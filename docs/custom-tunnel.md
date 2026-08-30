@@ -15,7 +15,7 @@ dsh-bridge 的「自建隧道」功能需要一台有公网 IP 的服务器来�
 在服务器上以 root 身份执行以下命令：
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/wenbin-wb/dsh-bridge/main/scripts/install-tunnel-server.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/lament-z/dsh-bridge-gateway/main/scripts/install-tunnel-server.sh)
 ```
 
 脚本会自动完成：
@@ -198,7 +198,7 @@ DSH（127.0.0.1:3080）
 历史消息较多时，API 响应时间较长。请确保服务端版本 ≥ 1.0.6（脚本已将 API 请求超时提升至 120s）。重新运行安装脚本即可更新：
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/wenbin-wb/dsh-bridge/main/scripts/install-tunnel-server.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/lament-z/dsh-bridge-gateway/main/scripts/install-tunnel-server.sh)
 ```
 
 **重装后端口变了，安全组不匹配**
@@ -216,5 +216,5 @@ WebSocket 长连接需要较长的超时配置。如果使用 Nginx，确保 `pr
 重新执行一键部署命令即可，会覆盖旧版本并保留配置文件：
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/wenbin-wb/dsh-bridge/main/scripts/install-tunnel-server.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/lament-z/dsh-bridge-gateway/main/scripts/install-tunnel-server.sh)
 ```

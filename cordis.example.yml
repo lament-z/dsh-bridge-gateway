@@ -1,7 +1,7 @@
-# dsh-bridge cordis.yml 配置文件示例
+# dsh-bridge-gateway cordis.yml 配置文件示例
 # 插件开箱即用，以下配置均为可选
 
-- name: '@wenbin_wb/dsh-bridge'
+- name: 'dsh-bridge-gateway'
   config:
     # 本地代理端口 (默认 3082)
     port: 3082

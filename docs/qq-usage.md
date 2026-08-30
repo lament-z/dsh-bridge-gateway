@@ -38,7 +38,7 @@ QQ Bot 使用 WebSocket 接收事件，需要配置 Intents（事件订阅）：
 
 ```bash
 # 安装最新版本
-npm install -g @wenbin_wb/dsh-bridge@latest
+npm install -g dsh-bridge-gateway@latest
 
 # 启动服务
 dsh web

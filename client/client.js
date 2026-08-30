@@ -136,12 +136,12 @@ function isLocalEnvironment() {
   const proto = window.location.protocol || "";
   return host === "127.0.0.1" || host === "localhost" || host === "::1" || host === "" || proto === "file:" || proto === "vscode-webview:" || proto === "app:" || typeof window.__DSH_ELECTRON__ !== "undefined" || typeof navigator !== "undefined" && navigator.userAgent && navigator.userAgent.includes("Electron");
 }
-var GITHUB_URL = "https://github.com/wenbin-wb/dsh-bridge";
-var RELEASES_URL = "https://github.com/wenbin-wb/dsh-bridge/releases";
-var ISSUES_URL = "https://github.com/wenbin-wb/dsh-bridge/issues/new";
-var TUNNEL_DOCS_URL = "https://github.com/wenbin-wb/dsh-bridge/blob/main/docs/custom-tunnel.md";
+var GITHUB_URL = "https://github.com/lament-z/dsh-bridge-gateway";
+var RELEASES_URL = "https://github.com/lament-z/dsh-bridge-gateway/releases";
+var ISSUES_URL = "https://github.com/lament-z/dsh-bridge-gateway/issues/new";
+var TUNNEL_DOCS_URL = "https://github.com/lament-z/dsh-bridge-gateway/blob/main/docs/custom-tunnel.md";
 function upgradeCommands(latest) {
-  const spec = `@wenbin_wb/dsh-bridge@${latest}`;
+  const spec = `dsh-bridge-gateway@${latest}`;
   return [
     { id: "dsh", cmd: `dsh plugin --profile web add ${spec}` },
     { id: "npx", cmd: `npx --yes @deepseek-ai/dsh plugin --profile web add ${spec}` }
@@ -1533,13 +1533,13 @@ function PlatformCard({ platformId, platformName, platformDesc, rpcCall, onStatu
       "div",
       { style: { display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap", alignItems: "center" } },
       platformId === "wechat" && React.createElement("a", {
-        href: "https://github.com/wenbin-wb/dsh-bridge/blob/main/docs/wechat-usage.md",
+        href: "https://github.com/lament-z/dsh-bridge-gateway/blob/main/docs/wechat-usage.md",
         target: "_blank",
         rel: "noopener noreferrer",
         style: s.btnGhost
       }, "\u{1F4D6} \u5FAE\u4FE1\u4F7F\u7528\u8BF4\u660E"),
       platformId === "qq" && React.createElement("a", {
-        href: "https://github.com/wenbin-wb/dsh-bridge/blob/main/docs/qq-usage.md",
+        href: "https://github.com/lament-z/dsh-bridge-gateway/blob/main/docs/qq-usage.md",
         target: "_blank",
         rel: "noopener noreferrer",
         style: s.btnGhost
@@ -1551,7 +1551,7 @@ function PlatformCard({ platformId, platformName, platformDesc, rpcCall, onStatu
         style: s.btnGhost
       }, "\u{1F310} QQ \u5F00\u653E\u5E73\u53F0"),
       platformId === "feishu" && React.createElement("a", {
-        href: "https://github.com/wenbin-wb/dsh-bridge/blob/main/docs/feishu-usage.md",
+        href: "https://github.com/lament-z/dsh-bridge-gateway/blob/main/docs/feishu-usage.md",
         target: "_blank",
         rel: "noopener noreferrer",
         style: s.btnGhost
@@ -1563,7 +1563,7 @@ function PlatformCard({ platformId, platformName, platformDesc, rpcCall, onStatu
         style: s.btnGhost
       }, "\u{1F310} \u98DE\u4E66\u5F00\u653E\u5E73\u53F0"),
       platformId === "telegram" && React.createElement("a", {
-        href: "https://github.com/wenbin-wb/dsh-bridge/blob/main/docs/telegram-usage.md",
+        href: "https://github.com/lament-z/dsh-bridge-gateway/blob/main/docs/telegram-usage.md",
         target: "_blank",
         rel: "noopener noreferrer",
         style: s.btnGhost

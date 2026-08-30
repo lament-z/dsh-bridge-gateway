@@ -2,7 +2,7 @@
 # dsh-bridge 隧道服务端一键部署脚本
 #
 # 用法（零配置，全自动）：
-#   bash <(curl -fsSL https://raw.githubusercontent.com/wenbin-wb/dsh-bridge/main/scripts/install-tunnel-server.sh)
+#   bash <(curl -fsSL https://raw.githubusercontent.com/lament-z/dsh-bridge-gateway/main/scripts/install-tunnel-server.sh)
 #
 # 自定义参数（可选，通过环境变量覆盖）：
 #   PORT=8080 bash <(curl -fsSL ...)
@@ -28,7 +28,7 @@ SERVICE_NAME="dsh-tunnel"
 clear
 echo ""
 echo -e "${BOLD}  dsh-bridge 隧道服务端  ·  一键部署${NC}"
-echo -e "${DIM}  https://github.com/wenbin-wb/dsh-bridge${NC}"
+echo -e "${DIM}  https://github.com/lament-z/dsh-bridge-gateway${NC}"
 echo -e "  ────────────────────────────────────────"
 
 # ── 1/4 检测环境 ────────────────────────────────────────────────────────────
@@ -416,7 +416,7 @@ if command -v systemctl &>/dev/null; then
   cat > "/etc/systemd/system/${SERVICE_NAME}.service" << EOF
 [Unit]
 Description=dsh-bridge Tunnel Server
-Documentation=https://github.com/wenbin-wb/dsh-bridge
+Documentation=https://github.com/lament-z/dsh-bridge-gateway
 After=network-online.target
 Wants=network-online.target
 
@@ -497,5 +497,5 @@ fi
 
 echo -e "  ${DIM}日志：journalctl -u $SERVICE_NAME -f${NC}"
 echo -e "  ${DIM}配置：$INSTALL_DIR/.env${NC}"
-echo -e "  ${DIM}更新：bash <(curl -fsSL https://raw.githubusercontent.com/wenbin-wb/dsh-bridge/main/scripts/install-tunnel-server.sh)${NC}"
+echo -e "  ${DIM}更新：bash <(curl -fsSL https://raw.githubusercontent.com/lament-z/dsh-bridge-gateway/main/scripts/install-tunnel-server.sh)${NC}"
 echo ""
