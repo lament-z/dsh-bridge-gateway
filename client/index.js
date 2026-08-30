@@ -2597,18 +2597,28 @@ function BridgePanel({ rpcCall }) {
 
   const loadInFlightRef = React.useRef(false);
   const loadSeqRef = React.useRef(0);
+  // 兜底超时：RPC 若一直不返回（连接打不开/宿主未响应），强制结束「加载中」，
+  // 释放 in-flight 锁并提示重试，避免面板无限卡在加载态
+  const LOAD_TIMEOUT_MS = 15000;
   const load = React.useCallback(async (quiet = false) => {
     if (loadInFlightRef.current) return;
     loadInFlightRef.current = true;
     const currentSeq = ++loadSeqRef.current;
+    const timedOut = { done: false };
     try {
-      const r = await authRpcCall(BRIDGE_ENDPOINTS.getStatus, {});
+      const result = await Promise.race([
+        authRpcCall(BRIDGE_ENDPOINTS.getStatus, {}),
+        new Promise((resolve) => {
+          setTimeout(() => { timedOut.done = true; resolve(null); }, LOAD_TIMEOUT_MS);
+        }),
+      ]);
+      if (timedOut.done) throw new Error('加载超时（宿主连接可能在切换或未建立）。请点击「🔄 重试」刷新。');
       if (currentSeq !== loadSeqRef.current) return;
-      if (!r?.ok) throw new Error(r?.error?.message ?? 'RPC failed');
-      setStatus(r.value);
+      if (!result?.ok) throw new Error(result?.error?.message ?? 'RPC failed');
+      setStatus(result.value);
       if (!quiet) setErr(null);
     } catch (e) {
-      if (currentSeq === loadSeqRef.current) setErr(e.message);
+      if (currentSeq === loadSeqRef.current) setErr(e.message || '加载失败');
     } finally {
       loadInFlightRef.current = false;
     }
@@ -2977,6 +2987,11 @@ function BridgePanel({ rpcCall }) {
       },
     },
       React.createElement('span', { style: { flex: '1 1 auto' } }, err),
+      !isInterceptionErr && React.createElement('button', {
+        type: 'button',
+        style: { ...s.btnGhost, height: 26, fontSize: 12, padding: '0 10px', flexShrink: 0 },
+        onClick: () => load(),
+      }, '🔄 重试'),
       isInterceptionErr && React.createElement('button', {
         type: 'button',
         style: { ...s.btnPri, background: '#dc2626', color: '#ffffff', height: 26, fontSize: 12, padding: '0 10px', flexShrink: 0 },
