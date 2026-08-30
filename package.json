@@ -89,12 +89,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/wenbin-wb/dsh-bridge.git"
+    "url": "git@github.com:lament-z/dsh-bridge-gateway.git"
   },
   "bugs": {
-    "url": "https://github.com/wenbin-wb/dsh-bridge/issues"
+    "url": "https://github.com/lament-z/dsh-bridge-gateway/issues"
   },
-  "homepage": "https://github.com/wenbin-wb/dsh-bridge",
+  "homepage": "https://github.com/lament-z/dsh-bridge-gateway",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
