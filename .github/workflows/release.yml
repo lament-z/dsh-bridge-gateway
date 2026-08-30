@@ -1,4 +1,4 @@
-name: Release
+name: Release & Publish to npm
 
 on:
   push:
@@ -17,13 +17,37 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js
+      - name: Setup Node.js and npm registry
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          registry-url: 'https://registry.npmjs.org/'
 
-      - name: Create GitHub Release
+      - name: Install dependencies
+        run: |
+          if [ -f pnpm-lock.yaml ]; then
+            corepack enable && pnpm install --frozen-lockfile
+          elif [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Build (if configured)
+        run: npm run build
+        continue-on-error: true
+
+      - name: Publish to npm
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub Release (if script present)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          node scripts/create-github-release.mjs
+          if [ -f scripts/create-github-release.mjs ]; then
+            node scripts/create-github-release.mjs
+          else
+            echo "No create-github-release.mjs present; npm publish already succeeded."
+          fi
