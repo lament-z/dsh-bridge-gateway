@@ -1,0 +1,102 @@
+{
+  "name": "dsh-bridge-gateway",
+  "version": "0.1.0",
+  "description": "以 dsh-bridge 为根基、融合 remote-gateway 能力的 DSH 远程访问网关：局域网 / Cloudflare 隧道 / 自建隧道之外，新增「公网直连网关」（0.0.0.0 监听 + 自带 HTTPS 自签证书 + 强制登录门禁），解决移动端外网直连操控电脑。",
+  "releaseNotes": "【v0.1.0 fork: dsh-bridge-gateway】\n• 🚀 以 @wenbin_wb/dsh-bridge v2.8.7 为根基 fork\n• ➕ 公网访问区：隧道 / 直连网关 二选一，网关全部配置项可在界面配置\n• ➕ 直连网关：0.0.0.0:<端口> 自带 HTTPS(自签证书) + 强制 public_only 门禁，复用 AuthManager，链路打通到 DSH loopback\n• 📱 修复移动端选择模型时界面溢出屏幕的问题\n• 默认不启用，安装后原有局域网/隧道/IM 行为完全不变",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./client": "./client/client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "client",
+    "cordis.patch.yml",
+    "README.md",
+    "README.en.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    "docs"
+  ],
+  "scripts": {
+    "build:client": "node client/build.mjs",
+    "build:lark": "node scripts/bundle-lark.mjs",
+    "build:banner": "node scripts/generate-banner.mjs",
+    "prepack": "npm run build:lark && npm run build:client",
+    "release:github": "node scripts/create-github-release.mjs",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "qrcode": "^1.5.3",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@deepseek-ai/dsh-llm": "0.1.0-rc.6",
+    "@larksuiteoapi/node-sdk": "^1.73.0",
+    "esbuild": "^0.25.9",
+    "puppeteer-core": "^25.8.0"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/dsh-llm": ">=0.1.0-rc.6"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/dsh-llm": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "license": "MIT",
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "remote",
+    "remote-access",
+    "tunnel",
+    "cloudflare",
+    "mobile",
+    "smartphone",
+    "tablet",
+    "qr-code",
+    "qrcode",
+    "websocket",
+    "bot",
+    "wechat",
+    "qq",
+    "feishu",
+    "telegram"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-connection",
+        "@deepseek-ai/dsh-client-ui-slots",
+        "@deepseek-ai/dsh-client-ui-layout",
+        "@deepseek-ai/dsh-client-locale"
+      ],
+      "platform": "web"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wenbin-wb/dsh-bridge.git"
+  },
+  "bugs": {
+    "url": "https://github.com/wenbin-wb/dsh-bridge/issues"
+  },
+  "homepage": "https://github.com/wenbin-wb/dsh-bridge",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}

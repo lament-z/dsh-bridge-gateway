@@ -1,0 +1,76 @@
+# Dependencies
+node_modules/
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Testing
+.jest/
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS
+Thumbs.db
+
+# DSH Bridge specific
+.dsh-bridge/
+bin/cloudflared*
+
+# Temporary files
+*.tmp
+.cache/
+
+# Debug
+debug.log
+
+# AI agent local skills and workspace data
+.agents/
+
+# Credentials (never commit)
+.credentials
+
+# Temporary project files (not for public repo)
+PROJECT_SUMMARY.md
+DELIVERY_*.md
+PUSH_READY.md
+push-to-github.ps1
+market-submission.md
+
+# Internal design/planning docs (kept locally, not published)
+docs/wechat-bot-plan.md
+
+# Note: CODE_STANDARDS.md, CODE_REVIEW.md, and other docs are kept in repo
+# They are part of the project documentation

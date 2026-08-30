@@ -1,0 +1,28 @@
+# dsh-bridge cordis.yml 配置文件示例
+# 插件开箱即用，以下配置均为可选
+
+- name: '@wenbin_wb/dsh-bridge'
+  config:
+    # 本地代理端口 (默认 3082)
+    port: 3082
+
+    # 自建隧道配置 (可选，也可在 Web 设置页面中配置)
+    customTunnel:
+      serverUrl: ''   # WebSocket URL, 如: wss://tunnel.example.com/connect
+      accessToken: '' # 访问令牌
+
+    # 微信 Bot 配置 (可选，建议在 Web 设置页面中扫码配置)
+    wechat:
+      digestIntervalSec: 300
+      approvalTimeoutSec: 600
+      maxMessageChars: 2000
+      sendChunkDelayMs: 1500
+
+    # QQ Bot 配置 (可选，建议在 Web 设置页面中配置)
+    qq:
+      appId: ''
+      clientSecret: ''
+      digestIntervalSec: 300
+      approvalTimeoutSec: 600
+      maxMessageChars: 2000
+      sendChunkDelayMs: 1500
