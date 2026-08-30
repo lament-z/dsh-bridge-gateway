@@ -3561,7 +3561,7 @@ function injectMobileStyles() {
         min-width: 0 !important;
       }
 
-      /* 移动端：模型/权限选择弹层不超出屏幕（从 180px 触发器中弹出时强制约束视口、横向可滚动兜底） */
+      /* 移动端：模型/权限选择弹层固定为输入栏上方的底部浮层，保证完整可见（修复真机下拉只剩右下角横条、内容被挤出视口） */
       div[class*="_7KE1Ra_root"] > div[class*="dropdown"],
       div[class*="_7KE1Ra_root"] > div[class*="listbox"],
       div[class*="_7KE1Ra_root"] > div[class*="popup"],
@@ -3571,15 +3571,20 @@ function injectMobileStyles() {
       div[class*="Sh0Q9G_root"] > div[class*="listbox"],
       div[class*="Sh0Q9G_root"] > div[class*="popup"],
       div[class*="Sh0Q9G_root"] > div[class*="menu"] {
+        position: fixed !important;
+        left: 8px !important;
+        right: 8px !important;
+        top: auto !important;
+        bottom: calc(64px + var(--dsh-mobile-safe-bottom)) !important;
+        width: auto !important;
         min-width: 0 !important;
         max-width: calc(100vw - 16px) !important;
-        width: auto !important;
-        max-height: 55vh !important;
+        max-height: 48vh !important;
         overflow-x: auto !important;
         overflow-y: auto !important;
-        left: auto !important;
-        right: auto !important;
-        top: calc(100% + 6px) !important;
+        z-index: 10005 !important;
+        transform: none !important;
+        margin: 0 !important;
         box-sizing: border-box !important;
         -webkit-overflow-scrolling: touch !important;
       }
@@ -3831,7 +3836,7 @@ function injectMobileStyles() {
         pointer-events: auto !important;
       }
 
-      /* 兜底：Portal 渲染到 overlayAnchor 里的模型/权限选择弹层也强制约束在屏幕内，杜绝整体跑出视口 */
+      /* 兜底：Portal 渲染到 overlayAnchor 里的模型/权限选择弹层也固定为底部浮层，杜绝整体跑出视口只剩横条 */
       div[class*="uV2eYG_overlayAnchor"] > div[class*="dropdown"],
       div[class*="uV2eYG_overlayAnchor"] > div[class*="popup"],
       div[class*="uV2eYG_overlayAnchor"] > div[class*="menu"],
@@ -3839,13 +3844,22 @@ function injectMobileStyles() {
       div[class*="uV2eYG_overlayAnchor"] > div[role="listbox"],
       div[class*="overlayLayer"] > div[class*="dropdown"],
       div[class*="overlayLayer"] > div[class*="popup"] {
-        max-width: calc(100vw - 16px) !important;
+        position: fixed !important;
+        left: 8px !important;
+        right: 8px !important;
+        top: auto !important;
+        bottom: calc(64px + var(--dsh-mobile-safe-bottom)) !important;
+        width: auto !important;
         min-width: 0 !important;
-        max-height: 60vh !important;
+        max-width: calc(100vw - 16px) !important;
+        max-height: 50vh !important;
         overflow-x: auto !important;
         overflow-y: auto !important;
+        z-index: 10005 !important;
+        transform: none !important;
+        margin: 0 !important;
         box-sizing: border-box !important;
-        transform-origin: left top !important;
+        transform-origin: left bottom !important;
       }
     }
 

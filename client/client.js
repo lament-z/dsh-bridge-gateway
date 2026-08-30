@@ -3963,7 +3963,7 @@ function injectMobileStyles() {
         min-width: 0 !important;
       }
 
-      /* \u79FB\u52A8\u7AEF\uFF1A\u6A21\u578B/\u6743\u9650\u9009\u62E9\u5F39\u5C42\u4E0D\u8D85\u51FA\u5C4F\u5E55\uFF08\u4ECE 180px \u89E6\u53D1\u5668\u4E2D\u5F39\u51FA\u65F6\u5F3A\u5236\u7EA6\u675F\u89C6\u53E3\u3001\u6A2A\u5411\u53EF\u6EDA\u52A8\u515C\u5E95\uFF09 */
+      /* \u79FB\u52A8\u7AEF\uFF1A\u6A21\u578B/\u6743\u9650\u9009\u62E9\u5F39\u5C42\u56FA\u5B9A\u4E3A\u8F93\u5165\u680F\u4E0A\u65B9\u7684\u5E95\u90E8\u6D6E\u5C42\uFF0C\u4FDD\u8BC1\u5B8C\u6574\u53EF\u89C1\uFF08\u4FEE\u590D\u771F\u673A\u4E0B\u62C9\u53EA\u5269\u53F3\u4E0B\u89D2\u6A2A\u6761\u3001\u5185\u5BB9\u88AB\u6324\u51FA\u89C6\u53E3\uFF09 */
       div[class*="_7KE1Ra_root"] > div[class*="dropdown"],
       div[class*="_7KE1Ra_root"] > div[class*="listbox"],
       div[class*="_7KE1Ra_root"] > div[class*="popup"],
@@ -3973,15 +3973,20 @@ function injectMobileStyles() {
       div[class*="Sh0Q9G_root"] > div[class*="listbox"],
       div[class*="Sh0Q9G_root"] > div[class*="popup"],
       div[class*="Sh0Q9G_root"] > div[class*="menu"] {
+        position: fixed !important;
+        left: 8px !important;
+        right: 8px !important;
+        top: auto !important;
+        bottom: calc(64px + var(--dsh-mobile-safe-bottom)) !important;
+        width: auto !important;
         min-width: 0 !important;
         max-width: calc(100vw - 16px) !important;
-        width: auto !important;
-        max-height: 55vh !important;
+        max-height: 48vh !important;
         overflow-x: auto !important;
         overflow-y: auto !important;
-        left: auto !important;
-        right: auto !important;
-        top: calc(100% + 6px) !important;
+        z-index: 10005 !important;
+        transform: none !important;
+        margin: 0 !important;
         box-sizing: border-box !important;
         -webkit-overflow-scrolling: touch !important;
       }
@@ -4233,7 +4238,7 @@ function injectMobileStyles() {
         pointer-events: auto !important;
       }
 
-      /* \u515C\u5E95\uFF1APortal \u6E32\u67D3\u5230 overlayAnchor \u91CC\u7684\u6A21\u578B/\u6743\u9650\u9009\u62E9\u5F39\u5C42\u4E5F\u5F3A\u5236\u7EA6\u675F\u5728\u5C4F\u5E55\u5185\uFF0C\u675C\u7EDD\u6574\u4F53\u8DD1\u51FA\u89C6\u53E3 */
+      /* \u515C\u5E95\uFF1APortal \u6E32\u67D3\u5230 overlayAnchor \u91CC\u7684\u6A21\u578B/\u6743\u9650\u9009\u62E9\u5F39\u5C42\u4E5F\u56FA\u5B9A\u4E3A\u5E95\u90E8\u6D6E\u5C42\uFF0C\u675C\u7EDD\u6574\u4F53\u8DD1\u51FA\u89C6\u53E3\u53EA\u5269\u6A2A\u6761 */
       div[class*="uV2eYG_overlayAnchor"] > div[class*="dropdown"],
       div[class*="uV2eYG_overlayAnchor"] > div[class*="popup"],
       div[class*="uV2eYG_overlayAnchor"] > div[class*="menu"],
@@ -4241,13 +4246,22 @@ function injectMobileStyles() {
       div[class*="uV2eYG_overlayAnchor"] > div[role="listbox"],
       div[class*="overlayLayer"] > div[class*="dropdown"],
       div[class*="overlayLayer"] > div[class*="popup"] {
-        max-width: calc(100vw - 16px) !important;
+        position: fixed !important;
+        left: 8px !important;
+        right: 8px !important;
+        top: auto !important;
+        bottom: calc(64px + var(--dsh-mobile-safe-bottom)) !important;
+        width: auto !important;
         min-width: 0 !important;
-        max-height: 60vh !important;
+        max-width: calc(100vw - 16px) !important;
+        max-height: 50vh !important;
         overflow-x: auto !important;
         overflow-y: auto !important;
+        z-index: 10005 !important;
+        transform: none !important;
+        margin: 0 !important;
         box-sizing: border-box !important;
-        transform-origin: left top !important;
+        transform-origin: left bottom !important;
       }
     }
 

@@ -2,6 +2,14 @@
 
 本项目 `dsh-bridge-gateway` 是基于 [dsh-bridge](https://github.com/wenbin-wb/dsh-bridge) 的移植增强分支，在保留原版能力之外，重点新增「公网直连网关」。
 
+## [0.1.2] - 待发布
+
+### 新增
+- 公网直连网关新增插件 host 反向代理：`/points-checkin/*` 路径转发到本机 points-checkin bridge，使积分签到插件在公网 HTTPS 网关页面下同步可用。
+
+### 修复
+- 修复移动端模型/权限选择下拉在底部输入栏被挤出视口、仅剩右下角横条的问题：改为固定在输入栏上方的底部浮层。
+
 ## [0.1.1] - 待发布
 
 ### 修复

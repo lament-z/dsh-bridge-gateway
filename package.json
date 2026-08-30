@@ -1,6 +1,6 @@
 {
   "name": "dsh-bridge-gateway",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "以 dsh-bridge 为根基、融合 remote-gateway 能力的 DSH 远程访问网关：局域网 / Cloudflare 隧道 / 自建隧道之外，新增「公网直连网关」（0.0.0.0 监听 + 自带 HTTPS 自签证书 + 强制登录门禁），解决移动端外网直连操控电脑。",
   "releaseNotes": "【dsh-bridge-gateway】以 dsh-bridge 为根基、融合 remote-gateway 能力的 DSH 远程访问网关\n• ➕ 公网访问区：隧道 / 直连网关 二选一，网关全部配置项可在界面配置\n• ➕ 直连网关：0.0.0.0:<端口> 自带 HTTPS(自签证书) + 强制 public_only 门禁，复用 AuthManager，链路打通到 DSH loopback\n• 📱 修复移动端选择模型时界面溢出屏幕的问题\n• 默认不启用，安装后原有局域网/隧道/IM 行为完全不变",
   "type": "module",
