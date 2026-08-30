@@ -3902,6 +3902,27 @@ function injectMobileStyles() {
         background: var(--dsw-alias-bg-layer-2, #f4f4f7) !important;
       }
 
+      /* \u8F93\u5165\u6846\u6A2A\u5411\u4E0D\u6EA2\u51FA\uFF1A\u5361\u7247\u53CA\u5176\u7F29\u5BB9\u5668\u6700\u5927\u5BBD\u5EA6\u4E0D\u8D85\u8FC7\u89C6\u53E3\uFF0C\u5185\u90E8\u7F16\u8F91\u5668\u53EF\u6536\u7F29\u3001\u957F\u5185\u5BB9\u81EA\u52A8\u6298\u884C */
+      div[class*="uV2eYG_scrollBody"] {
+        max-width: 100vw !important;
+        overflow-x: hidden !important;
+      }
+      div[class*="uV2eYG_card"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+      }
+      div[class*="uV2eYG_card"] div,
+      div[class*="uV2eYG_card"] textarea,
+      div[class*="uV2eYG_card"] [contenteditable="true"] {
+        max-width: 100% !important;
+        min-width: 0 !important;
+        overflow-wrap: anywhere !important;
+        word-break: break-word !important;
+        box-sizing: border-box !important;
+      }
+
       /* \u8F93\u5165\u6846\u5E95\u90E8\u5DE5\u5177\u680F\uFF1A\u5F39\u6027\u81EA\u9002\u5E94\uFF0C\u5F7B\u5E95\u675C\u7EDD\u6743\u9650\u9009\u62E9\u5668(Full access)\u4E0E\u6A21\u578B\u9009\u62E9\u5668\u91CD\u53E0\u78B0\u649E */
       div[class*="uV2eYG_row"] {
         display: flex !important;

@@ -3500,6 +3500,27 @@ function injectMobileStyles() {
         background: var(--dsw-alias-bg-layer-2, #f4f4f7) !important;
       }
 
+      /* 输入框横向不溢出：卡片及其缩容器最大宽度不超过视口，内部编辑器可收缩、长内容自动折行 */
+      div[class*="uV2eYG_scrollBody"] {
+        max-width: 100vw !important;
+        overflow-x: hidden !important;
+      }
+      div[class*="uV2eYG_card"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+      }
+      div[class*="uV2eYG_card"] div,
+      div[class*="uV2eYG_card"] textarea,
+      div[class*="uV2eYG_card"] [contenteditable="true"] {
+        max-width: 100% !important;
+        min-width: 0 !important;
+        overflow-wrap: anywhere !important;
+        word-break: break-word !important;
+        box-sizing: border-box !important;
+      }
+
       /* 输入框底部工具栏：弹性自适应，彻底杜绝权限选择器(Full access)与模型选择器重叠碰撞 */
       div[class*="uV2eYG_row"] {
         display: flex !important;
