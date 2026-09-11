@@ -2920,7 +2920,7 @@ function BridgePanel({ rpcCall }) {
   }, [rpcCall, adminToken]);
   const loadInFlightRef = React.useRef(false);
   const loadSeqRef = React.useRef(0);
-  const LOAD_TIMEOUT_MS = 15000;
+  const LOAD_TIMEOUT_MS = 15e3;
   const load = React.useCallback(async (quiet = false) => {
     if (loadInFlightRef.current) return;
     loadInFlightRef.current = true;
@@ -2930,16 +2930,19 @@ function BridgePanel({ rpcCall }) {
       const result = await Promise.race([
         authRpcCall(BRIDGE_ENDPOINTS.getStatus, {}),
         new Promise((resolve) => {
-          setTimeout(() => { timedOut.done = true; resolve(null); }, LOAD_TIMEOUT_MS);
-        }),
+          setTimeout(() => {
+            timedOut.done = true;
+            resolve(null);
+          }, LOAD_TIMEOUT_MS);
+        })
       ]);
-      if (timedOut.done) throw new Error("加载超时（宿主连接可能在切换或未建立）。请点击「🔄 重试」刷新。");
+      if (timedOut.done) throw new Error("\u52A0\u8F7D\u8D85\u65F6\uFF08\u5BBF\u4E3B\u8FDE\u63A5\u53EF\u80FD\u5728\u5207\u6362\u6216\u672A\u5EFA\u7ACB\uFF09\u3002\u8BF7\u70B9\u51FB\u300C\u{1F504} \u91CD\u8BD5\u300D\u5237\u65B0\u3002");
       if (currentSeq !== loadSeqRef.current) return;
       if (!result?.ok) throw new Error(result?.error?.message ?? "RPC failed");
       setStatus(result.value);
       if (!quiet) setErr(null);
     } catch (e) {
-      if (currentSeq === loadSeqRef.current) setErr(e.message || "加载失败");
+      if (currentSeq === loadSeqRef.current) setErr(e.message || "\u52A0\u8F7D\u5931\u8D25");
     } finally {
       loadInFlightRef.current = false;
     }
@@ -3826,6 +3829,54 @@ function injectMobileStyles() {
         display: none !important;
       }
 
+      /* ---- \u9876\u680F\u300C\u6807\u51C6\u6A21\u5F0F\u300D\u4E0E\u300C\u5BF9\u8BDD\u7BA1\u7406\u300D\u91CD\u53E0\u4FEE\u590D ----
+         \u5B9E\u6D4B\uFF08390px\uFF09\uFF1A\u6807\u51C6\u6A21\u5F0F(\u5728 titleCluster \u5185) \u53F3\u8FB9\u754C 102\uFF0C
+         \u5BF9\u8BDD\u7BA1\u7406(\u5728 headerUtilities \u5185) \u5DE6\u8FB9\u754C 91 \u2192 \u6C34\u5E73\u91CD\u53E0 11px\u3002
+         \u6839\u56E0\uFF1AtitleCluster \u53EA\u6709 46px \u5BBD\uFF08[33,79]\uFF09\uFF0C\u4F46\u5185\u90E8\u7684\u300C\u6807\u51C6\u6A21\u5F0F\u300D\u80F6\u56CA\u56FA\u5B9A 69px\uFF0C
+         \u6491\u7834\u7236\u5BB9\u5668\u540E\u4E0E\u53F3\u4FA7 headerUtilities \u76F8\u649E\u3002
+         \u4FEE\u590D\uFF1A\u5141\u8BB8 titleRow \u6362\u884C + \u8BA9\u4E24\u4FA7\u5404\u81EA\u53EF\u6536\u7F29\u5E76\u9650\u5BBD\u3002 */
+      div[class*="wSkVaW_titleRow"],
+      div[class*="_titleRow"] {
+        flex-wrap: wrap !important;
+        row-gap: 6px !important;
+        column-gap: 8px !important;
+        overflow: visible !important;
+      }
+      div[class*="wSkVaW_titleCluster"],
+      div[class*="_titleCluster"] {
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+      }
+      div[class*="wSkVaW_headerActions"],
+      div[class*="_headerActions"] {
+        flex: 0 0 auto !important;
+        min-width: 0 !important;
+        max-width: 45vw !important;
+        overflow: hidden !important;
+      }
+      div[class*="wSkVaW_headerUtilities"],
+      div[class*="_headerUtilities"] {
+        flex: 0 0 auto !important;
+        min-width: 0 !important;
+        max-width: 50vw !important;
+        margin-left: auto !important;
+        overflow: hidden !important;
+      }
+      /* \u4E24\u8005\u5185\u90E8\u7684\u65E0 class \u6309\u94AE\uFF08\u6A21\u5F0F\u80F6\u56CA / \u5BF9\u8BDD\u7BA1\u7406 / \u5220\u9664\u672C\u5BF9\u8BDD\uFF09\u7EDF\u4E00\u9650\u5BBD\u5E76\u5141\u8BB8\u6536\u7F29 */
+      div[class*="wSkVaW_headerActions"] > *,
+      div[class*="wSkVaW_headerActions"] button,
+      div[class*="wSkVaW_headerActions"] span,
+      div[class*="wSkVaW_headerUtilities"] > *,
+      div[class*="wSkVaW_headerUtilities"] button,
+      div[class*="wSkVaW_headerUtilities"] span {
+        max-width: 100% !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+      }
+
       /* \u5B50\u4EE3\u7406/\u667A\u80FD\u4F53\u6A21\u5F0F\u80F6\u56CA (Actions)\uFF1A\u7D27\u51D1\u5706\u89D2\u80F6\u56CA */
       div[class*="wSkVaW_headerActions"],
       div[class*="headerActions"] {
@@ -3936,6 +3987,136 @@ function injectMobileStyles() {
         box-sizing: border-box !important;
       }
 
+      /* ---- \u8F93\u5165\u6846\u5BBD\u5EA6\u4E0E\u5BF9\u8BDD\u5217\u5BF9\u9F50\u4FEE\u590D ----
+         \u95EE\u9898\uFF1A\u8FDB\u5165\u771F\u5B9E\u5BF9\u8BDD\u540E\u8F93\u5165\u6846\u88AB\u6491\u5230 780px\uFF08= 748px \u5185\u5BB9\u5BBD + 32px\uFF09\uFF0C
+         \u800C\u6D88\u606F\u5217\u4EC5 318px\uFF0C\u8F93\u5165\u6846\u6BD4\u5BF9\u8BDD\u5185\u5BB9\u5BBD\u7EA6 2.45 \u500D\u3002
+         \u6839\u56E0\uFF1A\u5361\u7247\u7684\u7236\u7EA7 uV2eYG_root \u81EA\u5E26 max-width: var(--dsh-composer-card-max-width)\uFF0C
+         \u5361\u7247\u81EA\u8EAB\u7684 max-width:100% \u662F\u76F8\u5BF9\u7236\u7EA7 780px \u8BA1\u7B97\u7684\uFF0C\u56E0\u6B64\u4ECD\u662F 780px\u3002
+         \u4FEE\u590D\uFF1A\u4ECE\u6839\u53D8\u91CF\u6536\u7A84 + \u8865\u4E0A uV2eYG_root \u8FD9\u4E00\u5C42\u7EA6\u675F\u3002 */
+
+      /* 1. \u4ECE\u4F1A\u8BDD\u6839\u8282\u70B9\u6536\u7A84\u5185\u5BB9\u5BBD\u5EA6\u53D8\u91CF\uFF08\u540C\u65F6\u7EA6\u675F\u6D88\u606F\u5217\u4E0E\u8F93\u5165\u6846\uFF09 */
+      div[class*="wSkVaW_root"] {
+        --dsh-chat-content-width: min(748px, 100vw - 32px) !important;
+        --dsh-composer-card-max-width: min(780px, 100vw - 24px) !important;
+      }
+
+      /* 2. \u8865\u4E0A\u63D2\u4EF6\u6B64\u524D\u9057\u6F0F\u7684 uV2eYG_root\uFF08\u8F93\u5165\u6846\u7684\u76F4\u63A5\u7F29\u5BB9\u5668\uFF09 */
+      div[class*="uV2eYG_root"] {
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+      }
+
+      /* 3. \u8F93\u5165\u6846\u7956\u5148\u94FE\u6574\u4F53\u4E0D\u8D85\u51FA\u89C6\u53E3 */
+      div[class*="wSkVaW_composerStack"],
+      div[class*="wSkVaW_composerSeat"],
+      div[class*="uV2eYG_scroll"],
+      div[class*="uV2eYG_grow"] {
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+      }
+
+      /* ---- \u9876\u90E8\u63A7\u4EF6\u9632\u6EA2\u51FA\u88C1\u5207\uFF08320px \u4E0B main \u5206\u652F chip \u6EA2\u51FA 39px \u88AB\u88C1\uFF09 ---- */
+      div[class*="wSkVaW_titleRow"],
+      div[class*="_titleRow"] {
+        flex-wrap: wrap !important;
+        row-gap: 6px !important;
+        overflow: visible !important;
+      }
+      button[class*="_7rgC5q_chip"],
+      button[class*="cubgiG_seat"],
+      div[class*="_7rgC5q_chipWrap"] {
+        max-width: min(120px, 30vw) !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+      }
+
+      /* git-graph \u7684\u5206\u652F chip \u5916\u5C42\u662F position:absolute \u6D6E\u5C42\uFF08_7rgC5q_anchor / _7rgC5q_anchorHero\uFF09\uFF0C
+         \u4E14\u901A\u8FC7\u5185\u8054\u6837\u5F0F\u5199\u6B7B left\uFF08\u5982 left: 271.484px\uFF09\uFF0C\u8131\u79BB flex \u6D41\u4E14\u4E0D\u53D7\u7236\u5BB9\u5668\u9650\u5BBD\u7EA6\u675F\uFF0C
+         \u5728 320px \u4E0B\u6EA2\u51FA\u5C4F\u5E55\u53F3\u4FA7\u88AB\u88C1\u5207\uFF08\u53F3\u8FB9\u754C 351 > \u89C6\u53E3 320\uFF09\u3002
+         \u5185\u8054\u6837\u5F0F\u4F18\u5148\u7EA7\u9AD8\u4E8E\u666E\u901A CSS\uFF0C\u5FC5\u987B\u7528 !important \u8986\u76D6 left\uFF0C\u6539\u4E3A\u6309\u89C6\u53E3\u53F3\u8FB9\u754C\u951A\u5B9A\u3002 */
+      div[class*="_7rgC5q_anchor"] {
+        left: auto !important;
+        right: 8px !important;
+        max-width: calc(100vw - 16px) !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+      }
+      button[class*="_7rgC5q_chip"],
+      div[class*="_7rgC5q_chipWrap"] {
+        width: auto !important;
+        max-width: 100% !important;
+      }
+
+      /* ---- \u70B9\u51FB\u76EE\u6807\u6269\u5230 44px\uFF08\u4F2A\u5143\u7D20\u6269\u70ED\u533A\uFF0C\u89C6\u89C9\u5C3A\u5BF8\u4E0D\u53D8\uFF09 ---- */
+      button[class*="cubgiG_seat"],
+      button[class*="_7rgC5q_chip"],
+      button[class*="pXSMma_workspace"],
+      button[class*="Sh0Q9G_trigger"],
+      button[class*="_7KE1Ra_trigger"],
+      button[class*="uV2eYG_add"],
+      button[class*="qDHVXG_iconButton"],
+      button[class*="qDHVXG_searchButton"],
+      button[class*="hHd-Xa_iconButton"],
+      button[class*="YDXeBa_iconButton"] {
+        position: relative !important;
+      }
+      button[class*="cubgiG_seat"]::after,
+      button[class*="_7rgC5q_chip"]::after,
+      button[class*="pXSMma_workspace"]::after,
+      button[class*="Sh0Q9G_trigger"]::after,
+      button[class*="_7KE1Ra_trigger"]::after,
+      button[class*="uV2eYG_add"]::after,
+      button[class*="qDHVXG_iconButton"]::after,
+      button[class*="qDHVXG_searchButton"]::after,
+      button[class*="hHd-Xa_iconButton"]::after,
+      button[class*="YDXeBa_iconButton"]::after {
+        content: "" !important;
+        position: absolute !important;
+        inset: -8px !important;
+        z-index: 1 !important;
+      }
+
+      /* ---- \u4FA7\u8FB9\u680F\u771F\u6B63\u9690\u85CF\uFF0C\u6D88\u9664\u952E\u76D8/\u8BFB\u5C4F\u7126\u70B9\u9677\u9631 ----
+         \u6B64\u524D\u4FA7\u8FB9\u680F\u4EC5\u88AB transform \u79FB\u5230\u5C4F\u5E55\u5916\uFF08visibility \u4ECD\u4E3A visible\uFF09\uFF0C
+         \u5185\u90E8 7 \u4E2A\u6309\u94AE\u4ECD\u53EF\u88AB Tab \u805A\u7126\u3002 */
+      div[class*="_sidebarCol"] {
+        visibility: hidden !important;
+        pointer-events: none !important;
+      }
+      body.dsh-drawer-open div[class*="_sidebarCol"] {
+        visibility: visible !important;
+        pointer-events: auto !important;
+      }
+
+      /* ---- \u8F93\u5165\u6846 sticky \u5B9A\u4F4D\u4E0E\u906E\u6321\u4FEE\u590D ----
+         \u73B0\u8C61\uFF1A\u53D1\u9001\u540E\u8F93\u5165\u6846\u8DF3\u5230 tabs(\u5BF9\u8BDD/\u8F68\u8FF9/\u4E0A\u4E0B\u6587/\u8BB0\u5FC6) \u4E0B\u65B9\uFF0C\u4E0B\u65B9\u7559\u51FA\u5927\u7247\u7A7A\u767D\uFF1B
+               \u6EDA\u52A8\u65F6\u53F3\u4E0B\u89D2\u51FA\u73B0\u4E00\u4E2A\u5C0F\u65B9\u5757\u3002
+         \u6839\u56E0\uFF1A
+           1) dsh-better-sidebar \u63D2\u4EF6\u6CE8\u5165\u7684 div[data-dsh-panel-host] \u662F\u5168\u5C4F fixed \u906E\u7F69
+              \uFF08390x844\uFF0Cz-index 25\uFF09\uFF0C\u5728\u79FB\u52A8\u7AEF\u672A\u88AB\u9690\u85CF\uFF0C\u538B\u5728 composerSeat(z-index 7) \u4E4B\u4E0A\uFF1B
+           2) \u4E3B\u9898\u88C5\u9970\u5C42 span[data-dsh-glass-fade="bottom"] \u662F\u5168\u5BBD fixed \u6761\uFF08390x13\uFF0Cz-index 7\uFF09\uFF0C
+              \u5E38\u9A7B\u5C4F\u5E55\u53F3\u4E0B\u89D2\uFF0C\u89C6\u89C9\u4E0A\u5C31\u662F\u90A3\u4E2A"\u5C0F\u65B9\u5757"\u3002
+         \u4FEE\u590D\uFF1A\u79FB\u52A8\u7AEF\u9690\u85CF panel-host \u906E\u7F69\u4E0E glass \u6E10\u53D8\u88C5\u9970\u6761\uFF0C\u5E76\u9501\u5B9A\u8F93\u5165\u6846 sticky \u4E8E\u5E95\u90E8\u3002 */
+
+      /* \u9690\u85CF better-sidebar \u7684\u5168\u5C4F\u906E\u7F69\uFF08\u907F\u514D\u8986\u76D6\u8F93\u5165\u6846\u5E76\u62E6\u622A\u70B9\u51FB\uFF09 */
+      div[data-dsh-panel-host],
+      div[data-dsh-better-sidebar] {
+        display: none !important;
+      }
+      /* \u9690\u85CF\u4E3B\u9898\u88C5\u9970\u6027\u6E10\u53D8\u6761\uFF08\u53F3\u4E0B\u89D2\u5C0F\u65B9\u5757\uFF09 */
+      span[data-dsh-glass-fade] {
+        display: none !important;
+      }
+      /* \u6CE8\u610F\uFF1A\u4EE5\u4E0B\u4E24\u5904\u6539\u52A8\u5747\u5DF2\u5B9E\u6D4B\u5931\u8D25\u5E76\u64A4\u56DE\uFF0C\u5207\u52FF\u91CD\u8BD5\u2014\u2014
+         (1) \u628A viewArea \u6539\u4E3A\u53EF\u6536\u7F29\uFF08flex:1 1 auto / min-height:0\uFF09\uFF1A
+             sticky \u5931\u53BB\u6B63\u786E\u6EDA\u52A8\u4E0A\u4E0B\u6587\uFF0C\u8F93\u5165\u6846\u88AB\u9876\u5230\u6574\u4E2A\u5BF9\u8BDD\u5386\u53F2\u6700\u4E0A\u65B9\u3002
+         (2) \u628A composerSeat \u6539\u4E3A absolute\uFF08\u4EFF\u6E90\u7801 composer-overlay \u5206\u652F\uFF09\uFF1A
+             absolute \u8131\u79BB\u6587\u6863\u6D41\u540E\u968F\u6EDA\u52A8\u5185\u5BB9\u79FB\u52A8\uFF0C\u5B9E\u6D4B\u8F93\u5165\u6846\u8DD1\u5230 y=-8972\u3002
+         \u7ED3\u8BBA\uFF1A\u4FDD\u7559\u6E90\u7801\u7684 sticky \u673A\u5236\uFF0C\u4E0D\u505A\u7ED3\u6784\u6027\u6539\u52A8\u3002 */
+
       /* \u8F93\u5165\u6846\u5E95\u90E8\u5DE5\u5177\u680F\uFF1A\u5F39\u6027\u81EA\u9002\u5E94\uFF0C\u5F7B\u5E95\u675C\u7EDD\u6743\u9650\u9009\u62E9\u5668(Full access)\u4E0E\u6A21\u578B\u9009\u62E9\u5668\u91CD\u53E0\u78B0\u649E */
       div[class*="uV2eYG_row"] {
         display: flex !important;
@@ -4030,8 +4211,16 @@ function injectMobileStyles() {
         position: fixed !important;
         left: 0 !important;
         top: 0 !important;
-        bottom: 0 !important;
+        bottom: auto !important;
+        /* \u4FA7\u8FB9\u680F\u5E95\u90E8\u6EA2\u51FA\u5C4F\u5E55\u4FEE\u590D\uFF1A
+           \u5B9E\u6D4B 390x844 \u4E0B\uFF0C\u4FA7\u8FB9\u680F\u5B9E\u9645\u76D2\u5B50\u4E3A T=12 B=882\uFF08\u9AD8\u5EA6 870 > \u89C6\u53E3 844\uFF09\uFF0C\u5E95\u90E8\u6EA2\u51FA 38px\u3002
+           \u6839\u56E0\u662F\u63D2\u4EF6\u6B64\u524D\u672A\u58F0\u660E box-sizing\uFF0C\u5143\u7D20\u7EE7\u627F\u4E3A content-box\uFF0C
+           \u4E8E\u662F padding(10px+14px) \u4E0E margin(12px) \u88AB\u52A0\u5728 height:100dvh \u4E4B\u5916\u3002
+           \u6539\u4E3A border-box \u5E76\u7528 100dvh \u76F4\u63A5\u7EA6\u675F\u9AD8\u5EA6\uFF0Cpadding \u5373\u88AB\u5305\u542B\u5728\u9AD8\u5EA6\u5185\u3002 */
+        box-sizing: border-box !important;
         height: 100dvh !important;
+        max-height: 100dvh !important;
+        margin: 0 !important;
         width: 290px !important;
         max-width: 82vw !important;
         z-index: 10000 !important;
@@ -4549,6 +4738,9 @@ function setupMobileExperience(rpcCall, ctx) {
       }
       const sessionRow = e.target.closest('a, div[class*="sessionRow"], div[role="treeitem"]');
       if (sessionRow) {
+        if (sessionRow.hasAttribute("aria-expanded")) {
+          return;
+        }
         setTimeout(() => {
           if (document.body.classList.contains("dsh-drawer-open")) {
             document.body.classList.remove("dsh-drawer-open");
@@ -4559,6 +4751,31 @@ function setupMobileExperience(rpcCall, ctx) {
       document.body.classList.remove("dsh-drawer-open");
     }
   }, true);
+  const syncSidebarInert = () => {
+    const sidebar = document.querySelector('div[class*="_sidebarCol"]');
+    if (!sidebar) return;
+    const open = document.body.classList.contains("dsh-drawer-open");
+    const wantInert = window.innerWidth <= 768 && !open;
+    if (wantInert) {
+      if (!sidebar.hasAttribute("inert")) sidebar.setAttribute("inert", "");
+    } else if (sidebar.hasAttribute("inert")) {
+      sidebar.removeAttribute("inert");
+    }
+  };
+  new MutationObserver(syncSidebarInert).observe(document.body, {
+    attributes: true,
+    attributeFilter: ["class"],
+    childList: true,
+    subtree: true
+  });
+  window.addEventListener("resize", syncSidebarInert);
+  let inertRetry = 0;
+  const inertTimer = setInterval(() => {
+    syncSidebarInert();
+    const sb = document.querySelector('div[class*="_sidebarCol"]');
+    if (sb && sb.hasAttribute("inert") || ++inertRetry > 40) clearInterval(inertTimer);
+  }, 250);
+  syncSidebarInert();
   let longPressTimer = null;
   let touchStartX = 0;
   let touchStartY = 0;

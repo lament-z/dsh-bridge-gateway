@@ -14,7 +14,7 @@ LAN access, Cloudflare tunnels, custom tunnels, and the IM bots all keep working
 - **Remote workspace.** Browse the host's directory tree and pick workspace conversations from the phone.
 - **Security.** Password gate + QR-based password-free token + admin unlock/lock for sensitive config + rate limiting against brute force. Client-claimed `isLocalhost` is never trusted.
 - **IM bots.** WeChat / QQ / Feishu / Telegram bots connect through their own gateway links — no public IP needed. Per-platform guides live in [docs/](./docs).
-- **Mobile-friendly web.** The remote web UI is adapted for phone screens (drawer navigation, workspace picker, on-screen keyboard handling).
+- **Mobile-friendly web.** The remote web UI is deeply adapted for phone screens: drawer sidebar (fully hidden when closed, removing keyboard/screen-reader focus traps), top-bar mode and conversation-management controls that wrap instead of overlapping, git branch chips anchored to the viewport edge instead of being clipped, composer width aligned with the conversation column and stuck to the bottom, ~44px touch targets on the main controls via pseudo-element hit areas, and removal of full-screen overlays and decorative gradient strips that covered the input box.
 - **All configuration in the UI.** Every feature above is configured from DSH Web's remote-access panel; nothing is edited by hand.
 
 ## Requirements

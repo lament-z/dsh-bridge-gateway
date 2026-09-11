@@ -3426,6 +3426,54 @@ function injectMobileStyles() {
         display: none !important;
       }
 
+      /* ---- 顶栏「标准模式」与「对话管理」重叠修复 ----
+         实测（390px）：标准模式(在 titleCluster 内) 右边界 102，
+         对话管理(在 headerUtilities 内) 左边界 91 → 水平重叠 11px。
+         根因：titleCluster 只有 46px 宽（[33,79]），但内部的「标准模式」胶囊固定 69px，
+         撑破父容器后与右侧 headerUtilities 相撞。
+         修复：允许 titleRow 换行 + 让两侧各自可收缩并限宽。 */
+      div[class*="wSkVaW_titleRow"],
+      div[class*="_titleRow"] {
+        flex-wrap: wrap !important;
+        row-gap: 6px !important;
+        column-gap: 8px !important;
+        overflow: visible !important;
+      }
+      div[class*="wSkVaW_titleCluster"],
+      div[class*="_titleCluster"] {
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+      }
+      div[class*="wSkVaW_headerActions"],
+      div[class*="_headerActions"] {
+        flex: 0 0 auto !important;
+        min-width: 0 !important;
+        max-width: 45vw !important;
+        overflow: hidden !important;
+      }
+      div[class*="wSkVaW_headerUtilities"],
+      div[class*="_headerUtilities"] {
+        flex: 0 0 auto !important;
+        min-width: 0 !important;
+        max-width: 50vw !important;
+        margin-left: auto !important;
+        overflow: hidden !important;
+      }
+      /* 两者内部的无 class 按钮（模式胶囊 / 对话管理 / 删除本对话）统一限宽并允许收缩 */
+      div[class*="wSkVaW_headerActions"] > *,
+      div[class*="wSkVaW_headerActions"] button,
+      div[class*="wSkVaW_headerActions"] span,
+      div[class*="wSkVaW_headerUtilities"] > *,
+      div[class*="wSkVaW_headerUtilities"] button,
+      div[class*="wSkVaW_headerUtilities"] span {
+        max-width: 100% !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+      }
+
       /* 子代理/智能体模式胶囊 (Actions)：紧凑圆角胶囊 */
       div[class*="wSkVaW_headerActions"],
       div[class*="headerActions"] {
@@ -3536,6 +3584,136 @@ function injectMobileStyles() {
         box-sizing: border-box !important;
       }
 
+      /* ---- 输入框宽度与对话列对齐修复 ----
+         问题：进入真实对话后输入框被撑到 780px（= 748px 内容宽 + 32px），
+         而消息列仅 318px，输入框比对话内容宽约 2.45 倍。
+         根因：卡片的父级 uV2eYG_root 自带 max-width: var(--dsh-composer-card-max-width)，
+         卡片自身的 max-width:100% 是相对父级 780px 计算的，因此仍是 780px。
+         修复：从根变量收窄 + 补上 uV2eYG_root 这一层约束。 */
+
+      /* 1. 从会话根节点收窄内容宽度变量（同时约束消息列与输入框） */
+      div[class*="wSkVaW_root"] {
+        --dsh-chat-content-width: min(748px, 100vw - 32px) !important;
+        --dsh-composer-card-max-width: min(780px, 100vw - 24px) !important;
+      }
+
+      /* 2. 补上插件此前遗漏的 uV2eYG_root（输入框的直接缩容器） */
+      div[class*="uV2eYG_root"] {
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+      }
+
+      /* 3. 输入框祖先链整体不超出视口 */
+      div[class*="wSkVaW_composerStack"],
+      div[class*="wSkVaW_composerSeat"],
+      div[class*="uV2eYG_scroll"],
+      div[class*="uV2eYG_grow"] {
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+      }
+
+      /* ---- 顶部控件防溢出裁切（320px 下 main 分支 chip 溢出 39px 被裁） ---- */
+      div[class*="wSkVaW_titleRow"],
+      div[class*="_titleRow"] {
+        flex-wrap: wrap !important;
+        row-gap: 6px !important;
+        overflow: visible !important;
+      }
+      button[class*="_7rgC5q_chip"],
+      button[class*="cubgiG_seat"],
+      div[class*="_7rgC5q_chipWrap"] {
+        max-width: min(120px, 30vw) !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+      }
+
+      /* git-graph 的分支 chip 外层是 position:absolute 浮层（_7rgC5q_anchor / _7rgC5q_anchorHero），
+         且通过内联样式写死 left（如 left: 271.484px），脱离 flex 流且不受父容器限宽约束，
+         在 320px 下溢出屏幕右侧被裁切（右边界 351 > 视口 320）。
+         内联样式优先级高于普通 CSS，必须用 !important 覆盖 left，改为按视口右边界锚定。 */
+      div[class*="_7rgC5q_anchor"] {
+        left: auto !important;
+        right: 8px !important;
+        max-width: calc(100vw - 16px) !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+      }
+      button[class*="_7rgC5q_chip"],
+      div[class*="_7rgC5q_chipWrap"] {
+        width: auto !important;
+        max-width: 100% !important;
+      }
+
+      /* ---- 点击目标扩到 44px（伪元素扩热区，视觉尺寸不变） ---- */
+      button[class*="cubgiG_seat"],
+      button[class*="_7rgC5q_chip"],
+      button[class*="pXSMma_workspace"],
+      button[class*="Sh0Q9G_trigger"],
+      button[class*="_7KE1Ra_trigger"],
+      button[class*="uV2eYG_add"],
+      button[class*="qDHVXG_iconButton"],
+      button[class*="qDHVXG_searchButton"],
+      button[class*="hHd-Xa_iconButton"],
+      button[class*="YDXeBa_iconButton"] {
+        position: relative !important;
+      }
+      button[class*="cubgiG_seat"]::after,
+      button[class*="_7rgC5q_chip"]::after,
+      button[class*="pXSMma_workspace"]::after,
+      button[class*="Sh0Q9G_trigger"]::after,
+      button[class*="_7KE1Ra_trigger"]::after,
+      button[class*="uV2eYG_add"]::after,
+      button[class*="qDHVXG_iconButton"]::after,
+      button[class*="qDHVXG_searchButton"]::after,
+      button[class*="hHd-Xa_iconButton"]::after,
+      button[class*="YDXeBa_iconButton"]::after {
+        content: "" !important;
+        position: absolute !important;
+        inset: -8px !important;
+        z-index: 1 !important;
+      }
+
+      /* ---- 侧边栏真正隐藏，消除键盘/读屏焦点陷阱 ----
+         此前侧边栏仅被 transform 移到屏幕外（visibility 仍为 visible），
+         内部 7 个按钮仍可被 Tab 聚焦。 */
+      div[class*="_sidebarCol"] {
+        visibility: hidden !important;
+        pointer-events: none !important;
+      }
+      body.dsh-drawer-open div[class*="_sidebarCol"] {
+        visibility: visible !important;
+        pointer-events: auto !important;
+      }
+
+      /* ---- 输入框 sticky 定位与遮挡修复 ----
+         现象：发送后输入框跳到 tabs(对话/轨迹/上下文/记忆) 下方，下方留出大片空白；
+               滚动时右下角出现一个小方块。
+         根因：
+           1) dsh-better-sidebar 插件注入的 div[data-dsh-panel-host] 是全屏 fixed 遮罩
+              （390x844，z-index 25），在移动端未被隐藏，压在 composerSeat(z-index 7) 之上；
+           2) 主题装饰层 span[data-dsh-glass-fade="bottom"] 是全宽 fixed 条（390x13，z-index 7），
+              常驻屏幕右下角，视觉上就是那个"小方块"。
+         修复：移动端隐藏 panel-host 遮罩与 glass 渐变装饰条，并锁定输入框 sticky 于底部。 */
+
+      /* 隐藏 better-sidebar 的全屏遮罩（避免覆盖输入框并拦截点击） */
+      div[data-dsh-panel-host],
+      div[data-dsh-better-sidebar] {
+        display: none !important;
+      }
+      /* 隐藏主题装饰性渐变条（右下角小方块） */
+      span[data-dsh-glass-fade] {
+        display: none !important;
+      }
+      /* 注意：以下两处改动均已实测失败并撤回，切勿重试——
+         (1) 把 viewArea 改为可收缩（flex:1 1 auto / min-height:0）：
+             sticky 失去正确滚动上下文，输入框被顶到整个对话历史最上方。
+         (2) 把 composerSeat 改为 absolute（仿源码 composer-overlay 分支）：
+             absolute 脱离文档流后随滚动内容移动，实测输入框跑到 y=-8972。
+         结论：保留源码的 sticky 机制，不做结构性改动。 */
+
       /* 输入框底部工具栏：弹性自适应，彻底杜绝权限选择器(Full access)与模型选择器重叠碰撞 */
       div[class*="uV2eYG_row"] {
         display: flex !important;
@@ -3630,8 +3808,16 @@ function injectMobileStyles() {
         position: fixed !important;
         left: 0 !important;
         top: 0 !important;
-        bottom: 0 !important;
+        bottom: auto !important;
+        /* 侧边栏底部溢出屏幕修复：
+           实测 390x844 下，侧边栏实际盒子为 T=12 B=882（高度 870 > 视口 844），底部溢出 38px。
+           根因是插件此前未声明 box-sizing，元素继承为 content-box，
+           于是 padding(10px+14px) 与 margin(12px) 被加在 height:100dvh 之外。
+           改为 border-box 并用 100dvh 直接约束高度，padding 即被包含在高度内。 */
+        box-sizing: border-box !important;
         height: 100dvh !important;
+        max-height: 100dvh !important;
+        margin: 0 !important;
         width: 290px !important;
         max-width: 82vw !important;
         z-index: 10000 !important;
@@ -4193,8 +4379,16 @@ function setupMobileExperience(rpcCall, ctx) {
       }
 
       // 点击会话项后平滑收起抽屉
+      // 注意：工作区「文件夹」与「会话」都是 role="treeitem"，但语义完全不同：
+      //   文件夹 → 带 aria-expanded，onClick 是 onToggle（展开/折叠）
+      //   会话   → 无 aria-expanded，onClick 是切换会话
+      // 此前不区分二者，导致点击文件夹（只是想展开）也会立刻收起抽屉。
       const sessionRow = e.target.closest('a, div[class*="sessionRow"], div[role="treeitem"]');
       if (sessionRow) {
+        // 文件夹：点击是为了展开/折叠，保持抽屉打开
+        if (sessionRow.hasAttribute('aria-expanded')) {
+          return;
+        }
         setTimeout(() => {
           if (document.body.classList.contains('dsh-drawer-open')) {
             document.body.classList.remove('dsh-drawer-open');
@@ -4205,6 +4399,34 @@ function setupMobileExperience(rpcCall, ctx) {
       document.body.classList.remove('dsh-drawer-open');
     }
   }, true);
+
+  // 3b. 抽屉关闭时，用 inert 彻底移除侧边栏内部控件的可聚焦性
+  //     CSS 的 visibility:hidden 不足以阻止 Tab 聚焦（实测仍可聚焦到屏幕外按钮），
+  //     inert 能同时阻断键盘焦点、指针事件与屏幕阅读器访问。
+  const syncSidebarInert = () => {
+    const sidebar = document.querySelector('div[class*="_sidebarCol"]');
+    if (!sidebar) return;
+    const open = document.body.classList.contains('dsh-drawer-open');
+    const wantInert = window.innerWidth <= 768 && !open;
+    if (wantInert) {
+      if (!sidebar.hasAttribute('inert')) sidebar.setAttribute('inert', '');
+    } else if (sidebar.hasAttribute('inert')) {
+      sidebar.removeAttribute('inert');
+    }
+  };
+  new MutationObserver(syncSidebarInert).observe(document.body, {
+    attributes: true, attributeFilter: ['class'],
+    childList: true, subtree: true,
+  });
+  window.addEventListener('resize', syncSidebarInert);
+  // 侧边栏由 React 异步挂载，首帧执行时可能尚未存在，需轮询重试若干次
+  let inertRetry = 0;
+  const inertTimer = setInterval(() => {
+    syncSidebarInert();
+    const sb = document.querySelector('div[class*="_sidebarCol"]');
+    if ((sb && sb.hasAttribute('inert')) || ++inertRetry > 40) clearInterval(inertTimer);
+  }, 250);
+  syncSidebarInert();
 
   // 4. 移动端抽屉长按（Long Press >= 380ms）呼出操作菜单，以及左右滑动手势
   let longPressTimer = null;
