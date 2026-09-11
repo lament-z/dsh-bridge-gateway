@@ -4,6 +4,67 @@ import { AuthManager } from '../lib/auth/manager.js'
 import { installBridgeRpc, BRIDGE_ENDPOINTS } from '../lib/bridge-rpc.js'
 import { BridgeService } from '../lib/index.js'
 
+// 0.1.5 适配：RPC 入口从 connection.rpc.handle 迁到 ctx.inject(['connection','webServer'])
+// + webServer.register 的 prefix 路由。此夹具按新入口捕获路由 handler，
+// call() 走完整 wire 路径（POST JSON {rpcId,type:'client-request',method,payload}），
+// 返回解包后的 result（与旧 connection.rpc.handle 直调的返回形状一致）。
+function makeRpcHarness() {
+  let routeHandler = null
+  const ctx = {
+    connection: {},
+    inject(_deps, fn) {
+      fn({
+        connection: {},
+        webServer: {
+          register: (route) => {
+            routeHandler = route.handler
+            return () => {}
+          },
+        },
+        effect: (f) => f(),
+      })
+    },
+  }
+  const call = async (endpoint, payload = {}) => {
+    assert.ok(routeHandler, 'RPC route was not registered')
+    const body = JSON.stringify({ rpcId: 'test-rpc-1', type: 'client-request', method: endpoint, payload })
+    const req = {
+      method: 'POST',
+      url: `/dsh-bridge/${endpoint}`,
+      headers: { 'content-type': 'application/json', host: 'localhost' },
+      [Symbol.asyncIterator]: async function* () {
+        yield Buffer.from(body)
+      },
+      destroy() {},
+    }
+    const chunks = []
+    const res = {
+      writeHead(code) {
+        this.statusCode = code
+      },
+      on() {},
+      off() {},
+      once() {},
+      write(chunk) {
+        chunks.push(chunk)
+        return true
+      },
+      end(chunk) {
+        if (chunk) chunks.push(chunk)
+        this.writableEnded = true
+      },
+    }
+    await routeHandler(req, res)
+    // 路由 handler 是 void 异步（不返回 Promise），等待响应写完再解析
+    for (let i = 0; i < 200 && !res.writableEnded; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 5))
+    }
+    const wire = JSON.parse(Buffer.concat(chunks).toString())
+    return wire.result
+  }
+  return { ctx, call }
+}
+
 test('P0-1: Custom Tunnel Authentication - prevents loopback bypass when forwarding', () => {
   const auth = new AuthManager({
     config: {
@@ -114,16 +175,7 @@ test('P0-4: RPC 服务端管理员权限校验与主动重新锁定', async () =
   })
   await auth.setAdminPassword('admin_pass')
 
-  let handlerFn = null
-  const mockCtx = {
-    connection: {
-      rpc: {
-        handle: (channel, fn) => {
-          handlerFn = fn
-        },
-      },
-    },
-  }
+  const { ctx: mockCtx, call: handlerFn } = makeRpcHarness()
 
   installBridgeRpc(mockCtx, {
     service: {
@@ -268,16 +320,7 @@ test('P0-8: Workspace RPC checkAdminAuth 权限校验与访客拦截', async () 
   })
   service.ctx = mockCtx
 
-  let rpcHandler
-  const mockDshCtx = {
-    connection: {
-      rpc: {
-        handle: (channel, fn) => {
-          rpcHandler = fn
-        },
-      },
-    },
-  }
+  const { ctx: mockDshCtx, call: rpcHandler } = makeRpcHarness()
 
   installBridgeRpc(mockDshCtx, {
     service,
