@@ -2,7 +2,10 @@
 
 本项目 `dsh-bridge-gateway` 是基于 [dsh-bridge](https://github.com/wenbin-wb/dsh-bridge) 的移植增强分支，在保留原版能力之外，重点新增「公网直连网关」。
 
-## [未发布]
+## [0.1.5] - 2026-09-12
+
+### 变更
+- 适配 DSH 0.1.5：RPC 通道从 `connection.rpc.handle` 迁到 webServer 直注册 + `connection.requestRejection` 鉴权（0.1.5 inject 守卫使旧入口不可用，wire 格式不变）。
 
 ### 修复（移动端深度适配批次，基于 390px/320px 真机实测坐标）
 - 顶栏「标准模式」与「对话管理」水平重叠（390px 下重叠 11px）：titleRow 允许换行，titleCluster/headerActions/headerUtilities 各自可收缩并限宽（45vw/50vw），内部按钮限宽省略号。
@@ -14,7 +17,7 @@
 - 输入框底部工具栏（权限选择器/模型选择器/添加命令/发送）弹性自适应互不重叠。
 - 侧边栏抽屉底部溢出屏幕 38px：`box-sizing: border-box` + `100dvh` 高度约束。
 
-## [0.1.4] - 待发布
+## [0.1.4] - 2026-08-30
 
 ### 修复
 - 修复「远程访问」面板在宿主连接未建立时无限卡在「加载中」的问题：为状态拉取增加兜底超时（15s），超时后释放 in-flight 锁并给出可用的「🔄 重试」按钮，避免面板永远无法自行恢复。
