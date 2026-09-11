@@ -1,47 +1,82 @@
 # dsh-bridge-gateway
 
-DeepSeek Harness 远程访问插件：以 [dsh-bridge](https://github.com/wenbin-wb/dsh-bridge) 为基础，额外加入 **「公网直连网关」**，让手机/外网设备能直接访问操作电脑上的 Harness。
+English | [简体中文](./README.zh.md)
 
-局域网、Cloudflare 隧道、自建隧道、IM 机器人等原有能力保持不变。
+Remote-access plugin for DeepSeek Harness (DSH). Built on top of [dsh-bridge](https://github.com/wenbin-wb/dsh-bridge), it adds a **public direct-connect gateway** so phones and other out-of-network devices can open and operate the Harness running on your computer — no tunnel required.
 
-## 一键安装
+LAN access, Cloudflare tunnels, custom tunnels, and the IM bots all keep working exactly as before. The plugin is fully inert until you enable the features you want.
 
-```bash
+## Features
+
+- **Public direct-connect gateway.** The computer listens on `0.0.0.0:<port>` with its own HTTPS self-signed certificate and a forced login gate, so outside devices connect straight to your machine. The link is terminated at the gateway and proxied to the DSH loopback, so plugin pages and RPC channels work unchanged.
+- **LAN access.** Scan a QR code from the remote-access panel on the same Wi-Fi and you are in.
+- **Public tunnels.** Cloudflare (temporary or fixed hostname) or a self-built tunnel, selectable per need alongside the direct gateway.
+- **Remote workspace.** Browse the host's directory tree and pick workspace conversations from the phone.
+- **Security.** Password gate + QR-based password-free token + admin unlock/lock for sensitive config + rate limiting against brute force. Client-claimed `isLocalhost` is never trusted.
+- **IM bots.** WeChat / QQ / Feishu / Telegram bots connect through their own gateway links — no public IP needed. Per-platform guides live in [docs/](./docs).
+- **Mobile-friendly web.** The remote web UI is adapted for phone screens (drawer navigation, workspace picker, on-screen keyboard handling).
+- **All configuration in the UI.** Every feature above is configured from DSH Web's remote-access panel; nothing is edited by hand.
+
+## Requirements
+
+- Node `^22.19.0 || >=24.0.0`.
+- DSH with a web profile (built and tested against `0.1.5-rc.2`; adapted for the 0.1.5 RPC/webServer entry points).
+
+## Install
+
+```sh
+# Preferred: install straight from GitHub (no npm involved)
+dsh plugin --profile web add github:lament-z/dsh-bridge-gateway
+
+# Alternative: from npm
 dsh plugin --profile web add dsh-bridge-gateway
+
+# From a local clone / working copy
+dsh plugin --profile web add link:<this directory>
 ```
 
-> 源码安装：`git clone https://github.com/lament-z/dsh-bridge-gateway && dsh plugin --profile web add ./dsh-bridge-gateway`
+Upgrade to the newest build: `dsh plugin --profile web add github:lament-z/dsh-bridge-gateway` again (or append `@latest` for the npm source). Then restart `dsh web`.
 
-升级到最新版：`dsh plugin --profile web add dsh-bridge-gateway@latest`
+Nothing changes on install: the gateway is off by default and the original LAN/tunnel/IM behavior is untouched.
 
-## 核心功能：公网直连网关
+## Usage
 
-不需要隧道，让电脑直接监听公网端口，外网直连访问。
+### Public direct-connect gateway (core feature)
 
-- **HTTPS 自签证书**：本机自动生成，公网传输加密。
-- **强制登录门禁**：外部访问必须输入你在「安全认证」里设置的密码，与局域网策略相互独立。
-- **全界面配置**：端口、随 DSH 自动启动等，都在「公网访问」设置页里配置。
+No tunnel needed — the computer exposes a port itself and outside devices connect directly.
 
-### 开启方式
+1. Install, then open DSH Web -> Settings -> **Public Access** tab.
+2. In the **Direct Gateway** card, set the port (default `7443`) and click save.
+3. Click **Enable Direct Gateway**.
+4. Map that port to this machine on your router / cloud server, then open `https://<public-IP-or-domain>:<port>` from outside.
 
-1. 安装后进入 DSH Web 设置 → 「公网访问」Tab。
-2. 在「直连网关」卡片设置端口（默认 `7443`），点「保存端口」。
-3. 点击「开启直连网关」。
-4. 在路由器/云服务器把该端口映射到本机，即可通过 `https://<公网IP或域名>:端口` 访问。
+First visit shows a certificate warning because the HTTPS certificate is self-signed — choose "always allow" to continue. External visitors must pass the login gate configured under **Security**; the gate policy is independent of your LAN settings.
 
-浏览器首次访问会提示证书不安全，勾选「始终允许」即可继续。
+### LAN access
 
-## 其他能力
+Open the remote-access panel in DSH Web and scan the QR code with the phone on the same Wi-Fi.
 
-- **局域网访问**：同一 Wi-Fi 扫码即可。
-- **公网隧道**：Cloudflare（临时/固定域名）或自建隧道二选一，与直连网关按需选用。
-- **远程工作区**：手机端网页目录树直接浏览并选择工作区对话。
-- **安全认证**：密码 + 扫码免密 Token + 管理后台防篡改 + 防暴力破解。
-- **IM 机器人**：微信 / QQ / 飞书 / Telegram 扫码直连，无需公网。
+### Public tunnel
 
-## 开发
+In the same panel choose Cloudflare (temporary or fixed hostname) or a self-built tunnel. See [docs/custom-tunnel.md](./docs/custom-tunnel.md) for the custom-tunnel protocol.
 
-```bash
+### Security configuration
+
+Settings -> Security: enable protection, set the password, manage the password-free token, and unlock/lock the admin surface. Unauthorized visitors are rejected before any page content is served.
+
+### IM bots
+
+WeChat / QQ / Feishu / Telegram guides: [docs/wechat-usage.md](./docs/wechat-usage.md), [docs/qq-usage.md](./docs/qq-usage.md), [docs/feishu-usage.md](./docs/feishu-usage.md), [docs/telegram-usage.md](./docs/telegram-usage.md).
+
+## Security notes
+
+- The direct gateway always enforces `public_only`-style gating: external visitors authenticate through the same AuthManager as LAN access, and loopback-only resources stay loopback-only.
+- RPC channels are registered through the host web server and pass request-rejection authentication, so forged or unauthenticated channel calls are dropped at the entry.
+- The self-signed certificate encrypts transport; it does not add identity. Anyone with the password can log in — keep the password strong and enable admin lock.
+
+## Development
+
+```sh
 git clone https://github.com/lament-z/dsh-bridge-gateway
 cd dsh-bridge-gateway
 npm install
@@ -50,10 +85,10 @@ npm test
 dsh plugin --profile web add .
 ```
 
-## 发布说明
+## Release notes
 
-打 `v*` 标签推送到 GitHub 即自动 `npm publish`（GitHub Actions，需仓库配置 `NPM_TOKEN` secret）。
+Pushing a `v*` tag to GitHub triggers automatic `npm publish` (GitHub Actions; the repository needs an `NPM_TOKEN` secret).
 
-## 开源协议
+## License
 
 [MIT](./LICENSE)
