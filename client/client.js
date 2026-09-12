@@ -3830,42 +3830,65 @@ function injectMobileStyles() {
       }
 
       /* ---- \u5BF9\u8BDD/\u8F68\u8FF9/\u4E0A\u4E0B\u6587 \u6807\u7B7E\u6298\u53E0\u8FDB\u6807\u9898\u884C\uFF08\u540C\u4E00\u884C\uFF09 ----
-         \u539F\u672C tabs \u72EC\u5360\u4E00\u884C\uFF0825px + \u95F4\u8DDD\uFF09\uFF0C\u79FB\u52A8\u7AEF\u4E2D\u95F4\u7A7A\u95F4\u592A\u5C0F\u3002
-         \u6539\u6CD5\uFF1Aheader \u53D8\u5355\u884C flex \u2014\u2014 titleRow \u6536\u7F29\uFF08\u5185\u5BB9\u8D85\u957F\u622A\u65AD\uFF0C\u4E0D\u518D\u6362\u884C\uFF09\uFF0C
-         tabs \u4F5C\u4E3A\u540C\u4E00\u884C\u53F3\u4FA7\u7684\u7D27\u51D1\u80F6\u56CA\uFF08\u8D85\u5BBD\u5185\u90E8\u6A2A\u5411\u6EDA\u52A8\uFF09\u3002 */
-      header[class*="wSkVaW_header"] {
-        display: flex !important;
-        flex-wrap: nowrap !important;
-        align-items: center !important;
-        gap: 4px !important;
-      }
+         \u539F\u751F tablist \u6574\u884C\u9690\u85CF\uFF1B\u7531 setupMobileExperience \u6CE8\u5165\u4E00\u4E2A\u539F\u751F\u6837\u5F0F\u7684
+         \u300C\u5BF9\u8BDD\u300D\u6309\u94AE\uFF08\u63D2\u5728\u6807\u51C6\u6A21\u5F0F\u4E0E\u8BBF\u8FBE\u56FE\u6807\u4E4B\u95F4\uFF09\uFF0C\u70B9\u51FB\u5F39\u4E0B\u62C9\u5207\u6362\u4E09\u4E2A\u89C6\u56FE\u3002
+         \u6309\u94AE\u6587\u6848\u4E0E\u9009\u9879\u6587\u6848\u90FD\u4ECE\u539F\u751F tab \u52A8\u6001\u8BFB\u53D6\uFF0C\u8BED\u8A00\u65E0\u5173\u3002 */
       div[class*="wSkVaW_tabs"] {
-        position: static !important;
-        flex: 0 0 auto !important;
-        width: auto !important;
-        max-width: 46vw !important;
-        height: 28px !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        gap: 1px !important;
-        padding: 2px !important;
-        border-radius: 999px !important;
-        background: var(--dsw-alias-tooltip-bg, #43454a) !important;
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3) !important;
-        overflow-x: auto !important;
-        overflow-y: hidden !important;
-        scrollbar-width: none !important;
-      }
-      div[class*="wSkVaW_tabs"]::-webkit-scrollbar {
         display: none !important;
       }
-      div[class*="wSkVaW_tabs"] [role="tab"] {
-        height: 22px !important;
-        padding: 0 6px !important;
+      .dsh-mobile-tab-btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 5px !important;
+        position: relative !important;
+        height: 28px !important;
+        min-height: 28px !important;
+        padding: 0 10px !important;
         border-radius: 999px !important;
-        font-size: 10.5px !important;
+        background: var(--dsw-alias-bg-layer-2, rgba(127, 127, 127, 0.12)) !important;
+        color: var(--dsw-alias-label-primary, inherit) !important;
+        font-size: 12.5px !important;
+        line-height: 28px !important;
         white-space: nowrap !important;
+        cursor: pointer !important;
+      }
+      .dsh-mobile-tab-btn svg {
         flex: 0 0 auto !important;
+      }
+      .dsh-mobile-tab-dropdown {
+        position: absolute !important;
+        top: calc(100% + 6px) !important;
+        left: 0 !important;
+        min-width: 132px !important;
+        z-index: 60 !important;
+        padding: 4px !important;
+        border-radius: 12px !important;
+        background: var(--dsw-alias-bg-layer-2, #2c2c2e) !important;
+        border: 1px solid var(--dsw-alias-border-l2, transparent) !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+      }
+      .dsh-mobile-tab-dropdown .dsh-mobile-tab-option {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 8px !important;
+        width: 100% !important;
+        padding: 7px 10px !important;
+        border: 0 !important;
+        border-radius: 8px !important;
+        background: transparent !important;
+        color: var(--dsw-alias-label-primary, inherit) !important;
+        font-size: 13px !important;
+        line-height: 18px !important;
+        cursor: pointer !important;
+        text-align: left !important;
+      }
+      .dsh-mobile-tab-dropdown .dsh-mobile-tab-option:hover {
+        background: var(--dsw-alias-interactive-bg-hover, rgba(127, 127, 127, 0.15)) !important;
+      }
+      .dsh-mobile-tab-dropdown .dsh-mobile-tab-option[data-active='true'] {
+        color: var(--dsw-alias-brand-text, var(--dsw-alias-label-primary, inherit)) !important;
+        font-weight: 600 !important;
       }
 
       /* ---- \u9876\u680F\u300C\u6807\u51C6\u6A21\u5F0F\u300D\u4E0E\u300C\u5BF9\u8BDD\u7BA1\u7406\u300D\u91CD\u53E0\u4FEE\u590D ----
@@ -4792,6 +4815,125 @@ function setupMobileExperience(rpcCall, ctx) {
   const panelObserver = new MutationObserver(ensurePanelCloseButton);
   panelObserver.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
   window.addEventListener("resize", ensurePanelCloseButton);
+  const mobileTabState = { btn: null, dropdown: null };
+  const nativeTabs = () => [...document.querySelectorAll('[role="tablist"] [role="tab"]')];
+  const closeTabDropdown = () => {
+    if (mobileTabState.dropdown) {
+      mobileTabState.dropdown.remove();
+      mobileTabState.dropdown = null;
+    }
+  };
+  const renderTabDropdown = () => {
+    closeTabDropdown();
+    if (!mobileTabState.btn) return;
+    const dropdown = document.createElement("div");
+    dropdown.className = "dsh-mobile-tab-dropdown";
+    const tabs = nativeTabs();
+    tabs.forEach((tabEl) => {
+      const isActive = tabEl.getAttribute("aria-selected") === "true";
+      const option = document.createElement("button");
+      option.type = "button";
+      option.className = "dsh-mobile-tab-option";
+      option.setAttribute("data-active", isActive ? "true" : "false");
+      const name2 = document.createElement("span");
+      name2.textContent = tabEl.textContent.replace(/\s+/g, " ").trim();
+      option.appendChild(name2);
+      if (isActive) {
+        const check = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        check.setAttribute("width", "14");
+        check.setAttribute("height", "14");
+        check.setAttribute("viewBox", "0 0 24 24");
+        check.setAttribute("fill", "none");
+        check.setAttribute("stroke", "currentColor");
+        check.setAttribute("stroke-width", "2.5");
+        check.setAttribute("stroke-linecap", "round");
+        check.setAttribute("stroke-linejoin", "round");
+        check.innerHTML = '<polyline points="20 6 9 17 4 12"></polyline>';
+        option.appendChild(check);
+      }
+      option.onclick = (e) => {
+        e.stopPropagation();
+        tabEl.click();
+        closeTabDropdown();
+        syncTabButtonLabel();
+      };
+      dropdown.appendChild(option);
+    });
+    mobileTabState.btn.appendChild(dropdown);
+    mobileTabState.dropdown = dropdown;
+  };
+  const syncTabButtonLabel = () => {
+    if (!mobileTabState.btn || !mobileTabState.btn.isConnected) return;
+    const active = nativeTabs().find((t) => t.getAttribute("aria-selected") === "true");
+    const labelEl = mobileTabState.btn.querySelector(".dsh-mobile-tab-btn-label");
+    if (!labelEl || !active) return;
+    const name2 = active.textContent.replace(/\s+/g, " ").trim();
+    if (labelEl.textContent !== name2) labelEl.textContent = name2;
+  };
+  const ensureTabButton = () => {
+    if (typeof window === "undefined" || window.innerWidth > 768) return;
+    const titleRow = document.querySelector('div[class*="wSkVaW_titleRow"]');
+    const cluster = titleRow ? titleRow.querySelector('div[class*="wSkVaW_titleCluster"]') : null;
+    if (!titleRow || !cluster) {
+      closeTabDropdown();
+      if (mobileTabState.btn) {
+        mobileTabState.btn.remove();
+        mobileTabState.btn = null;
+      }
+      return;
+    }
+    if (mobileTabState.btn && mobileTabState.btn.isConnected && titleRow.contains(mobileTabState.btn)) {
+      syncTabButtonLabel();
+      return;
+    }
+    document.querySelectorAll(".dsh-mobile-tab-btn").forEach((el) => el.remove());
+    const tabBtn = document.createElement("button");
+    tabBtn.type = "button";
+    const pillBtn = titleRow.querySelector('div[class*="wSkVaW_titleCluster"] button');
+    const utilBtn = titleRow.querySelector('div[class*="wSkVaW_headerUtilities"] button');
+    const mimic = pillBtn && pillBtn.className || utilBtn && utilBtn.className || "";
+    tabBtn.className = (mimic ? mimic + " " : "") + "dsh-mobile-tab-btn";
+    tabBtn.innerHTML = `<span class="dsh-mobile-tab-btn-label">\u5BF9\u8BDD</span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
+    tabBtn.onclick = (e) => {
+      e.stopPropagation();
+      if (mobileTabState.dropdown) closeTabDropdown();
+      else renderTabDropdown();
+    };
+    titleRow.insertBefore(tabBtn, cluster.nextSibling);
+    mobileTabState.btn = tabBtn;
+    syncTabButtonLabel();
+  };
+  const cleanReasoningButtons = () => {
+    if (typeof window === "undefined" || window.innerWidth > 768) return;
+    document.querySelectorAll('div[class*="uV2eYG_trailing"] span > button:not([class])').forEach((btn) => {
+      if (btn.dataset.dshTextCleaned === "1") return;
+      [...btn.childNodes].forEach((node) => {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          if (node.tagName.toLowerCase() === "svg" || typeof node.querySelector === "function" && node.querySelector("svg")) return;
+        }
+        node.remove();
+      });
+      btn.dataset.dshTextCleaned = "1";
+    });
+  };
+  const titleExtrasObserver = new MutationObserver(() => {
+    ensureTabButton();
+    cleanReasoningButtons();
+  });
+  titleExtrasObserver.observe(document.body, { childList: true, subtree: true });
+  window.addEventListener("resize", () => {
+    if (window.innerWidth > 768) closeTabDropdown();
+  });
+  document.addEventListener(
+    "click",
+    (e) => {
+      if (!mobileTabState.dropdown) return;
+      if (!mobileTabState.dropdown.contains(e.target) && !e.target.closest(".dsh-mobile-tab-btn")) closeTabDropdown();
+    },
+    true
+  );
+  ensureTabButton();
+  cleanReasoningButtons();
   document.addEventListener("click", (e) => {
     if (typeof window === "undefined" || window.innerWidth > 768) return;
     const trigger = e.target.closest('button[aria-label*="\u9762\u677F"], button[aria-label*="\u5DE5\u4F5C\u533A"], div[class*="toggleCluster"] button, button[class*="subagent"], div[class*="headerActions"] button, div[class*="titleRow"] button');

@@ -3427,42 +3427,65 @@ function injectMobileStyles() {
       }
 
       /* ---- 对话/轨迹/上下文 标签折叠进标题行（同一行） ----
-         原本 tabs 独占一行（25px + 间距），移动端中间空间太小。
-         改法：header 变单行 flex —— titleRow 收缩（内容超长截断，不再换行），
-         tabs 作为同一行右侧的紧凑胶囊（超宽内部横向滚动）。 */
-      header[class*="wSkVaW_header"] {
-        display: flex !important;
-        flex-wrap: nowrap !important;
-        align-items: center !important;
-        gap: 4px !important;
-      }
+         原生 tablist 整行隐藏；由 setupMobileExperience 注入一个原生样式的
+         「对话」按钮（插在标准模式与访达图标之间），点击弹下拉切换三个视图。
+         按钮文案与选项文案都从原生 tab 动态读取，语言无关。 */
       div[class*="wSkVaW_tabs"] {
-        position: static !important;
-        flex: 0 0 auto !important;
-        width: auto !important;
-        max-width: 46vw !important;
-        height: 28px !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        gap: 1px !important;
-        padding: 2px !important;
-        border-radius: 999px !important;
-        background: var(--dsw-alias-tooltip-bg, #43454a) !important;
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3) !important;
-        overflow-x: auto !important;
-        overflow-y: hidden !important;
-        scrollbar-width: none !important;
-      }
-      div[class*="wSkVaW_tabs"]::-webkit-scrollbar {
         display: none !important;
       }
-      div[class*="wSkVaW_tabs"] [role="tab"] {
-        height: 22px !important;
-        padding: 0 6px !important;
+      .dsh-mobile-tab-btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 5px !important;
+        position: relative !important;
+        height: 28px !important;
+        min-height: 28px !important;
+        padding: 0 10px !important;
         border-radius: 999px !important;
-        font-size: 10.5px !important;
+        background: var(--dsw-alias-bg-layer-2, rgba(127, 127, 127, 0.12)) !important;
+        color: var(--dsw-alias-label-primary, inherit) !important;
+        font-size: 12.5px !important;
+        line-height: 28px !important;
         white-space: nowrap !important;
+        cursor: pointer !important;
+      }
+      .dsh-mobile-tab-btn svg {
         flex: 0 0 auto !important;
+      }
+      .dsh-mobile-tab-dropdown {
+        position: absolute !important;
+        top: calc(100% + 6px) !important;
+        left: 0 !important;
+        min-width: 132px !important;
+        z-index: 60 !important;
+        padding: 4px !important;
+        border-radius: 12px !important;
+        background: var(--dsw-alias-bg-layer-2, #2c2c2e) !important;
+        border: 1px solid var(--dsw-alias-border-l2, transparent) !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+      }
+      .dsh-mobile-tab-dropdown .dsh-mobile-tab-option {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 8px !important;
+        width: 100% !important;
+        padding: 7px 10px !important;
+        border: 0 !important;
+        border-radius: 8px !important;
+        background: transparent !important;
+        color: var(--dsw-alias-label-primary, inherit) !important;
+        font-size: 13px !important;
+        line-height: 18px !important;
+        cursor: pointer !important;
+        text-align: left !important;
+      }
+      .dsh-mobile-tab-dropdown .dsh-mobile-tab-option:hover {
+        background: var(--dsw-alias-interactive-bg-hover, rgba(127, 127, 127, 0.15)) !important;
+      }
+      .dsh-mobile-tab-dropdown .dsh-mobile-tab-option[data-active='true'] {
+        color: var(--dsw-alias-brand-text, var(--dsw-alias-label-primary, inherit)) !important;
+        font-weight: 600 !important;
       }
 
       /* ---- 顶栏「标准模式」与「对话管理」重叠修复 ----
@@ -4406,6 +4429,141 @@ function setupMobileExperience(rpcCall, ctx) {
   const panelObserver = new MutationObserver(ensurePanelCloseButton);
   panelObserver.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
   window.addEventListener('resize', ensurePanelCloseButton);
+
+  // 1.5 移动端标题行「对话」下拉：隐藏原生 tablist，在标准模式右边注入一个
+  //     原生样式的「对话 ▾」按钮，点开下拉选择 对话/轨迹/上下文 切换视图。
+  //     文案从原生 tab 动态读取（语言无关）；按钮类名复刻原生标题行按钮。
+  const mobileTabState = { btn: null, dropdown: null };
+
+  const nativeTabs = () => [...document.querySelectorAll('[role="tablist"] [role="tab"]')];
+
+  const closeTabDropdown = () => {
+    if (mobileTabState.dropdown) {
+      mobileTabState.dropdown.remove();
+      mobileTabState.dropdown = null;
+    }
+  };
+
+  const renderTabDropdown = () => {
+    closeTabDropdown();
+    if (!mobileTabState.btn) return;
+    const dropdown = document.createElement('div');
+    dropdown.className = 'dsh-mobile-tab-dropdown';
+    const tabs = nativeTabs();
+    tabs.forEach((tabEl) => {
+      const isActive = tabEl.getAttribute('aria-selected') === 'true';
+      const option = document.createElement('button');
+      option.type = 'button';
+      option.className = 'dsh-mobile-tab-option';
+      option.setAttribute('data-active', isActive ? 'true' : 'false');
+      const name = document.createElement('span');
+      name.textContent = tabEl.textContent.replace(/\s+/g, ' ').trim();
+      option.appendChild(name);
+      if (isActive) {
+        const check = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        check.setAttribute('width', '14');
+        check.setAttribute('height', '14');
+        check.setAttribute('viewBox', '0 0 24 24');
+        check.setAttribute('fill', 'none');
+        check.setAttribute('stroke', 'currentColor');
+        check.setAttribute('stroke-width', '2.5');
+        check.setAttribute('stroke-linecap', 'round');
+        check.setAttribute('stroke-linejoin', 'round');
+        check.innerHTML = '<polyline points="20 6 9 17 4 12"></polyline>';
+        option.appendChild(check);
+      }
+      option.onclick = (e) => {
+        e.stopPropagation();
+        tabEl.click();
+        closeTabDropdown();
+        syncTabButtonLabel();
+      };
+      dropdown.appendChild(option);
+    });
+    mobileTabState.btn.appendChild(dropdown);
+    mobileTabState.dropdown = dropdown;
+  };
+
+  const syncTabButtonLabel = () => {
+    if (!mobileTabState.btn || !mobileTabState.btn.isConnected) return;
+    const active = nativeTabs().find((t) => t.getAttribute('aria-selected') === 'true');
+    const labelEl = mobileTabState.btn.querySelector('.dsh-mobile-tab-btn-label');
+    if (!labelEl || !active) return;
+    // 只有文案真的变化才写入：textContent 无条件赋值会移除并重建文本节点，
+    // 触发 MutationObserver → 无限循环，页面卡死。
+    const name = active.textContent.replace(/\s+/g, ' ').trim();
+    if (labelEl.textContent !== name) labelEl.textContent = name;
+  };
+
+  const ensureTabButton = () => {
+    if (typeof window === 'undefined' || window.innerWidth > 768) return;
+    const titleRow = document.querySelector('div[class*="wSkVaW_titleRow"]');
+    const cluster = titleRow ? titleRow.querySelector('div[class*="wSkVaW_titleCluster"]') : null;
+    if (!titleRow || !cluster) {
+      closeTabDropdown();
+      if (mobileTabState.btn) {
+        mobileTabState.btn.remove();
+        mobileTabState.btn = null;
+      }
+      return;
+    }
+    if (mobileTabState.btn && mobileTabState.btn.isConnected && titleRow.contains(mobileTabState.btn)) {
+      syncTabButtonLabel();
+      return;
+    }
+    document.querySelectorAll('.dsh-mobile-tab-btn').forEach((el) => el.remove());
+    const tabBtn = document.createElement('button');
+    tabBtn.type = 'button';
+    // 观感对齐：优先复刻标准模式胶囊的类，其次访达图标按钮，最后自有样式兜底
+    const pillBtn = titleRow.querySelector('div[class*="wSkVaW_titleCluster"] button');
+    const utilBtn = titleRow.querySelector('div[class*="wSkVaW_headerUtilities"] button');
+    const mimic = (pillBtn && pillBtn.className) || (utilBtn && utilBtn.className) || '';
+    tabBtn.className = (mimic ? mimic + ' ' : '') + 'dsh-mobile-tab-btn';
+    tabBtn.innerHTML = `<span class="dsh-mobile-tab-btn-label">对话</span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
+    tabBtn.onclick = (e) => {
+      e.stopPropagation();
+      if (mobileTabState.dropdown) closeTabDropdown();
+      else renderTabDropdown();
+    };
+    titleRow.insertBefore(tabBtn, cluster.nextSibling);
+    mobileTabState.btn = tabBtn;
+    syncTabButtonLabel();
+  };
+
+  // workbuddy-connect 的 Reasoning 按钮：移动端删掉文字节点只留图标（svg 保留），
+  // 插件重渲染后新按钮由观察器重新清理
+  const cleanReasoningButtons = () => {
+    if (typeof window === 'undefined' || window.innerWidth > 768) return;
+    document.querySelectorAll('div[class*="uV2eYG_trailing"] span > button:not([class])').forEach((btn) => {
+      if (btn.dataset.dshTextCleaned === '1') return;
+      [...btn.childNodes].forEach((node) => {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          if (node.tagName.toLowerCase() === 'svg' || (typeof node.querySelector === 'function' && node.querySelector('svg'))) return;
+        }
+        node.remove();
+      });
+      btn.dataset.dshTextCleaned = '1';
+    });
+  };
+
+  const titleExtrasObserver = new MutationObserver(() => {
+    ensureTabButton();
+    cleanReasoningButtons();
+  });
+  titleExtrasObserver.observe(document.body, { childList: true, subtree: true });
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 768) closeTabDropdown();
+  });
+  document.addEventListener(
+    'click',
+    (e) => {
+      if (!mobileTabState.dropdown) return;
+      if (!mobileTabState.dropdown.contains(e.target) && !e.target.closest('.dsh-mobile-tab-btn')) closeTabDropdown();
+    },
+    true,
+  );
+  ensureTabButton();
+  cleanReasoningButtons();
 
   // 移动端点击面板/工作区触发按钮时，自动激活 dsh-workbench-open
   document.addEventListener('click', (e) => {
