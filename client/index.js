@@ -3426,40 +3426,41 @@ function injectMobileStyles() {
         display: none !important;
       }
 
-      /* ---- 对话/轨迹/上下文 标签行折叠进标题行 ----
+      /* ---- 对话/轨迹/上下文 标签折叠进标题行（同一行） ----
          原本 tabs 独占一行（25px + 间距），移动端中间空间太小。
-         改为绝对定位的悬浮胶囊：钉在标题行下缘右侧，不再占据布局高度，
-         中间内容区净增约 33px；背景用原生 tooltip 灰与内容分层。 */
+         改法：header 变单行 flex —— titleRow 收缩（内容超长截断，不再换行），
+         tabs 作为同一行右侧的紧凑胶囊（超宽内部横向滚动）。 */
       header[class*="wSkVaW_header"] {
-        position: relative !important;
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        gap: 4px !important;
       }
       div[class*="wSkVaW_tabs"] {
-        position: absolute !important;
-        top: 38px !important;
-        right: 6px !important;
-        left: auto !important;
+        position: static !important;
+        flex: 0 0 auto !important;
         width: auto !important;
-        max-width: 62vw !important;
-        height: 30px !important;
+        max-width: 46vw !important;
+        height: 28px !important;
         display: inline-flex !important;
         align-items: center !important;
-        gap: 2px !important;
+        gap: 1px !important;
         padding: 2px !important;
         border-radius: 999px !important;
         background: var(--dsw-alias-tooltip-bg, #43454a) !important;
         box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3) !important;
         overflow-x: auto !important;
+        overflow-y: hidden !important;
         scrollbar-width: none !important;
-        z-index: 30 !important;
       }
       div[class*="wSkVaW_tabs"]::-webkit-scrollbar {
         display: none !important;
       }
       div[class*="wSkVaW_tabs"] [role="tab"] {
-        height: 24px !important;
-        padding: 0 10px !important;
+        height: 22px !important;
+        padding: 0 6px !important;
         border-radius: 999px !important;
-        font-size: 12px !important;
+        font-size: 10.5px !important;
         white-space: nowrap !important;
         flex: 0 0 auto !important;
       }
@@ -3467,21 +3468,32 @@ function injectMobileStyles() {
       /* ---- 顶栏「标准模式」与「对话管理」重叠修复 ----
          实测（390px）：标准模式(在 titleCluster 内) 右边界 102，
          对话管理(在 headerUtilities 内) 左边界 91 → 水平重叠 11px。
-         根因：titleCluster 只有 46px 宽（[33,79]），但内部的「标准模式」胶囊固定 69px，
-         撑破父容器后与右侧 headerUtilities 相撞。
-         修复：允许 titleRow 换行 + 让两侧各自可收缩并限宽。 */
+         修复：titleRow 强制单行（tabs 已并入同一行），超宽时 titleCluster
+         内部截断而不是换行——换行会让 header 变两行、挤压中间空间。 */
       div[class*="wSkVaW_titleRow"],
       div[class*="_titleRow"] {
-        flex-wrap: wrap !important;
-        row-gap: 6px !important;
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
         column-gap: 8px !important;
-        overflow: visible !important;
+        overflow: hidden !important;
       }
       div[class*="wSkVaW_titleCluster"],
       div[class*="_titleCluster"] {
-        flex: 1 1 auto !important;
+        flex: 0 1 auto !important;
         min-width: 0 !important;
         max-width: 100% !important;
+        overflow: hidden !important;
+      }
+      /* 原生 corner 按钮带 margin-right:-16px 悬挂设计，在单行 + overflow:hidden 下
+         会被裁掉 16px——归零后整行刚好放下：cluster69 + utilities123 + corner28 */
+      div[class*="wSkVaW_headerCorner"] {
+        margin-right: 0 !important;
+        margin-left: 0 !important;
+        flex: 0 0 auto !important;
       }
       div[class*="wSkVaW_headerActions"],
       div[class*="_headerActions"] {
@@ -3652,13 +3664,9 @@ function injectMobileStyles() {
         box-sizing: border-box !important;
       }
 
-      /* ---- 顶部控件防溢出裁切（320px 下 main 分支 chip 溢出 39px 被裁） ---- */
-      div[class*="wSkVaW_titleRow"],
-      div[class*="_titleRow"] {
-        flex-wrap: wrap !important;
-        row-gap: 6px !important;
-        overflow: visible !important;
-      }
+      /* ---- 顶部控件防溢出裁切（320px 下 main 分支 chip 溢出 39px 被裁） ----
+         注意：titleRow 的 wrap 规则已删除——tabs 折叠进标题行后必须单行，
+         这里的 wrap 会在级联中赢过前面的 nowrap，导致标题行重新折成两行。 */
       button[class*="_7rgC5q_chip"],
       button[class*="cubgiG_seat"],
       div[class*="_7rgC5q_chipWrap"] {
@@ -3808,6 +3816,15 @@ function injectMobileStyles() {
         justify-content: center !important;
         gap: 0 !important;
         font-size: 0 !important;
+        /* 悬停锁定：宽度与位移都不变，杜绝工具栏/对话框抖动 */
+        transition: none !important;
+        border-radius: 8px !important;
+      }
+      div[class*="uV2eYG_trailing"] span > button:not([class]):hover {
+        width: 26px !important;
+        min-width: 26px !important;
+        padding: 0 2px !important;
+        background: var(--dsw-alias-interactive-bg-hover, rgba(127, 127, 127, 0.15)) !important;
       }
       div[class*="uV2eYG_trailing"] span > button:not([class]) svg {
         flex: 0 0 auto !important;

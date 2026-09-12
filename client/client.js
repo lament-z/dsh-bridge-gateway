@@ -3829,40 +3829,41 @@ function injectMobileStyles() {
         display: none !important;
       }
 
-      /* ---- \u5BF9\u8BDD/\u8F68\u8FF9/\u4E0A\u4E0B\u6587 \u6807\u7B7E\u884C\u6298\u53E0\u8FDB\u6807\u9898\u884C ----
+      /* ---- \u5BF9\u8BDD/\u8F68\u8FF9/\u4E0A\u4E0B\u6587 \u6807\u7B7E\u6298\u53E0\u8FDB\u6807\u9898\u884C\uFF08\u540C\u4E00\u884C\uFF09 ----
          \u539F\u672C tabs \u72EC\u5360\u4E00\u884C\uFF0825px + \u95F4\u8DDD\uFF09\uFF0C\u79FB\u52A8\u7AEF\u4E2D\u95F4\u7A7A\u95F4\u592A\u5C0F\u3002
-         \u6539\u4E3A\u7EDD\u5BF9\u5B9A\u4F4D\u7684\u60AC\u6D6E\u80F6\u56CA\uFF1A\u9489\u5728\u6807\u9898\u884C\u4E0B\u7F18\u53F3\u4FA7\uFF0C\u4E0D\u518D\u5360\u636E\u5E03\u5C40\u9AD8\u5EA6\uFF0C
-         \u4E2D\u95F4\u5185\u5BB9\u533A\u51C0\u589E\u7EA6 33px\uFF1B\u80CC\u666F\u7528\u539F\u751F tooltip \u7070\u4E0E\u5185\u5BB9\u5206\u5C42\u3002 */
+         \u6539\u6CD5\uFF1Aheader \u53D8\u5355\u884C flex \u2014\u2014 titleRow \u6536\u7F29\uFF08\u5185\u5BB9\u8D85\u957F\u622A\u65AD\uFF0C\u4E0D\u518D\u6362\u884C\uFF09\uFF0C
+         tabs \u4F5C\u4E3A\u540C\u4E00\u884C\u53F3\u4FA7\u7684\u7D27\u51D1\u80F6\u56CA\uFF08\u8D85\u5BBD\u5185\u90E8\u6A2A\u5411\u6EDA\u52A8\uFF09\u3002 */
       header[class*="wSkVaW_header"] {
-        position: relative !important;
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        gap: 4px !important;
       }
       div[class*="wSkVaW_tabs"] {
-        position: absolute !important;
-        top: 38px !important;
-        right: 6px !important;
-        left: auto !important;
+        position: static !important;
+        flex: 0 0 auto !important;
         width: auto !important;
-        max-width: 62vw !important;
-        height: 30px !important;
+        max-width: 46vw !important;
+        height: 28px !important;
         display: inline-flex !important;
         align-items: center !important;
-        gap: 2px !important;
+        gap: 1px !important;
         padding: 2px !important;
         border-radius: 999px !important;
         background: var(--dsw-alias-tooltip-bg, #43454a) !important;
         box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3) !important;
         overflow-x: auto !important;
+        overflow-y: hidden !important;
         scrollbar-width: none !important;
-        z-index: 30 !important;
       }
       div[class*="wSkVaW_tabs"]::-webkit-scrollbar {
         display: none !important;
       }
       div[class*="wSkVaW_tabs"] [role="tab"] {
-        height: 24px !important;
-        padding: 0 10px !important;
+        height: 22px !important;
+        padding: 0 6px !important;
         border-radius: 999px !important;
-        font-size: 12px !important;
+        font-size: 10.5px !important;
         white-space: nowrap !important;
         flex: 0 0 auto !important;
       }
@@ -3870,21 +3871,32 @@ function injectMobileStyles() {
       /* ---- \u9876\u680F\u300C\u6807\u51C6\u6A21\u5F0F\u300D\u4E0E\u300C\u5BF9\u8BDD\u7BA1\u7406\u300D\u91CD\u53E0\u4FEE\u590D ----
          \u5B9E\u6D4B\uFF08390px\uFF09\uFF1A\u6807\u51C6\u6A21\u5F0F(\u5728 titleCluster \u5185) \u53F3\u8FB9\u754C 102\uFF0C
          \u5BF9\u8BDD\u7BA1\u7406(\u5728 headerUtilities \u5185) \u5DE6\u8FB9\u754C 91 \u2192 \u6C34\u5E73\u91CD\u53E0 11px\u3002
-         \u6839\u56E0\uFF1AtitleCluster \u53EA\u6709 46px \u5BBD\uFF08[33,79]\uFF09\uFF0C\u4F46\u5185\u90E8\u7684\u300C\u6807\u51C6\u6A21\u5F0F\u300D\u80F6\u56CA\u56FA\u5B9A 69px\uFF0C
-         \u6491\u7834\u7236\u5BB9\u5668\u540E\u4E0E\u53F3\u4FA7 headerUtilities \u76F8\u649E\u3002
-         \u4FEE\u590D\uFF1A\u5141\u8BB8 titleRow \u6362\u884C + \u8BA9\u4E24\u4FA7\u5404\u81EA\u53EF\u6536\u7F29\u5E76\u9650\u5BBD\u3002 */
+         \u4FEE\u590D\uFF1AtitleRow \u5F3A\u5236\u5355\u884C\uFF08tabs \u5DF2\u5E76\u5165\u540C\u4E00\u884C\uFF09\uFF0C\u8D85\u5BBD\u65F6 titleCluster
+         \u5185\u90E8\u622A\u65AD\u800C\u4E0D\u662F\u6362\u884C\u2014\u2014\u6362\u884C\u4F1A\u8BA9 header \u53D8\u4E24\u884C\u3001\u6324\u538B\u4E2D\u95F4\u7A7A\u95F4\u3002 */
       div[class*="wSkVaW_titleRow"],
       div[class*="_titleRow"] {
-        flex-wrap: wrap !important;
-        row-gap: 6px !important;
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
         column-gap: 8px !important;
-        overflow: visible !important;
+        overflow: hidden !important;
       }
       div[class*="wSkVaW_titleCluster"],
       div[class*="_titleCluster"] {
-        flex: 1 1 auto !important;
+        flex: 0 1 auto !important;
         min-width: 0 !important;
         max-width: 100% !important;
+        overflow: hidden !important;
+      }
+      /* \u539F\u751F corner \u6309\u94AE\u5E26 margin-right:-16px \u60AC\u6302\u8BBE\u8BA1\uFF0C\u5728\u5355\u884C + overflow:hidden \u4E0B
+         \u4F1A\u88AB\u88C1\u6389 16px\u2014\u2014\u5F52\u96F6\u540E\u6574\u884C\u521A\u597D\u653E\u4E0B\uFF1Acluster69 + utilities123 + corner28 */
+      div[class*="wSkVaW_headerCorner"] {
+        margin-right: 0 !important;
+        margin-left: 0 !important;
+        flex: 0 0 auto !important;
       }
       div[class*="wSkVaW_headerActions"],
       div[class*="_headerActions"] {
@@ -4055,13 +4067,9 @@ function injectMobileStyles() {
         box-sizing: border-box !important;
       }
 
-      /* ---- \u9876\u90E8\u63A7\u4EF6\u9632\u6EA2\u51FA\u88C1\u5207\uFF08320px \u4E0B main \u5206\u652F chip \u6EA2\u51FA 39px \u88AB\u88C1\uFF09 ---- */
-      div[class*="wSkVaW_titleRow"],
-      div[class*="_titleRow"] {
-        flex-wrap: wrap !important;
-        row-gap: 6px !important;
-        overflow: visible !important;
-      }
+      /* ---- \u9876\u90E8\u63A7\u4EF6\u9632\u6EA2\u51FA\u88C1\u5207\uFF08320px \u4E0B main \u5206\u652F chip \u6EA2\u51FA 39px \u88AB\u88C1\uFF09 ----
+         \u6CE8\u610F\uFF1AtitleRow \u7684 wrap \u89C4\u5219\u5DF2\u5220\u9664\u2014\u2014tabs \u6298\u53E0\u8FDB\u6807\u9898\u884C\u540E\u5FC5\u987B\u5355\u884C\uFF0C
+         \u8FD9\u91CC\u7684 wrap \u4F1A\u5728\u7EA7\u8054\u4E2D\u8D62\u8FC7\u524D\u9762\u7684 nowrap\uFF0C\u5BFC\u81F4\u6807\u9898\u884C\u91CD\u65B0\u6298\u6210\u4E24\u884C\u3002 */
       button[class*="_7rgC5q_chip"],
       button[class*="cubgiG_seat"],
       div[class*="_7rgC5q_chipWrap"] {
@@ -4211,6 +4219,15 @@ function injectMobileStyles() {
         justify-content: center !important;
         gap: 0 !important;
         font-size: 0 !important;
+        /* \u60AC\u505C\u9501\u5B9A\uFF1A\u5BBD\u5EA6\u4E0E\u4F4D\u79FB\u90FD\u4E0D\u53D8\uFF0C\u675C\u7EDD\u5DE5\u5177\u680F/\u5BF9\u8BDD\u6846\u6296\u52A8 */
+        transition: none !important;
+        border-radius: 8px !important;
+      }
+      div[class*="uV2eYG_trailing"] span > button:not([class]):hover {
+        width: 26px !important;
+        min-width: 26px !important;
+        padding: 0 2px !important;
+        background: var(--dsw-alias-interactive-bg-hover, rgba(127, 127, 127, 0.15)) !important;
       }
       div[class*="uV2eYG_trailing"] span > button:not([class]) svg {
         flex: 0 0 auto !important;
