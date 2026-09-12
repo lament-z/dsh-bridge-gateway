@@ -2,6 +2,15 @@
 
 本项目 `dsh-bridge-gateway` 是基于 [dsh-bridge](https://github.com/wenbin-wb/dsh-bridge) 的移植增强分支，在保留原版能力之外，重点新增「公网直连网关」。
 
+## [0.1.6] - 2026-09-12
+
+### 修复（移动端第二批：布局密度与面板）
+- 输入框贴底：收掉 scrollBody 的 16px 底部衬距，只保留 6px 呼吸位 + 安全区，底部统计药丸完整可见。
+- workbuddy-connect 的 Reasoning levels 按钮收成纯图标（26px，结构锚点不依赖语言），不再把左侧按钮挤到上一行；工具栏恢复单行。
+- 对话/轨迹/上下文标签行折叠为标题行下缘的悬浮胶囊（原生 tooltip 灰配色），不再独占一行，中间内容区净增约 33px。
+- 底部面板（better-sidebar panel-host）不再被一刀切隐藏：展开时以底部面板形态显示内容（zsh 会话等），收起时隐藏；收掉展开时原生预留的 220px 空白。展开信号用语言无关的 aria-pressed 锚点（body.dsh-workbench-open 在收起后残留，不可用）。
+- 抽屉化侧边栏顶部对齐到标签条之下（top: 38px），不再与最上面的栏重叠。
+
 ## [0.1.5] - 2026-09-12
 
 ### 变更

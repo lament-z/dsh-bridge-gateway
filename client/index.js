@@ -3426,6 +3426,44 @@ function injectMobileStyles() {
         display: none !important;
       }
 
+      /* ---- 对话/轨迹/上下文 标签行折叠进标题行 ----
+         原本 tabs 独占一行（25px + 间距），移动端中间空间太小。
+         改为绝对定位的悬浮胶囊：钉在标题行下缘右侧，不再占据布局高度，
+         中间内容区净增约 33px；背景用原生 tooltip 灰与内容分层。 */
+      header[class*="wSkVaW_header"] {
+        position: relative !important;
+      }
+      div[class*="wSkVaW_tabs"] {
+        position: absolute !important;
+        top: 38px !important;
+        right: 6px !important;
+        left: auto !important;
+        width: auto !important;
+        max-width: 62vw !important;
+        height: 30px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 2px !important;
+        padding: 2px !important;
+        border-radius: 999px !important;
+        background: var(--dsw-alias-tooltip-bg, #43454a) !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3) !important;
+        overflow-x: auto !important;
+        scrollbar-width: none !important;
+        z-index: 30 !important;
+      }
+      div[class*="wSkVaW_tabs"]::-webkit-scrollbar {
+        display: none !important;
+      }
+      div[class*="wSkVaW_tabs"] [role="tab"] {
+        height: 24px !important;
+        padding: 0 10px !important;
+        border-radius: 999px !important;
+        font-size: 12px !important;
+        white-space: nowrap !important;
+        flex: 0 0 auto !important;
+      }
+
       /* ---- 顶栏「标准模式」与「对话管理」重叠修复 ----
          实测（390px）：标准模式(在 titleCluster 内) 右边界 102，
          对话管理(在 headerUtilities 内) 左边界 91 → 水平重叠 11px。
@@ -3698,10 +3736,33 @@ function injectMobileStyles() {
               常驻屏幕右下角，视觉上就是那个"小方块"。
          修复：移动端隐藏 panel-host 遮罩与 glass 渐变装饰条，并锁定输入框 sticky 于底部。 */
 
-      /* 隐藏 better-sidebar 的全屏遮罩（避免覆盖输入框并拦截点击） */
+      /* better-sidebar 面板宿主：默认隐藏（旧的全屏 fixed 遮罩会盖住输入框并拦截点击）；
+         底部面板展开时（开关 aria-pressed=true / body.dsh-workbench-open）改为
+         底部面板形态显示——不遮输入框、不顶状态栏，内容（zsh 会话等）可见。
+         aria-pressed 与 data-active 都是语言无关锚点，中英文环境通用。 */
       div[data-dsh-panel-host],
       div[data-dsh-better-sidebar] {
         display: none !important;
+      }
+      body:has(button[data-dsh-bottom-toggle][aria-pressed='true']) div[data-dsh-panel-host],
+      body:has(button[data-dsh-bottom-toggle][aria-pressed='true']) div[data-dsh-better-sidebar] {
+        display: block !important;
+        top: 42px !important;
+        bottom: calc(var(--dsh-composer-height, 171px) + 34px) !important;
+        left: 8px !important;
+        right: 8px !important;
+        width: auto !important;
+        height: auto !important;
+        z-index: 20 !important;
+        border-radius: 12px !important;
+        overflow: auto !important;
+        background: var(--dsw-alias-bg-layer-2, #2c2c2e) !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+      }
+      /* 底部面板展开时原生给中栏预留的 220px 底部空白收掉，输入框回到屏幕底。
+         注意 body.dsh-workbench-open 在收起后仍残留，不能当展开信号。 */
+      body:has(button[data-dsh-bottom-toggle][aria-pressed='true']) div[class*="pI_x6G_centerCol"] {
+        margin-bottom: 0 !important;
       }
       /* 隐藏主题装饰性渐变条（右下角小方块） */
       span[data-dsh-glass-fade] {
@@ -3719,10 +3780,37 @@ function injectMobileStyles() {
         display: flex !important;
         align-items: center !important;
         justify-content: space-between !important;
+        flex-wrap: nowrap !important;
         gap: 6px !important;
         width: 100% !important;
         padding: 2px 2px 4px !important;
         box-sizing: border-box !important;
+      }
+
+      /* 输入框贴底：scrollBody 的 16px 底部衬距是空隙来源，收掉只留安全区；
+         再垫 6px 让统计药丸完整可见 */
+      div[class*="wSkVaW_scrollBody"] {
+        padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px)) !important;
+      }
+      div[class*="wSkVaW_composerStack"] {
+        padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+      }
+
+      /* workbuddy-connect 的 Reasoning levels 按钮（uV2eYG_trailing 里唯一的无 class
+         按钮，结构锚点 span>button）：移动端收成纯图标，文字被裁掉，
+         不再把左侧按钮挤到上一行 */
+      div[class*="uV2eYG_trailing"] span > button:not([class]) {
+        flex: 0 0 26px !important;
+        width: 26px !important;
+        min-width: 26px !important;
+        padding: 0 2px !important;
+        overflow: hidden !important;
+        justify-content: center !important;
+        gap: 0 !important;
+        font-size: 0 !important;
+      }
+      div[class*="uV2eYG_trailing"] span > button:not([class]) svg {
+        flex: 0 0 auto !important;
       }
 
       div[class*="uV2eYG_tools"] {
@@ -3807,7 +3895,8 @@ function injectMobileStyles() {
       div[class*="_sidebarCol"] {
         position: fixed !important;
         left: 0 !important;
-        top: 0 !important;
+        /* 顶到顶部标签条(38px)之下，不再与最上面的栏重叠 */
+        top: 38px !important;
         bottom: auto !important;
         /* 侧边栏底部溢出屏幕修复：
            实测 390x844 下，侧边栏实际盒子为 T=12 B=882（高度 870 > 视口 844），底部溢出 38px。
@@ -3815,8 +3904,8 @@ function injectMobileStyles() {
            于是 padding(10px+14px) 与 margin(12px) 被加在 height:100dvh 之外。
            改为 border-box 并用 100dvh 直接约束高度，padding 即被包含在高度内。 */
         box-sizing: border-box !important;
-        height: 100dvh !important;
-        max-height: 100dvh !important;
+        height: calc(100dvh - 38px) !important;
+        max-height: calc(100dvh - 38px) !important;
         margin: 0 !important;
         width: 290px !important;
         max-width: 82vw !important;

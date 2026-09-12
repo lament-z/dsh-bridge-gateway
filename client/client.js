@@ -3829,6 +3829,44 @@ function injectMobileStyles() {
         display: none !important;
       }
 
+      /* ---- \u5BF9\u8BDD/\u8F68\u8FF9/\u4E0A\u4E0B\u6587 \u6807\u7B7E\u884C\u6298\u53E0\u8FDB\u6807\u9898\u884C ----
+         \u539F\u672C tabs \u72EC\u5360\u4E00\u884C\uFF0825px + \u95F4\u8DDD\uFF09\uFF0C\u79FB\u52A8\u7AEF\u4E2D\u95F4\u7A7A\u95F4\u592A\u5C0F\u3002
+         \u6539\u4E3A\u7EDD\u5BF9\u5B9A\u4F4D\u7684\u60AC\u6D6E\u80F6\u56CA\uFF1A\u9489\u5728\u6807\u9898\u884C\u4E0B\u7F18\u53F3\u4FA7\uFF0C\u4E0D\u518D\u5360\u636E\u5E03\u5C40\u9AD8\u5EA6\uFF0C
+         \u4E2D\u95F4\u5185\u5BB9\u533A\u51C0\u589E\u7EA6 33px\uFF1B\u80CC\u666F\u7528\u539F\u751F tooltip \u7070\u4E0E\u5185\u5BB9\u5206\u5C42\u3002 */
+      header[class*="wSkVaW_header"] {
+        position: relative !important;
+      }
+      div[class*="wSkVaW_tabs"] {
+        position: absolute !important;
+        top: 38px !important;
+        right: 6px !important;
+        left: auto !important;
+        width: auto !important;
+        max-width: 62vw !important;
+        height: 30px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 2px !important;
+        padding: 2px !important;
+        border-radius: 999px !important;
+        background: var(--dsw-alias-tooltip-bg, #43454a) !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3) !important;
+        overflow-x: auto !important;
+        scrollbar-width: none !important;
+        z-index: 30 !important;
+      }
+      div[class*="wSkVaW_tabs"]::-webkit-scrollbar {
+        display: none !important;
+      }
+      div[class*="wSkVaW_tabs"] [role="tab"] {
+        height: 24px !important;
+        padding: 0 10px !important;
+        border-radius: 999px !important;
+        font-size: 12px !important;
+        white-space: nowrap !important;
+        flex: 0 0 auto !important;
+      }
+
       /* ---- \u9876\u680F\u300C\u6807\u51C6\u6A21\u5F0F\u300D\u4E0E\u300C\u5BF9\u8BDD\u7BA1\u7406\u300D\u91CD\u53E0\u4FEE\u590D ----
          \u5B9E\u6D4B\uFF08390px\uFF09\uFF1A\u6807\u51C6\u6A21\u5F0F(\u5728 titleCluster \u5185) \u53F3\u8FB9\u754C 102\uFF0C
          \u5BF9\u8BDD\u7BA1\u7406(\u5728 headerUtilities \u5185) \u5DE6\u8FB9\u754C 91 \u2192 \u6C34\u5E73\u91CD\u53E0 11px\u3002
@@ -4101,10 +4139,33 @@ function injectMobileStyles() {
               \u5E38\u9A7B\u5C4F\u5E55\u53F3\u4E0B\u89D2\uFF0C\u89C6\u89C9\u4E0A\u5C31\u662F\u90A3\u4E2A"\u5C0F\u65B9\u5757"\u3002
          \u4FEE\u590D\uFF1A\u79FB\u52A8\u7AEF\u9690\u85CF panel-host \u906E\u7F69\u4E0E glass \u6E10\u53D8\u88C5\u9970\u6761\uFF0C\u5E76\u9501\u5B9A\u8F93\u5165\u6846 sticky \u4E8E\u5E95\u90E8\u3002 */
 
-      /* \u9690\u85CF better-sidebar \u7684\u5168\u5C4F\u906E\u7F69\uFF08\u907F\u514D\u8986\u76D6\u8F93\u5165\u6846\u5E76\u62E6\u622A\u70B9\u51FB\uFF09 */
+      /* better-sidebar \u9762\u677F\u5BBF\u4E3B\uFF1A\u9ED8\u8BA4\u9690\u85CF\uFF08\u65E7\u7684\u5168\u5C4F fixed \u906E\u7F69\u4F1A\u76D6\u4F4F\u8F93\u5165\u6846\u5E76\u62E6\u622A\u70B9\u51FB\uFF09\uFF1B
+         \u5E95\u90E8\u9762\u677F\u5C55\u5F00\u65F6\uFF08\u5F00\u5173 aria-pressed=true / body.dsh-workbench-open\uFF09\u6539\u4E3A
+         \u5E95\u90E8\u9762\u677F\u5F62\u6001\u663E\u793A\u2014\u2014\u4E0D\u906E\u8F93\u5165\u6846\u3001\u4E0D\u9876\u72B6\u6001\u680F\uFF0C\u5185\u5BB9\uFF08zsh \u4F1A\u8BDD\u7B49\uFF09\u53EF\u89C1\u3002
+         aria-pressed \u4E0E data-active \u90FD\u662F\u8BED\u8A00\u65E0\u5173\u951A\u70B9\uFF0C\u4E2D\u82F1\u6587\u73AF\u5883\u901A\u7528\u3002 */
       div[data-dsh-panel-host],
       div[data-dsh-better-sidebar] {
         display: none !important;
+      }
+      body:has(button[data-dsh-bottom-toggle][aria-pressed='true']) div[data-dsh-panel-host],
+      body:has(button[data-dsh-bottom-toggle][aria-pressed='true']) div[data-dsh-better-sidebar] {
+        display: block !important;
+        top: 42px !important;
+        bottom: calc(var(--dsh-composer-height, 171px) + 34px) !important;
+        left: 8px !important;
+        right: 8px !important;
+        width: auto !important;
+        height: auto !important;
+        z-index: 20 !important;
+        border-radius: 12px !important;
+        overflow: auto !important;
+        background: var(--dsw-alias-bg-layer-2, #2c2c2e) !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+      }
+      /* \u5E95\u90E8\u9762\u677F\u5C55\u5F00\u65F6\u539F\u751F\u7ED9\u4E2D\u680F\u9884\u7559\u7684 220px \u5E95\u90E8\u7A7A\u767D\u6536\u6389\uFF0C\u8F93\u5165\u6846\u56DE\u5230\u5C4F\u5E55\u5E95\u3002
+         \u6CE8\u610F body.dsh-workbench-open \u5728\u6536\u8D77\u540E\u4ECD\u6B8B\u7559\uFF0C\u4E0D\u80FD\u5F53\u5C55\u5F00\u4FE1\u53F7\u3002 */
+      body:has(button[data-dsh-bottom-toggle][aria-pressed='true']) div[class*="pI_x6G_centerCol"] {
+        margin-bottom: 0 !important;
       }
       /* \u9690\u85CF\u4E3B\u9898\u88C5\u9970\u6027\u6E10\u53D8\u6761\uFF08\u53F3\u4E0B\u89D2\u5C0F\u65B9\u5757\uFF09 */
       span[data-dsh-glass-fade] {
@@ -4122,10 +4183,37 @@ function injectMobileStyles() {
         display: flex !important;
         align-items: center !important;
         justify-content: space-between !important;
+        flex-wrap: nowrap !important;
         gap: 6px !important;
         width: 100% !important;
         padding: 2px 2px 4px !important;
         box-sizing: border-box !important;
+      }
+
+      /* \u8F93\u5165\u6846\u8D34\u5E95\uFF1AscrollBody \u7684 16px \u5E95\u90E8\u886C\u8DDD\u662F\u7A7A\u9699\u6765\u6E90\uFF0C\u6536\u6389\u53EA\u7559\u5B89\u5168\u533A\uFF1B
+         \u518D\u57AB 6px \u8BA9\u7EDF\u8BA1\u836F\u4E38\u5B8C\u6574\u53EF\u89C1 */
+      div[class*="wSkVaW_scrollBody"] {
+        padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px)) !important;
+      }
+      div[class*="wSkVaW_composerStack"] {
+        padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+      }
+
+      /* workbuddy-connect \u7684 Reasoning levels \u6309\u94AE\uFF08uV2eYG_trailing \u91CC\u552F\u4E00\u7684\u65E0 class
+         \u6309\u94AE\uFF0C\u7ED3\u6784\u951A\u70B9 span>button\uFF09\uFF1A\u79FB\u52A8\u7AEF\u6536\u6210\u7EAF\u56FE\u6807\uFF0C\u6587\u5B57\u88AB\u88C1\u6389\uFF0C
+         \u4E0D\u518D\u628A\u5DE6\u4FA7\u6309\u94AE\u6324\u5230\u4E0A\u4E00\u884C */
+      div[class*="uV2eYG_trailing"] span > button:not([class]) {
+        flex: 0 0 26px !important;
+        width: 26px !important;
+        min-width: 26px !important;
+        padding: 0 2px !important;
+        overflow: hidden !important;
+        justify-content: center !important;
+        gap: 0 !important;
+        font-size: 0 !important;
+      }
+      div[class*="uV2eYG_trailing"] span > button:not([class]) svg {
+        flex: 0 0 auto !important;
       }
 
       div[class*="uV2eYG_tools"] {
@@ -4210,7 +4298,8 @@ function injectMobileStyles() {
       div[class*="_sidebarCol"] {
         position: fixed !important;
         left: 0 !important;
-        top: 0 !important;
+        /* \u9876\u5230\u9876\u90E8\u6807\u7B7E\u6761(38px)\u4E4B\u4E0B\uFF0C\u4E0D\u518D\u4E0E\u6700\u4E0A\u9762\u7684\u680F\u91CD\u53E0 */
+        top: 38px !important;
         bottom: auto !important;
         /* \u4FA7\u8FB9\u680F\u5E95\u90E8\u6EA2\u51FA\u5C4F\u5E55\u4FEE\u590D\uFF1A
            \u5B9E\u6D4B 390x844 \u4E0B\uFF0C\u4FA7\u8FB9\u680F\u5B9E\u9645\u76D2\u5B50\u4E3A T=12 B=882\uFF08\u9AD8\u5EA6 870 > \u89C6\u53E3 844\uFF09\uFF0C\u5E95\u90E8\u6EA2\u51FA 38px\u3002
@@ -4218,8 +4307,8 @@ function injectMobileStyles() {
            \u4E8E\u662F padding(10px+14px) \u4E0E margin(12px) \u88AB\u52A0\u5728 height:100dvh \u4E4B\u5916\u3002
            \u6539\u4E3A border-box \u5E76\u7528 100dvh \u76F4\u63A5\u7EA6\u675F\u9AD8\u5EA6\uFF0Cpadding \u5373\u88AB\u5305\u542B\u5728\u9AD8\u5EA6\u5185\u3002 */
         box-sizing: border-box !important;
-        height: 100dvh !important;
-        max-height: 100dvh !important;
+        height: calc(100dvh - 38px) !important;
+        max-height: calc(100dvh - 38px) !important;
         margin: 0 !important;
         width: 290px !important;
         max-width: 82vw !important;
