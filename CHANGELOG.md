@@ -2,6 +2,15 @@
 
 本项目 `dsh-bridge-gateway` 是基于 [dsh-bridge](https://github.com/wenbin-wb/dsh-bridge) 的移植增强分支，在保留原版能力之外，重点新增「公网直连网关」。
 
+## [未发布]
+
+### 修复（公网直连网关：外网长连接会永久挂起 + 无法追溯来源）
+- **长连接保活与回收**：WebSocket 在 upgrade 成功后即脱离 HTTP 解析器，`server.timeout` / `keepAliveTimeout` / `headersTimeout` 对它全部失效；此前网关没有任何应用层保活，对端静默消失（进电梯断网、被系统杀进程、NAT 表项过期）的连接会一直挂到内核 TCP 保活兜底（macOS 默认 2 小时）。现在每 15s 巡检一次台账：连续 60s 无任何入向字节先发一个 WebSocket ping 探活，再等 30s 一个字节都收不回来即判定死链并销毁（原因记为 `dead-peer`），真正死掉的连接最长 90s 内回收。
+- **不再误杀活跃连接**：判定只依据「有没有入向字节」，客户端回的 pong 或任何业务帧都会解除探活状态；可选的绝对空闲上限 `GW_WS_MAX_IDLE_MS` 默认关闭。
+- **来源可追溯（新增访问日志）**：新增 `<DSH_HOME>/dsh-bridge/access.log`（JSONL，5MB 滚动保留一份历史），记录每一次 WebSocket 建立/关闭（含**来源 IP、鉴权方式 token/session/loopback、连接时长、收发字节、关闭原因**）、被拒绝的 upgrade、访问密码登录成功/失败、URL Token 免密登录。此前插件完全不记录来访 IP，出事后无法判断连接归属。
+- **真实连接台账**：`activeConnections` 此前只在初始化和 `stop()` 时归零、从未自增，面板「活动连接数」恒为 0；现在随 socket 增减实时维护，并且 `gatewayGetStatus` 额外返回 `wsConnections`（当前长连接数）与 `clients`（按来源 IP 聚合的明细，**仅管理员可见**）。
+- **显式锁定 HTTP 层超时**：`headersTimeout` 60s / `requestTimeout` 300s / `keepAliveTimeout` 5s，保住「握手前慢速攻击」防护，不因存在长连接而放宽。
+
 ## [0.1.7] - 2026-09-12
 
 ### 变更（移动端第三批：标题行密度）

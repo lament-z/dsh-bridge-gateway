@@ -58,6 +58,7 @@ debug.log
 
 # AI agent local skills and workspace data
 .agents/
+.workbuddy/
 
 # Credentials (never commit)
 .credentials
