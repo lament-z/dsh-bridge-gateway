@@ -28,7 +28,7 @@
     "build:banner": "node scripts/generate-banner.mjs",
     "prepack": "npm run build:lark && npm run build:client",
     "release:github": "node scripts/create-github-release.mjs",
-    "test": "node --test test/*.test.mjs"
+    "test": "node --import ./test/isolate-home.mjs --test test/*.test.mjs"
   },
   "dependencies": {
     "qrcode": "^1.5.3",

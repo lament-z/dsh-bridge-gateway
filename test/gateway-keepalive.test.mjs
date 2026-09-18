@@ -120,7 +120,7 @@ async function withGateway(authManager, fn) {
       proxy,
       port,
       home,
-      logFile: join(home, 'dsh-bridge', 'access.log'),
+      logFile: join(home, 'dsh-bridge-gateway', 'access.log'),
       open: (socket) => {
         clients.push(socket)
         return socket
