@@ -21,7 +21,7 @@ if (typeof window !== 'undefined') {
   }
 }
 
-import { BRIDGE_RPC_CHANNEL, BRIDGE_ENDPOINTS } from '../lib/bridge-rpc-constants.js';
+import { BRIDGE_RPC_CHANNEL, BRIDGE_RPC_CHANNEL_LEGACY, BRIDGE_ENDPOINTS } from '../lib/bridge-rpc-constants.js';
 
 let _globalAdminToken = '';
 function setGlobalAdminToken(t) {
@@ -79,7 +79,7 @@ function upgradeCommands(latest) {
   ];
 }
 
-const name = 'dsh-bridge';
+const name = 'dsh-bridge-gateway';
 const inject = ['slots', 'connection', 'workspaces', 'sessions'];
 
 // semver 比较：a > b
@@ -1173,6 +1173,12 @@ function PlatformCard({ platformId, platformName, platformDesc, rpcCall, onStatu
         approvalTimeoutSec: String(platform.config.approvalTimeoutSec ?? 600),
         maxMessageChars:    String((platform.config.maxMessageChars >= 500 ? platform.config.maxMessageChars : null) ?? (platformId === 'telegram' ? 4096 : 2000)),
         sendChunkDelayMs:   String(platform.config.sendChunkDelayMs   ?? 1500),
+        // 会话级配置：决定该平台远程会话建在哪里、挂什么预设、用哪个模型。
+        // 空串表示"未设置"，会话创建时回落 DSH 默认值。
+        agentPreset: platform.config.agentPreset ?? '',
+        cwd: platform.config.cwd ?? '',
+        agentProvider: platform.config.agentProvider ?? '',
+        agentModel: platform.config.agentModel ?? '',
         appId: platform.config.appId ?? '',
         // Secret 不由后端回传；空值表示沿用已保存密钥
         clientSecret: '',
@@ -1286,6 +1292,11 @@ function PlatformCard({ platformId, platformName, platformDesc, rpcCall, onStatu
       approvalTimeoutSec: Number(cfgDraft.approvalTimeoutSec),
       maxMessageChars:    Number(cfgDraft.maxMessageChars),
       sendChunkDelayMs:   Number(cfgDraft.sendChunkDelayMs),
+      // 会话级配置：始终提交（空串是显式清除，回落 DSH 默认值）
+      agentPreset: (cfgDraft.agentPreset ?? '').trim(),
+      cwd: (cfgDraft.cwd ?? '').trim(),
+      agentProvider: (cfgDraft.agentProvider ?? '').trim(),
+      agentModel: (cfgDraft.agentModel ?? '').trim(),
     };
     // QQ / 飞书 / Telegram 平台额外携带凭证
     if (platformId === 'qq') {
@@ -1306,6 +1317,11 @@ function PlatformCard({ platformId, platformName, platformDesc, rpcCall, onStatu
     Number(cfgDraft.approvalTimeoutSec) !== platform.config.approvalTimeoutSec ||
     Number(cfgDraft.maxMessageChars)    !== platform.config.maxMessageChars    ||
     Number(cfgDraft.sendChunkDelayMs)   !== platform.config.sendChunkDelayMs   ||
+    // 会话级配置（cwd / agentPreset / 模型）也参与脏检查，否则只改这几项时保存按钮不激活
+    (cfgDraft.agentPreset ?? '')   !== (platform.config.agentPreset ?? '')   ||
+    (cfgDraft.cwd ?? '')           !== (platform.config.cwd ?? '')           ||
+    (cfgDraft.agentProvider ?? '') !== (platform.config.agentProvider ?? '') ||
+    (cfgDraft.agentModel ?? '')    !== (platform.config.agentModel ?? '')    ||
     (platformId === 'qq' && (
       cfgDraft.appId !== (platform.config.appId ?? '') ||
       cfgDraft.clientSecret !== (platform.config.clientSecret ?? '')
@@ -1410,6 +1426,54 @@ function PlatformCard({ platformId, platformName, platformDesc, rpcCall, onStatu
     ),
 
     err && React.createElement('div', { style: { ...s.warn, marginTop: 10 } }, err),
+
+    // ---- 高级设置：会话级配置 + 节奏参数 ----
+    // 会话级配置决定该平台的远程会话建在哪个目录、挂什么 Agent 预设、用哪个模型；
+    // 此前没有任何界面入口，只能手改 config.json，且重启后还会丢。
+    platform?.configured && React.createElement('div', { style: { marginTop: 10 } },
+      React.createElement('button', {
+        type: 'button',
+        style: s.btnGhost,
+        onClick: () => setShowAdvanced(v => !v),
+      }, showAdvanced ? '收起高级设置' : '⚙️ 高级设置'),
+    ),
+    platform?.configured && showAdvanced && cfgDraft && React.createElement('div', { style: { ...s.block, marginTop: 8 } },
+      React.createElement('div', { style: { ...s.muted, marginBottom: 8, lineHeight: 1.7 } },
+        '会话级配置：决定通过', platformName, '创建的远程会话建在哪里、挂什么 Agent 预设、用哪个模型。留空表示使用 DSH 默认值。',
+      ),
+      React.createElement('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 } },
+        ...[
+          ['cwd', '工作区目录', '留空 = 首个已注册工作区'],
+          ['agentPreset', 'Agent 预设', '留空 = DSH 默认预设'],
+          ['agentProvider', '模型提供方', '留空 = 当前默认'],
+          ['agentModel', '模型', '留空 = 当前默认'],
+        ].map(([key, label, placeholder]) =>
+          React.createElement('div', { key },
+            React.createElement('div', { style: { ...s.muted, fontSize: 12, marginBottom: 4 } }, label),
+            React.createElement('input', {
+              style: s.input,
+              placeholder,
+              value: cfgDraft[key] ?? '',
+              onChange: (e) => setCfgDraft(d => ({ ...d, [key]: e.target.value })),
+            }),
+          ),
+        ),
+      ),
+      React.createElement('div', { style: { display: 'flex', gap: 8, marginTop: 10, alignItems: 'center' } },
+        React.createElement('button', {
+          type: 'button',
+          style: cfgDirty ? s.btnPri : { ...s.btnPri, opacity: 0.5, cursor: 'default' },
+          disabled: !cfgDirty,
+          onClick: saveConfig,
+        }, '保存高级设置'),
+        React.createElement('button', {
+          type: 'button',
+          style: s.btnGhost,
+          onClick: resetDefaults,
+        }, '恢复推荐节奏'),
+        cfgDirty && React.createElement('span', { style: { ...s.muted, fontSize: 12 } }, '有未保存的改动'),
+      ),
+    ),
 
     // 已配置：结构化状态看板 + 白名单
     platform?.configured && React.createElement('div', { style: s.block },
@@ -2013,77 +2077,6 @@ function RestartDshCard({ rpcCall }) {
   );
 }
 
-// 运维 Tab 内的远程工作区管理卡片
-function RemoteWorkspaceCard({ rpcCall }) {
-  const [workspaces, setWorkspaces] = React.useState([]);
-  const [loading, setLoading] = React.useState(false);
-
-  const load = React.useCallback(async () => {
-    if (!rpcCall) return;
-    setLoading(true);
-    try {
-      const res = await rpcCall(BRIDGE_ENDPOINTS.listWorkspaces, {});
-      const list = res?.value || res;
-      if (Array.isArray(list)) setWorkspaces(list);
-      else if (list?.workspaces && Array.isArray(list.workspaces)) setWorkspaces(list.workspaces);
-    } catch {}
-    finally { setLoading(false); }
-  }, [rpcCall]);
-
-  React.useEffect(() => {
-    load();
-  }, [load]);
-
-  return React.createElement('div', { style: { ...s.card, marginBottom: 16 } },
-    React.createElement('div', {
-      style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, flexWrap: 'wrap', gap: 8 },
-    },
-      React.createElement('div', null,
-        React.createElement('div', { style: { ...s.label, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 } },
-          '🗂️ 远程工作区管理 (目录浏览器)'
-        ),
-        React.createElement('div', { style: { ...s.muted, marginTop: 3 } },
-          '在移动端或远程设备上可视点选电脑上的文件夹或直接输入路径添加至 DSH。'
-        ),
-      ),
-      React.createElement('button', {
-        type: 'button',
-        style: { ...s.btnPri, height: 32, fontSize: 12, padding: '0 14px' },
-        onClick: () => {
-          if (typeof window.__dshOpenRemoteWorkspaceModal === 'function') {
-            window.__dshOpenRemoteWorkspaceModal();
-          } else if (typeof showRemoteWorkspaceDialog === 'function') {
-            showRemoteWorkspaceDialog(rpcCall, () => load());
-          }
-        },
-      }, '+ 远程添加工作区'),
-    ),
-    workspaces.length > 0 ? React.createElement('div', {
-      style: { display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 },
-    },
-      workspaces.map((ws, i) => React.createElement('div', {
-        key: ws.path || i,
-        style: {
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '7px 12px',
-          background: 'var(--dsw-alias-bg-layer-1,#ffffff)',
-          border: '1px solid var(--dsw-alias-border-l2,#e5e7eb)',
-          borderRadius: 8,
-          fontSize: 12,
-        },
-      },
-        React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden' } },
-          React.createElement('span', { style: { fontWeight: 600, color: 'var(--dsw-alias-brand-primary,#4f6ef7)', flexShrink: 0 } }, `@${i + 1} ${ws.title || ''}`),
-          React.createElement('span', { style: { ...s.code, color: 'var(--dsw-alias-label-tertiary,#6b7280)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, ws.path),
-        ),
-      )),
-    ) : React.createElement('div', {
-      style: { ...s.muted, marginTop: 6, padding: '10px 14px', background: 'var(--dsw-alias-bg-layer-1,#ffffff)', border: '1px solid var(--dsw-alias-border-l2,#e5e7eb)', borderRadius: 8, textAlign: 'center' },
-    }, loading ? '正在读取工作区列表…' : '暂无已注册工作区，点击右上角「+ 远程添加工作区」即可浏览添加。'),
-  );
-}
 
 // 版本检查 + 一键升级 + GitHub/反馈入口
 function VersionBanner({ rpcCall }) {
@@ -2805,7 +2798,6 @@ function BridgePanel({ rpcCall }) {
   } else if (activeTab === 'ops') {
     tabContent = React.createElement(React.Fragment, null,
       React.createElement(SystemMetricsWidget, { metrics: status?.system }),
-      React.createElement(RemoteWorkspaceCard, { rpcCall: authRpcCall }),
       React.createElement(NetworkDiagnosticWidget, { rpcCall: authRpcCall }),
       React.createElement(BackupRestoreWidget, {
         rpcCall: authRpcCall,
@@ -2910,7 +2902,7 @@ function BridgePanel({ rpcCall }) {
           },
             React.createElement('div', { style: { fontWeight: 600, color: 'var(--dsw-alias-label-primary,currentColor)', marginBottom: 4 } }, '🛟 救急解除锁定指引：'),
             React.createElement('div', null, '1. ', React.createElement('strong', null, '电脑本机直连修改'), '：直接在运行本程序的电脑本机打开本控制台（127.0.0.1 享有物理免锁特权），可随时修改策略或清除密码。'),
-            React.createElement('div', { style: { marginTop: 4 } }, '2. ', React.createElement('strong', null, '服务器救急指令'), '：在宿主电脑/服务器终端执行 ', React.createElement('code', { style: s.code }, 'touch ~/.dsh/dsh-bridge/reset-auth'), ' 即可瞬间清空密码恢复初始状态。'),
+            React.createElement('div', { style: { marginTop: 4 } }, '2. ', React.createElement('strong', null, '服务器救急指令'), '：在宿主电脑/服务器终端执行 ', React.createElement('code', { style: s.code }, 'touch ~/.dsh/dsh-bridge-gateway/reset-auth'), ' 即可瞬间清空密码恢复初始状态。'),
           ),
         )
       ) : (
@@ -2961,7 +2953,7 @@ function BridgePanel({ rpcCall }) {
           },
             React.createElement('div', { style: { fontWeight: 600, color: 'var(--dsw-alias-label-primary,currentColor)', marginBottom: 4 } }, '🛟 找回与重置密码指引：'),
             React.createElement('div', null, '1. ', React.createElement('strong', null, '电脑本机直连修改'), '：直接在运行本程序的电脑本机打开本控制台（127.0.0.1 享有物理免锁特权），可随时修改管理密码。'),
-            React.createElement('div', { style: { marginTop: 4 } }, '2. ', React.createElement('strong', null, '服务器救急指令'), '：在宿主电脑终端执行 ', React.createElement('code', { style: s.code }, 'touch ~/.dsh/dsh-bridge/reset-auth'), ' 即可瞬间清空密码恢复初始状态。'),
+            React.createElement('div', { style: { marginTop: 4 } }, '2. ', React.createElement('strong', null, '服务器救急指令'), '：在宿主电脑终端执行 ', React.createElement('code', { style: s.code }, 'touch ~/.dsh/dsh-bridge-gateway/reset-auth'), ' 即可瞬间清空密码恢复初始状态。'),
           ),
         )
       )
@@ -4214,80 +4206,6 @@ function injectMobileStyles() {
       }
     }
 
-    /* 远程工作区选择弹窗移动端/桌面端自适应样式 */
-    #dsh-remote-workspace-modal {
-      position: fixed !important;
-      inset: 0 !important;
-      z-index: 100000 !important;
-      background: rgba(0, 0, 0, 0.65) !important;
-      backdrop-filter: blur(5px) !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      padding: 16px !important;
-      box-sizing: border-box !important;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-      color: var(--dsw-alias-label-primary, #111827) !important;
-    }
-
-    .dsh-ws-dialog-card {
-      background: var(--dsw-alias-bg-layer-1, #ffffff) !important;
-      border: 1px solid var(--dsw-alias-border-l1, #e5e7eb) !important;
-      border-radius: 16px !important;
-      width: 100% !important;
-      max-width: 620px !important;
-      max-height: 88vh !important;
-      display: flex !important;
-      flex-direction: column !important;
-      box-shadow: 0 25px 35px -5px rgba(0,0,0,0.3), 0 12px 16px -5px rgba(0,0,0,0.2) !important;
-      overflow: hidden !important;
-      animation: dshModalFadeIn 0.2s ease-out !important;
-    }
-
-    .dsh-ws-chips-scroll {
-      display: flex !important;
-      align-items: center !important;
-      gap: 6px !important;
-      overflow-x: auto !important;
-      white-space: nowrap !important;
-      scrollbar-width: none !important;
-      -ms-overflow-style: none !important;
-      -webkit-overflow-scrolling: touch !important;
-      padding: 2px 0 !important;
-    }
-    .dsh-ws-chips-scroll::-webkit-scrollbar {
-      display: none !important;
-    }
-
-    @media (max-width: 640px) {
-      #dsh-remote-workspace-modal {
-        align-items: flex-end !important;
-        padding: 0 !important;
-      }
-
-      .dsh-ws-dialog-card {
-        max-height: 92dvh !important;
-        height: 92dvh !important;
-        border-bottom-left-radius: 0 !important;
-        border-bottom-right-radius: 0 !important;
-        border-left: none !important;
-        border-right: none !important;
-        border-bottom: none !important;
-        max-width: 100vw !important;
-        width: 100vw !important;
-        margin: 0 !important;
-        animation: dshBottomSheetUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
-      }
-
-      .dsh-ws-drag-handle {
-        display: block !important;
-      }
-    }
-
-    @keyframes dshModalFadeIn {
-      from { opacity: 0; transform: scale(0.96); }
-      to { opacity: 1; transform: scale(1); }
-    }
 
     @keyframes dshBottomSheetUp {
       from { transform: translateY(100%); }
@@ -4757,43 +4675,10 @@ function setupMobileExperience(rpcCall, ctx) {
     }
   }, { passive: true });
 
-  // 5. 拦截原生的「添加工作区 / 打开文件夹」操作，在远程与移动端无缝弹出网页版目录选择器（本机电脑保持原生对话框）
-  document.addEventListener('click', (e) => {
-    if (isLocalEnvironment()) return; // 本机电脑环境不拦截，使用系统原生文件夹对话框
-    const btn = e.target.closest('button, [role="button"], a');
-    if (!btn) return;
-    if (btn.closest('#dsh-remote-workspace-modal')) return;
-
-    const label = (
-      btn.getAttribute('aria-label') ||
-      btn.innerText ||
-      btn.title ||
-      ''
-    ).trim();
-
-    const isAddWorkspace = (
-      label === '添加工作区' ||
-      label === '新建工作区' ||
-      label === '打开工作区' ||
-      label === '打开文件夹' ||
-      label === 'Add Workspace' ||
-      label === 'Open Folder' ||
-      label.includes('添加工作区') ||
-      label.includes('打开工作区') ||
-      label.includes('打开文件夹') ||
-      btn.matches('button[aria-label*="工作区"][aria-label*="添加"], button[aria-label*="工作区"][aria-label*="打开"]')
-    );
-
-    if (isAddWorkspace) {
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
-
-      if (typeof window.__dshOpenRemoteWorkspaceModal === 'function') {
-        window.__dshOpenRemoteWorkspaceModal();
-      }
-    }
-  }, true);
+  // 说明：不再用 capture 阶段 click 拦截劫持原生的「添加工作区 / 打开文件夹」
+  // 按钮。此前该拦截会 preventDefault + stopImmediatePropagation，掐断宿主
+  // 事件链，导致原生目录选择器永远无法弹出。选目录完全交还原生
+  // directory-picker（本机 native / 远程 browse）。
 }
 
 // 辅助函数：HTML 转义
@@ -4807,689 +4692,38 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
-// ---- 全局网页端远程工作区目录选择弹窗 (树形层级浏览 + 面包屑导航 + 一键添加与切换) ----
-
-function showRemoteWorkspaceDialog(rpcCall, onWorkspaceAdded, clientCtx, onPicked, onCancel) {
-  if (typeof document === 'undefined' || typeof window === 'undefined') return;
-
-  const existing = document.getElementById('dsh-remote-workspace-modal');
-  if (existing) existing.remove();
-
-  const overlay = document.createElement('div');
-  overlay.id = 'dsh-remote-workspace-modal';
-  overlay.style.cssText = `
-    position: fixed;
-    inset: 0;
-    z-index: 100000;
-    background: rgba(0, 0, 0, 0.65);
-    backdrop-filter: blur(5px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-    box-sizing: border-box;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    color: var(--dsw-alias-label-primary, #111827);
-  `;
-
-  const modal = document.createElement('div');
-  modal.className = 'dsh-ws-dialog-card';
-
-  let currentPath = '';
-  let parentPath = null;
-  let breadcrumbs = [];
-  let entries = [];
-  let roots = [];
-  let drives = [];
-  let workspaces = [];
-  let filterQuery = '';
-  let showManualInput = false;
-  let isLoading = false;
-  let isSubmitting = false;
-  let statusMessage = null;
-  let isErrorMessage = false;
-
-  function closeModal() {
-    document.removeEventListener('keydown', handleKeydown);
-    overlay.style.opacity = '0';
-    overlay.style.transition = 'opacity 0.15s ease';
-    setTimeout(() => overlay.remove(), 150);
-    if (typeof onCancel === 'function') {
-      try {
-        onCancel();
-      } catch (e) {}
-    }
-  }
-
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) closeModal();
-  });
-
-  const handleKeydown = (e) => {
-    if (e.key === 'Escape') {
-      closeModal();
-    }
-  };
-  document.addEventListener('keydown', handleKeydown);
-
-  function render() {
-    const filteredEntries = (entries || []).filter(e => {
-      if (!filterQuery.trim()) return true;
-      return e.name.toLowerCase().includes(filterQuery.trim().toLowerCase());
-    });
-
-    modal.innerHTML = `
-      <!-- 移动端顶部下拉指示条 -->
-      <div class="dsh-ws-drag-handle" style="width: 36px; height: 4px; background: var(--dsw-alias-border-l2, #d1d5db); border-radius: 2px; margin: 8px auto 0 auto; display: none;"></div>
-
-      <!-- 弹窗顶部标题栏 -->
-      <div style="padding: 12px 16px; border-bottom: 1px solid var(--dsw-alias-border-l2, #e5e7eb); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; background: var(--dsw-alias-bg-layer-2, #f9fafb);">
-        <div style="display: flex; align-items: center; gap: 8px; overflow: hidden;">
-          <span style="font-size: 20px; flex-shrink: 0;">🗂️</span>
-          <div style="overflow: hidden;">
-            <div style="font-size: 15px; font-weight: 600; color: var(--dsw-alias-label-primary, #111827); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">选择电脑工作区</div>
-            <div style="font-size: 11px; color: var(--dsw-alias-label-tertiary, #6b7280); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">点击进入文件夹，或点击「+ 选为工作区」直接添加并切换</div>
-          </div>
-        </div>
-        <button id="dsh-ws-close-btn" style="border: none; background: none; font-size: 18px; cursor: pointer; color: var(--dsw-alias-label-tertiary, #9ca3af); padding: 4px 8px; border-radius: 6px; line-height: 1; flex-shrink: 0;">✕</button>
-      </div>
-
-      <div style="padding: 12px 16px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 10px;">
-        <!-- 提示信息横幅 -->
-        ${statusMessage ? `
-          <div style="padding: 8px 12px; border-radius: 8px; font-size: 12px; line-height: 1.5; font-weight: 500; display: flex; align-items: center; gap: 8px; ${isErrorMessage ? 'background: var(--dsw-alias-state-error-bg, #fef2f2); border: 1px solid var(--dsw-alias-state-error-border, #fecaca); color: var(--dsw-alias-state-error-primary, #dc2626);' : 'background: var(--dsw-alias-state-success-bg, #ecfdf5); border: 1px solid var(--dsw-alias-state-success-border, #a7f3d0); color: var(--dsw-alias-state-success-primary, #059669);'}">
-            <span>${isErrorMessage ? '⚠️' : '🎉'}</span>
-            <span>${escapeHtml(statusMessage)}</span>
-          </div>
-        ` : ''}
-
-        <!-- 快速直达与磁盘横向滑动栏 (极简省空间) -->
-        <div class="dsh-ws-chips-scroll">
-          ${(drives || []).map(d => {
-            const isActive = currentPath.startsWith(d.path) || currentPath === d.path;
-            return `
-              <button class="dsh-ws-quick-btn" data-path="${escapeHtml(d.path)}" style="border: 1px solid ${isActive ? 'var(--dsw-alias-brand-primary, #4f6ef7)' : 'var(--dsw-alias-border-l2, #d1d5db)'}; background: ${isActive ? 'var(--dsw-alias-brand-primary, #4f6ef7)' : 'var(--dsw-alias-bg-layer-2, #f9fafb)'}; color: ${isActive ? '#fff' : 'var(--dsw-alias-label-primary, #111827)'}; border-radius: 14px; padding: 4px 10px; font-size: 11px; cursor: pointer; font-weight: 500; flex-shrink: 0; transition: all 0.1s;">
-                💾 ${escapeHtml(d.name)}
-              </button>
-            `;
-          }).join('')}
-          <span style="color: var(--dsw-alias-border-l2, #d1d5db); margin: 0 1px; flex-shrink: 0;">|</span>
-          ${(roots || []).map(r => {
-            const isActive = currentPath === r.path;
-            return `
-              <button class="dsh-ws-quick-btn" data-path="${escapeHtml(r.path)}" style="border: 1px solid ${isActive ? 'var(--dsw-alias-brand-primary, #4f6ef7)' : 'var(--dsw-alias-border-l2, #d1d5db)'}; background: ${isActive ? 'var(--dsw-alias-state-info-bg, #eff6ff)' : 'var(--dsw-alias-bg-layer-2, #f9fafb)'}; color: ${isActive ? 'var(--dsw-alias-brand-primary, #4f6ef7)' : 'var(--dsw-alias-label-secondary, #374151)'}; border-radius: 14px; padding: 4px 10px; font-size: 11px; cursor: pointer; font-weight: 500; flex-shrink: 0;">
-                ${escapeHtml(r.name)}
-              </button>
-            `;
-          }).join('')}
-        </div>
-
-        <!-- 交互式面包屑路径导航条 (Breadcrumbs Bar) -->
-        <div style="background: var(--dsw-alias-bg-layer-3, #f3f4f6); border: 1px solid var(--dsw-alias-border-l2, #e5e7eb); border-radius: 10px; padding: 6px 10px; display: flex; align-items: center; justify-content: space-between; gap: 6px;">
-          <div class="dsh-ws-chips-scroll" style="flex: 1;">
-            <span style="font-size: 12px; margin-right: 2px; flex-shrink: 0;">📂</span>
-            ${(breadcrumbs || []).map((crumb, idx) => {
-              const isLast = idx === breadcrumbs.length - 1;
-              return `
-                <button class="dsh-ws-crumb-btn" data-path="${escapeHtml(crumb.path)}" style="border: none; background: ${isLast ? 'var(--dsw-alias-bg-layer-1, #fff)' : 'transparent'}; color: ${isLast ? 'var(--dsw-alias-brand-primary, #4f6ef7)' : 'var(--dsw-alias-label-secondary, #4b5563)'}; font-family: ui-monospace, Menlo, monospace; font-size: 11px; font-weight: ${isLast ? '700' : '500'}; padding: 3px 6px; border-radius: 4px; cursor: pointer; text-decoration: ${isLast ? 'none' : 'underline'}; text-underline-offset: 2px; flex-shrink: 0; box-shadow: ${isLast ? '0 1px 2px rgba(0,0,0,0.06)' : 'none'};">
-                  ${escapeHtml(crumb.name)}
-                </button>
-                ${!isLast ? `<span style="color: var(--dsw-alias-label-tertiary, #9ca3af); font-size: 11px; font-weight: 600; flex-shrink: 0;">/</span>` : ''}
-              `;
-            }).join('')}
-          </div>
-
-          <div style="display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
-            ${parentPath ? `
-              <button id="dsh-ws-up-btn" data-path="${escapeHtml(parentPath)}" title="返回上一级" style="border: 1px solid var(--dsw-alias-border-l2, #d1d5db); background: var(--dsw-alias-bg-layer-1, #fff); color: var(--dsw-alias-label-primary, #111827); padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 2px;">
-                ⬆️ 上级
-              </button>
-            ` : ''}
-            <button id="dsh-ws-refresh-btn" title="刷新目录" style="border: 1px solid var(--dsw-alias-border-l2, #d1d5db); background: var(--dsw-alias-bg-layer-1, #fff); color: var(--dsw-alias-label-primary, #111827); padding: 3px 6px; border-radius: 6px; font-size: 11px; cursor: pointer;">
-              🔄
-            </button>
-          </div>
-        </div>
-
-        <!-- 当前所在目录确认卡片 (Primary Action Card) -->
-        <div style="background: var(--dsw-alias-state-info-bg, #eff6ff); border: 1px solid var(--dsw-alias-state-info-border, #bfdbfe); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
-            <span style="font-size: 11px; font-weight: 600; color: var(--dsw-alias-brand-primary, #2563eb); flex-shrink: 0;">当前目录:</span>
-            <span style="font-family: ui-monospace, Menlo, monospace; font-size: 11px; color: var(--dsw-alias-label-primary, #1e3a8a); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; text-align: right; font-weight: 600;">${escapeHtml(currentPath)}</span>
-          </div>
-          <button id="dsh-ws-add-current-btn" style="border: none; background: var(--dsw-alias-brand-primary, #2563eb); color: #fff; height: 36px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; box-shadow: 0 2px 4px rgba(37,99,235,0.25); transition: opacity 0.1s;" ${isSubmitting ? 'disabled' : ''}>
-            ${isSubmitting ? '正在添加并切换…' : '👉 设为当前工作区并进入'}
-          </button>
-        </div>
-
-        <!-- 子目录列表与过滤栏 -->
-        <div style="border: 1px solid var(--dsw-alias-border-l2, #e5e7eb); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; background: var(--dsw-alias-bg-layer-1, #fff);">
-          <!-- 实时过滤搜索框 -->
-          <div style="padding: 7px 10px; background: var(--dsw-alias-bg-layer-2, #f9fafb); border-bottom: 1px solid var(--dsw-alias-border-l2, #e5e7eb); display: flex; align-items: center; justify-content: space-between; gap: 6px;">
-            <div style="display: flex; align-items: center; gap: 6px; flex: 1;">
-              <span style="font-size: 11px; color: var(--dsw-alias-label-tertiary, #9ca3af);">🔍</span>
-              <input id="dsh-ws-filter-input" type="text" value="${escapeHtml(filterQuery)}" placeholder="过滤子文件夹…" style="border: none; background: transparent; font-size: 12px; width: 100%; color: var(--dsw-alias-label-primary, #111827); outline: none;" />
-            </div>
-            <span style="font-size: 10px; color: var(--dsw-alias-label-tertiary, #6b7280); flex-shrink: 0;">
-              ${filteredEntries.length} 个文件夹
-            </span>
-          </div>
-
-          <!-- 子文件夹滚动列表 (移动端舒适大点按区域) -->
-          <div style="max-height: 240px; min-height: 120px; overflow-y: auto; padding: 2px 0;">
-            ${isLoading ? `
-              <div style="padding: 32px; text-align: center; font-size: 12px; color: var(--dsw-alias-label-tertiary, #6b7280); display: flex; flex-direction: column; align-items: center; gap: 6px;">
-                <span style="font-size: 20px;">⏳</span>
-                <span>正在读取目录内容…</span>
-              </div>
-            ` : filteredEntries.length === 0 ? `
-              <div style="padding: 26px 16px; text-align: center; font-size: 12px; color: var(--dsw-alias-label-tertiary, #6b7280); display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                <span style="font-size: 22px;">📁</span>
-                <span>${filterQuery ? '未找到匹配的子文件夹' : '当前文件夹下没有更多子文件夹'}</span>
-                <span style="font-size: 11px; color: var(--dsw-alias-label-tertiary, #9ca3af);">（直接点击上方蓝色按钮即可进入当前目录）</span>
-              </div>
-            ` : filteredEntries.map(e => `
-              <div class="dsh-ws-entry-row" data-path="${escapeHtml(e.path)}" style="display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; border-bottom: 1px solid var(--dsw-alias-border-l2, #f3f4f6); cursor: pointer; font-size: 12px; transition: background 0.1s; min-height: 40px;">
-                <div class="dsh-ws-drill-btn" data-path="${escapeHtml(e.path)}" style="display: flex; align-items: center; gap: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; padding: 2px 0;">
-                  <span style="font-size: 16px; flex-shrink: 0;">📁</span>
-                  <span style="font-family: ui-monospace, Menlo, monospace; font-weight: 500; color: var(--dsw-alias-label-primary, #111827); overflow: hidden; text-overflow: ellipsis;">${escapeHtml(e.name)}</span>
-                  <span style="color: var(--dsw-alias-label-tertiary, #9ca3af); font-size: 12px; margin-left: 2px; flex-shrink: 0;">›</span>
-                </div>
-                <button class="dsh-ws-pick-entry-btn" data-path="${escapeHtml(e.path)}" title="直接添加此子文件夹为工作区并进入" style="border: 1px solid var(--dsw-alias-state-success-border, #a7f3d0); background: var(--dsw-alias-state-success-bg, #ecfdf5); color: var(--dsw-alias-state-success-primary, #059669); padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 2px; flex-shrink: 0; margin-left: 8px; white-space: nowrap; transition: all 0.1s;">
-                  + 选为工作区
-                </button>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-
-        <!-- 手动输入路径折叠区 -->
-        <div>
-          <div style="display: flex; align-items: center; justify-content: space-between;">
-            <button id="dsh-ws-toggle-manual" style="border: none; background: none; color: var(--dsw-alias-label-tertiary, #6b7280); font-size: 11px; cursor: pointer; padding: 2px 0; text-decoration: underline;">
-              ${showManualInput ? '▼ 收起绝对路径手动输入' : '▶ 手动粘贴/输入绝对路径'}
-            </button>
-          </div>
-          ${showManualInput ? `
-            <div style="margin-top: 6px; display: flex; gap: 6px;">
-              <input id="dsh-ws-manual-input" type="text" value="${escapeHtml(currentPath)}" placeholder="输入电脑绝对路径，例如 C:\\Projects\\my-app" style="flex: 1; font-family: ui-monospace, Menlo, monospace; font-size: 11px; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--dsw-alias-border-l2, #d1d5db); background: var(--dsw-alias-bg-layer-1, #fff); color: var(--dsw-alias-label-primary, #111827); outline: none;" />
-              <button id="dsh-ws-manual-jump-btn" style="border: 1px solid var(--dsw-alias-border-l2, #d1d5db); background: var(--dsw-alias-bg-layer-2, #f9fafb); color: var(--dsw-alias-label-primary, #111827); padding: 0 10px; border-radius: 8px; font-size: 11px; cursor: pointer; white-space: nowrap;">
-                前往
-              </button>
-              <button id="dsh-ws-manual-add-btn" style="border: none; background: var(--dsw-alias-brand-primary, #4f6ef7); color: #fff; padding: 0 12px; border-radius: 8px; font-size: 11px; font-weight: 500; cursor: pointer; white-space: nowrap;">
-                添加并进入
-              </button>
-            </div>
-          ` : ''}
-        </div>
-
-        <!-- 已在 DSH 注册的工作区展示 (支持一键切换) -->
-        ${(workspaces && workspaces.length > 0) ? `
-          <div style="padding-top: 2px;">
-            <div style="font-size: 11px; font-weight: 600; color: var(--dsw-alias-label-tertiary, #6b7280); margin-bottom: 4px;">已注册工作区 (${workspaces.length} 个，点击直接切换)：</div>
-            <div style="display: flex; flex-direction: column; gap: 4px; max-height: 80px; overflow-y: auto;">
-              ${workspaces.map((w, i) => `
-                <div class="dsh-ws-registered-row" data-ws-id="${escapeHtml(w.id || '')}" data-ws-path="${escapeHtml(w.path)}" style="display: flex; align-items: center; justify-content: space-between; background: var(--dsw-alias-bg-layer-2, #f9fafb); border: 1px solid var(--dsw-alias-border-l2, #e5e7eb); border-radius: 6px; padding: 4px 8px; font-size: 11px; cursor: pointer; transition: background 0.1s;">
-                  <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">
-                    <span style="font-weight: 600; color: var(--dsw-alias-brand-primary, #4f6ef7);">@${i + 1} ${escapeHtml(w.title || '')}</span>
-                    <span style="color: var(--dsw-alias-label-tertiary, #6b7280); margin-left: 6px; font-family: ui-monospace, Menlo, monospace; font-size: 10px;">${escapeHtml(w.path)}</span>
-                  </div>
-                  <button class="dsh-ws-switch-btn" data-ws-id="${escapeHtml(w.id || '')}" data-ws-path="${escapeHtml(w.path)}" style="border: 1px solid var(--dsw-alias-brand-primary, #4f6ef7); background: var(--dsw-alias-state-info-bg, #eff6ff); color: var(--dsw-alias-brand-primary, #4f6ef7); padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 600; cursor: pointer; flex-shrink: 0; margin-left: 6px; white-space: nowrap;">
-                    进入 ➔
-                  </button>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-        ` : ''}
-      </div>
-
-      <!-- 弹窗底部操作条 -->
-      <div style="padding: 8px 16px; border-top: 1px solid var(--dsw-alias-border-l2, #e5e7eb); display: flex; align-items: center; justify-content: space-between; background: var(--dsw-alias-bg-layer-2, #f9fafb); flex-shrink: 0;">
-        <span style="font-size: 10px; color: var(--dsw-alias-label-tertiary, #6b7280);">
-          💡 点击文件夹可逐级进入
-        </span>
-        <button id="dsh-ws-cancel-btn" style="border: 1px solid var(--dsw-alias-border-l2, #d1d5db); background: var(--dsw-alias-bg-layer-1, #fff); color: var(--dsw-alias-label-primary, #111827); padding: 5px 14px; border-radius: 8px; font-size: 12px; cursor: pointer; font-weight: 500;">关闭</button>
-      </div>
-    `;
-
-    // 绑定事件处理器
-    modal.querySelector('#dsh-ws-close-btn')?.addEventListener('click', closeModal);
-    modal.querySelector('#dsh-ws-cancel-btn')?.addEventListener('click', closeModal);
-
-    // 面包屑点击
-    modal.querySelectorAll('.dsh-ws-crumb-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const p = btn.getAttribute('data-path');
-        if (p) loadDirectory(p);
-      });
-    });
-
-    // 快捷盘符与常用目录点击
-    modal.querySelectorAll('.dsh-ws-quick-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const p = btn.getAttribute('data-path');
-        if (p) loadDirectory(p);
-      });
-    });
-
-    // 返回上一级与刷新
-    modal.querySelector('#dsh-ws-up-btn')?.addEventListener('click', (e) => {
-      const p = e.currentTarget.getAttribute('data-path');
-      if (p) loadDirectory(p);
-    });
-    modal.querySelector('#dsh-ws-refresh-btn')?.addEventListener('click', () => {
-      loadDirectory(currentPath);
-    });
-
-    // 添加当前目录为工作区
-    modal.querySelector('#dsh-ws-add-current-btn')?.addEventListener('click', () => {
-      doSubmit(currentPath);
-    });
-
-    // 过滤输入框
-    const filterInput = modal.querySelector('#dsh-ws-filter-input');
-    if (filterInput) {
-      filterInput.addEventListener('input', (e) => {
-        filterQuery = e.target.value;
-        render();
-        const nextInput = modal.querySelector('#dsh-ws-filter-input');
-        if (nextInput) {
-          nextInput.focus();
-          nextInput.selectionStart = nextInput.selectionEnd = nextInput.value.length;
-        }
-      });
-    }
-
-    // 深入文件夹
-    modal.querySelectorAll('.dsh-ws-drill-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const p = btn.getAttribute('data-path');
-        if (p) loadDirectory(p);
-      });
-    });
-
-    // 列表项点击（整行进入文件夹）
-    modal.querySelectorAll('.dsh-ws-entry-row').forEach(row => {
-      row.addEventListener('click', (e) => {
-        if (e.target.closest('.dsh-ws-pick-entry-btn')) return;
-        const p = row.getAttribute('data-path');
-        if (p) loadDirectory(p);
-      });
-    });
-
-    // 快捷选为工作区按钮
-    modal.querySelectorAll('.dsh-ws-pick-entry-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const p = btn.getAttribute('data-path');
-        if (p) doSubmit(p);
-      });
-    });
-
-    // 已注册工作区切换按钮与整行点击
-    modal.querySelectorAll('.dsh-ws-registered-row, .dsh-ws-switch-btn').forEach(el => {
-      el.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const wsId = el.getAttribute('data-ws-id');
-        const wsPath = el.getAttribute('data-ws-path');
-        if (wsId || wsPath) {
-          switchToWorkspace(wsId, wsPath);
-        }
-      });
-    });
-
-    // 手动输入折叠切换
-    modal.querySelector('#dsh-ws-toggle-manual')?.addEventListener('click', () => {
-      showManualInput = !showManualInput;
-      render();
-    });
-
-    // 手动前往与添加
-    const manualInput = modal.querySelector('#dsh-ws-manual-input');
-    modal.querySelector('#dsh-ws-manual-jump-btn')?.addEventListener('click', () => {
-      if (manualInput && manualInput.value.trim()) {
-        loadDirectory(manualInput.value.trim());
-      }
-    });
-    modal.querySelector('#dsh-ws-manual-add-btn')?.addEventListener('click', () => {
-      if (manualInput && manualInput.value.trim()) {
-        doSubmit(manualInput.value.trim());
-      }
-    });
-    if (manualInput) {
-      manualInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          doSubmit(manualInput.value.trim());
-        }
-      });
-    }
-  }
-
-  async function authRpc(endpoint, payload = {}) {
-    let token = getGlobalAdminToken();
-    if (!token && isLocalEnvironment()) {
-      try {
-        const res = await fetch('/__dsh_bridge__/loopback-token', { method: 'POST' });
-        if (res.ok) {
-          const data = await res.json();
-          if (data?.adminToken) {
-            token = data.adminToken;
-            setGlobalAdminToken(token);
-          }
-        }
-      } catch {}
-    }
-    return rpcCall(endpoint, {
-      ...payload,
-      ...(token ? { adminToken: token } : {}),
-      ...(isLocalEnvironment() ? { isLocalhost: true } : {}),
-    });
-  }
-
-  async function switchToWorkspace(wsId, wsPath) {
-    if (isSubmitting) return;
-    isSubmitting = true;
-    statusMessage = `正在切换工作区…`;
-    isErrorMessage = false;
-    render();
-
-    if (typeof onPicked === 'function' && wsPath) {
-      try {
-        onPicked(wsPath);
-      } catch (e) {}
-    }
-
-    let switched = false;
-    if (clientCtx?.workspaces?.startSession && wsId) {
-      try {
-        clientCtx.workspaces.startSession(wsId);
-        switched = true;
-      } catch (e) {
-        console.warn('[dsh-bridge] startSession failed:', e);
-      }
-    }
-
-    if (!switched && wsPath) {
-      try {
-        if (clientCtx?.workspaces?.create) {
-          const ws = await clientCtx.workspaces.create({ path: wsPath });
-          if (ws?.workspaceId && clientCtx?.workspaces?.startSession) {
-            clientCtx.workspaces.startSession(ws.workspaceId);
-            switched = true;
-          }
-        }
-        if (!switched) {
-          const raw = await authRpc(BRIDGE_ENDPOINTS.addRemoteWorkspace, { path: wsPath });
-          const res = raw?.value || raw;
-          if (res?.workspaceId && clientCtx?.workspaces?.startSession) {
-            try {
-              clientCtx.workspaces.startSession(res.workspaceId);
-              switched = true;
-            } catch (e) {}
-          }
-          if (!switched && res?.sessionId && clientCtx?.sessions?.open) {
-            try {
-              clientCtx.sessions.open(res.sessionId);
-              switched = true;
-            } catch (e) {}
-          }
-        }
-      } catch (e) {}
-    }
-
-    statusMessage = `✓ 已切换至工作区！`;
-    render();
-    setTimeout(() => {
-      closeModal();
-      document.body.classList.remove('dsh-drawer-open');
-    }, 400);
-  }
-
-  async function loadDirectory(targetPath) {
-    if (isSubmitting) return;
-    if (!rpcCall) return;
-    isLoading = true;
-    filterQuery = '';
-    statusMessage = null;
-    isErrorMessage = false;
-    render();
-
-    try {
-      const raw = await authRpc(BRIDGE_ENDPOINTS.listRemoteDirectories, { path: targetPath });
-      const res = raw?.value || raw;
-      if (res) {
-        currentPath = res.currentPath || targetPath || '';
-        parentPath = res.parentPath || null;
-        breadcrumbs = res.breadcrumbs || [];
-        entries = res.entries || [];
-        roots = res.roots || [];
-        drives = res.drives || [];
-        workspaces = res.workspaces || [];
-        if (res.error) {
-          statusMessage = res.error;
-          isErrorMessage = true;
-        }
-      }
-    } catch (err) {
-      statusMessage = err.message || '读取目录失败';
-      isErrorMessage = true;
-    } finally {
-      isLoading = false;
-      render();
-    }
-  }
-
-  async function doSubmit(pathToRegister) {
-    if (isSubmitting) return;
-    const p = (pathToRegister || currentPath || '').trim();
-    if (!p) {
-      statusMessage = '请输入或选择工作区路径';
-      isErrorMessage = true;
-      render();
-      return;
-    }
-    if (!rpcCall) return;
-
-    isSubmitting = true;
-    statusMessage = null;
-    isErrorMessage = false;
-    render();
-
-    try {
-      // 1. 先通过 clientCtx.workspaces.create 注册本地客户端快照
-      let clientWs = null;
-      if (clientCtx?.workspaces?.create) {
-        try {
-          clientWs = await clientCtx.workspaces.create({ path: p });
-        } catch (e) {
-          console.warn('[dsh-bridge] clientCtx.workspaces.create failed:', e);
-        }
-      }
-
-      // 2. 调用服务端 RPC 进行持久化与 session 绑定
-      const raw = await authRpc(BRIDGE_ENDPOINTS.addRemoteWorkspace, { path: p });
-      const res = raw?.value || raw;
-      if (res && res.ok) {
-        statusMessage = `✓ 工作区「${res.title || p}」已选定，正在切换…`;
-        isErrorMessage = false;
-        workspaces = res.workspaces || [];
-        render();
-
-        const targetWorkspaceId = clientWs?.workspaceId || res.workspaceId;
-
-        // 如果是通过 Hero / DirectoryFlow 流程打开的，通知 Flow
-        if (typeof onPicked === 'function') {
-          try {
-            onPicked(p);
-          } catch (e) {}
-        }
-
-        // 切换至新工作区并创建会话
-        let switched = false;
-        if (clientCtx?.workspaces?.startSession && targetWorkspaceId) {
-          try {
-            clientCtx.workspaces.startSession(targetWorkspaceId);
-            switched = true;
-          } catch (e) {
-            console.warn('[dsh-bridge] startSession failed:', e);
-          }
-        }
-        
-        if (!switched && clientCtx?.sessions?.open && res.sessionId) {
-          try {
-            clientCtx.sessions.open(res.sessionId);
-            switched = true;
-          } catch (e) {
-            console.warn('[dsh-bridge] sessions.open failed:', e);
-          }
-        }
-
-        if (typeof onWorkspaceAdded === 'function') {
-          onWorkspaceAdded(res);
-        }
-
-        setTimeout(() => {
-          closeModal();
-          document.body.classList.remove('dsh-drawer-open');
-        }, 500);
-      } else {
-        statusMessage = res?.error || raw?.error || '添加工作区失败';
-        isErrorMessage = true;
-        render();
-      }
-    } catch (err) {
-      statusMessage = err.message || '添加工作区异常';
-      isErrorMessage = true;
-      render();
-    } finally {
-      isSubmitting = false;
-    }
-  }
-
-  overlay.appendChild(modal);
-  document.body.appendChild(overlay);
-
-  // 初次加载目录
-  loadDirectory('');
-}
-
-// ---- DSH 原生 Slot 目录选择器适配组件 ----
-
-function RemoteDirectoryFlow(props) {
-  const { open, pick } = props;
-  const outcome = React.useRef(props);
-  outcome.current = props;
-  const armed = React.useRef(false);
-
-  const openRemoteModal = () => {
-    if (typeof window.__dshOpenRemoteWorkspaceModal === 'function') {
-      window.__dshOpenRemoteWorkspaceModal(
-        (res) => {
-          if (res?.path && outcome.current?.onPicked) {
-            outcome.current.onPicked(res.path);
-          }
-        },
-        (chosenPath) => {
-          if (chosenPath && outcome.current?.onPicked) {
-            outcome.current.onPicked(chosenPath);
-          }
-        },
-        () => {
-          if (outcome.current?.onCancel) {
-            outcome.current.onCancel();
-          }
-        }
-      );
-    } else if (outcome.current?.onCancel) {
-      outcome.current.onCancel();
-    }
-  };
-
-  React.useEffect(() => {
-    if (!open) {
-      armed.current = false;
-      return;
-    }
-    if (armed.current) return;
-    armed.current = true;
-
-    // 1. 本机电脑或 Electron 环境：尝试唤起原生文件夹选择对话框
-    const isNativeHost = typeof window !== 'undefined' && (window.electron || window.__DSH_NATIVE_HOST__);
-    if (isNativeHost || isLocalEnvironment()) {
-      const pickFn = typeof pick === 'function' ? pick : (typeof window.__dshClientCtx?.workspaces?.pickDirectory === 'function' ? () => window.__dshClientCtx.workspaces.pickDirectory() : null);
-      if (pickFn) {
-        try {
-          const promise = pickFn();
-          if (promise && typeof promise.then === 'function') {
-            promise.then((chosenPath) => {
-              if (chosenPath === null) {
-                if (outcome.current?.onCancel) outcome.current.onCancel();
-              } else if (chosenPath) {
-                if (outcome.current?.onPicked) outcome.current.onPicked(chosenPath);
-              }
-            }).catch(() => {
-              // 原生选择器在纯网页模式下报 needs the native capability，平滑降级至远程目录树选择器
-              openRemoteModal();
-            });
-            return;
-          }
-        } catch {
-          openRemoteModal();
-          return;
-        }
-      }
-    }
-
-    // 2. 远程或移动端访问（手机或局域网跨设备/公网）：呼出网页版远程目录树形选择器！
-    openRemoteModal();
-  }, [open, pick]);
-
-  return null;
-}
-
-// ---- 插件入口 ----
 
 function apply(ctx) {
   window.__dshClientCtx = ctx;
-  const rpcCall = (endpoint, payload, signal) =>
-    ctx.connection.rpc.call(BRIDGE_RPC_CHANNEL, endpoint, payload, signal);
-
-  window.__dshOpenRemoteWorkspaceModal = (onAdded, onPickDirect, onCancel) =>
-    showRemoteWorkspaceDialog(rpcCall, onAdded, ctx, onPickDirect, onCancel);
+  // RPC 通道名在构建期内联进 bundle。新 bundle 默认走新通道名，但服务端可能因版本
+  // 错配（例如 host 侧插件尚未更新）只注册了旧名 —— 因此新名失败时回落旧名，
+  // 避免「插件更新到一半」时设置页整体失效。
+  // 反向场景（浏览器缓存着旧 bundle）由服务端双路径注册兜住，见 lib/bridge-rpc.js。
+  const rpcCall = async (endpoint, payload, signal) => {
+    try {
+      return await ctx.connection.rpc.call(BRIDGE_RPC_CHANNEL, endpoint, payload, signal);
+    } catch (err) {
+      if (!BRIDGE_RPC_CHANNEL_LEGACY || BRIDGE_RPC_CHANNEL_LEGACY === BRIDGE_RPC_CHANNEL) throw err;
+      if (typeof console !== 'undefined') {
+        console.warn('[dsh-bridge-gateway] 新 RPC 通道调用失败，回落到兼容通道:', err?.message ?? err);
+      }
+      return ctx.connection.rpc.call(BRIDGE_RPC_CHANNEL_LEGACY, endpoint, payload, signal);
+    }
+  };
 
   setupMobileExperience(rpcCall, ctx);
 
-  const injected = () => ({ pick: () => ctx.workspaces?.pickDirectory?.() });
-
-  // 注册至 DSH 原生目录选择 Slot（设置 priority: -10 覆盖原生 Electron 选择器，在远程/移动网页端生效）
-  ctx.slots.inject('conversation.hero.workspace.directoryFlow', () =>
-    ctx.slots.inject('sidebar.workspaces.directoryFlow', function* () {
-      yield ctx.slots.register(
-        {
-          name: 'conversation.hero.workspace.directoryFlow',
-          priority: -10,
-          inject: injected,
-        },
-        RemoteDirectoryFlow,
-      );
-      yield ctx.slots.register(
-        {
-          name: 'sidebar.workspaces.directoryFlow',
-          priority: -10,
-          inject: injected,
-        },
-        RemoteDirectoryFlow,
-      );
-    }),
-  );
+  // 说明：不再注册 conversation.hero.workspace.directoryFlow /
+  // sidebar.workspaces.directoryFlow 两个原生目录选择 Slot。
+  // 这两个洞口的职责由 DSH 原生 directory-picker 承担：本机走 native 弹窗，
+  // 远程走 browse（网页版目录树）。插件此前以 priority: -10 抢注会覆盖原生
+  // 选择器，导致「添加工作区」点了没反应。详见 CHANGELOG。
 
   ctx.slots.inject('settings.section', () =>
     ctx.slots.register(
       {
         name: 'settings.section',
-        id: 'dsh-bridge',
+        id: 'dsh-bridge-gateway',
         order: 10,
         label: () => '远程访问',
         inject: () => ({ rpcCall }),

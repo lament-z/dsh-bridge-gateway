@@ -27,6 +27,7 @@ function doRequest(options, postBody) {
 
 test('ProxyServer end-to-end authentication: login, token redirect, and cookie protection', async () => {
   // 1. Mock Backend Server
+  const backendHtml = '<html><head></head><body><h1>Welcome to DSH</h1></body></html>'
   const backend = createServer((req, res) => {
     if (req.url === '/api/data') {
       res.writeHead(200, { 'Content-Type': 'application/json' })
@@ -34,7 +35,7 @@ test('ProxyServer end-to-end authentication: login, token redirect, and cookie p
       return
     }
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' })
-    res.end('<html><head></head><body><h1>Welcome to DSH</h1></body></html>')
+    res.end(backendHtml)
   })
 
   await new Promise((resolve) => backend.listen(0, '127.0.0.1', resolve))
@@ -179,10 +180,13 @@ test('ProxyServer end-to-end authentication: login, token redirect, and cookie p
     assert.equal(resPwaIcon.statusCode, 200)
     assert.ok(resPwaIcon.body.includes('<svg'))
 
-    // I. Verified HTML head contains mobile viewport and PWA meta tags
-    assert.ok(resAuth.body.includes('viewport-fit=cover'))
-    assert.ok(resAuth.body.includes('apple-mobile-web-app-capable'))
-    assert.ok(resAuth.body.includes('/manifest.webmanifest'))
+    // I. 代理现在必须是「透明转发」：不得改写后端返回的 HTML。
+    //    PWA / viewport 注入改由 DSH 官方 webserver/index-inject 机制在
+    //    host 侧 apply() 中贡献（见 lib/index.js），不再经过代理层字符串替换。
+    assert.equal(resAuth.statusCode, 200)
+    assert.equal(resAuth.body, backendHtml)
+    assert.ok(!resAuth.body.includes('viewport-fit=cover'))
+    assert.ok(!resAuth.body.includes('data-dsh-bridge-polyfill'))
   } finally {
     await proxy.stop()
     await new Promise((resolve) => backend.close(resolve))

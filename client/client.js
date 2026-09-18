@@ -32,7 +32,8 @@ __export(index_exports, {
 module.exports = __toCommonJS(index_exports);
 
 // lib/bridge-rpc-constants.js
-var BRIDGE_RPC_CHANNEL = "/dsh-bridge";
+var BRIDGE_RPC_CHANNEL = "/dsh-bridge-gateway";
+var BRIDGE_RPC_CHANNEL_LEGACY = "/dsh-bridge";
 var BRIDGE_ENDPOINTS = {
   getStatus: "getStatus",
   startCustomTunnel: "startCustomTunnel",
@@ -130,12 +131,6 @@ function getGlobalAdminToken() {
   }
   return "";
 }
-function isLocalEnvironment() {
-  if (typeof window === "undefined") return true;
-  const host = window.location.hostname || "";
-  const proto = window.location.protocol || "";
-  return host === "127.0.0.1" || host === "localhost" || host === "::1" || host === "" || proto === "file:" || proto === "vscode-webview:" || proto === "app:" || typeof window.__DSH_ELECTRON__ !== "undefined" || typeof navigator !== "undefined" && navigator.userAgent && navigator.userAgent.includes("Electron");
-}
 var GITHUB_URL = "https://github.com/lament-z/dsh-bridge-gateway";
 var RELEASES_URL = "https://github.com/lament-z/dsh-bridge-gateway/releases";
 var ISSUES_URL = "https://github.com/lament-z/dsh-bridge-gateway/issues/new";
@@ -147,7 +142,7 @@ function upgradeCommands(latest) {
     { id: "npx", cmd: `npx --yes @deepseek-ai/dsh plugin --profile web add ${spec}` }
   ];
 }
-var name = "dsh-bridge";
+var name = "dsh-bridge-gateway";
 var inject = ["slots", "connection", "workspaces", "sessions"];
 function semverGt(a, b) {
   const parse = (v) => {
@@ -1382,6 +1377,12 @@ function PlatformCard({ platformId, platformName, platformDesc, rpcCall, onStatu
         approvalTimeoutSec: String(platform.config.approvalTimeoutSec ?? 600),
         maxMessageChars: String((platform.config.maxMessageChars >= 500 ? platform.config.maxMessageChars : null) ?? (platformId === "telegram" ? 4096 : 2e3)),
         sendChunkDelayMs: String(platform.config.sendChunkDelayMs ?? 1500),
+        // 会话级配置：决定该平台远程会话建在哪里、挂什么预设、用哪个模型。
+        // 空串表示"未设置"，会话创建时回落 DSH 默认值。
+        agentPreset: platform.config.agentPreset ?? "",
+        cwd: platform.config.cwd ?? "",
+        agentProvider: platform.config.agentProvider ?? "",
+        agentModel: platform.config.agentModel ?? "",
         appId: platform.config.appId ?? "",
         // Secret 不由后端回传；空值表示沿用已保存密钥
         clientSecret: "",
@@ -1478,7 +1479,12 @@ function PlatformCard({ platformId, platformName, platformDesc, rpcCall, onStatu
       digestIntervalSec: Number(cfgDraft.digestIntervalSec),
       approvalTimeoutSec: Number(cfgDraft.approvalTimeoutSec),
       maxMessageChars: Number(cfgDraft.maxMessageChars),
-      sendChunkDelayMs: Number(cfgDraft.sendChunkDelayMs)
+      sendChunkDelayMs: Number(cfgDraft.sendChunkDelayMs),
+      // 会话级配置：始终提交（空串是显式清除，回落 DSH 默认值）
+      agentPreset: (cfgDraft.agentPreset ?? "").trim(),
+      cwd: (cfgDraft.cwd ?? "").trim(),
+      agentProvider: (cfgDraft.agentProvider ?? "").trim(),
+      agentModel: (cfgDraft.agentModel ?? "").trim()
     };
     if (platformId === "qq") {
       payload.appId = cfgDraft.appId.trim();
@@ -1493,7 +1499,8 @@ function PlatformCard({ platformId, platformName, platformDesc, rpcCall, onStatu
     }
     await act(BRIDGE_ENDPOINTS.platformSetConfig, payload);
   }, [act, cfgDraft, platformId]);
-  const cfgDirty = cfgDraft && platform?.config && (Number(cfgDraft.digestIntervalSec) !== platform.config.digestIntervalSec || Number(cfgDraft.approvalTimeoutSec) !== platform.config.approvalTimeoutSec || Number(cfgDraft.maxMessageChars) !== platform.config.maxMessageChars || Number(cfgDraft.sendChunkDelayMs) !== platform.config.sendChunkDelayMs || platformId === "qq" && (cfgDraft.appId !== (platform.config.appId ?? "") || cfgDraft.clientSecret !== (platform.config.clientSecret ?? "")) || platformId === "feishu" && (cfgDraft.appId !== (platform.config.appId ?? "") || cfgDraft.appSecret !== (platform.config.appSecret ?? "")) || platformId === "telegram" && (cfgDraft.botToken !== "" || cfgDraft.proxy !== (platform.config.proxy ?? "")));
+  const cfgDirty = cfgDraft && platform?.config && (Number(cfgDraft.digestIntervalSec) !== platform.config.digestIntervalSec || Number(cfgDraft.approvalTimeoutSec) !== platform.config.approvalTimeoutSec || Number(cfgDraft.maxMessageChars) !== platform.config.maxMessageChars || Number(cfgDraft.sendChunkDelayMs) !== platform.config.sendChunkDelayMs || // 会话级配置（cwd / agentPreset / 模型）也参与脏检查，否则只改这几项时保存按钮不激活
+  (cfgDraft.agentPreset ?? "") !== (platform.config.agentPreset ?? "") || (cfgDraft.cwd ?? "") !== (platform.config.cwd ?? "") || (cfgDraft.agentProvider ?? "") !== (platform.config.agentProvider ?? "") || (cfgDraft.agentModel ?? "") !== (platform.config.agentModel ?? "") || platformId === "qq" && (cfgDraft.appId !== (platform.config.appId ?? "") || cfgDraft.clientSecret !== (platform.config.clientSecret ?? "")) || platformId === "feishu" && (cfgDraft.appId !== (platform.config.appId ?? "") || cfgDraft.appSecret !== (platform.config.appSecret ?? "")) || platformId === "telegram" && (cfgDraft.botToken !== "" || cfgDraft.proxy !== (platform.config.proxy ?? "")));
   if (!platform && !err) {
     return React.createElement(
       "div",
@@ -1595,6 +1602,67 @@ function PlatformCard({ platformId, platformName, platformDesc, rpcCall, onStatu
       React.createElement("div", null, "/help \u2014 \u663E\u793A\u5B8C\u6574\u547D\u4EE4\u5E2E\u52A9")
     ),
     err && React.createElement("div", { style: { ...s.warn, marginTop: 10 } }, err),
+    // ---- 高级设置：会话级配置 + 节奏参数 ----
+    // 会话级配置决定该平台的远程会话建在哪个目录、挂什么 Agent 预设、用哪个模型；
+    // 此前没有任何界面入口，只能手改 config.json，且重启后还会丢。
+    platform?.configured && React.createElement(
+      "div",
+      { style: { marginTop: 10 } },
+      React.createElement("button", {
+        type: "button",
+        style: s.btnGhost,
+        onClick: () => setShowAdvanced((v) => !v)
+      }, showAdvanced ? "\u6536\u8D77\u9AD8\u7EA7\u8BBE\u7F6E" : "\u2699\uFE0F \u9AD8\u7EA7\u8BBE\u7F6E")
+    ),
+    platform?.configured && showAdvanced && cfgDraft && React.createElement(
+      "div",
+      { style: { ...s.block, marginTop: 8 } },
+      React.createElement(
+        "div",
+        { style: { ...s.muted, marginBottom: 8, lineHeight: 1.7 } },
+        "\u4F1A\u8BDD\u7EA7\u914D\u7F6E\uFF1A\u51B3\u5B9A\u901A\u8FC7",
+        platformName,
+        "\u521B\u5EFA\u7684\u8FDC\u7A0B\u4F1A\u8BDD\u5EFA\u5728\u54EA\u91CC\u3001\u6302\u4EC0\u4E48 Agent \u9884\u8BBE\u3001\u7528\u54EA\u4E2A\u6A21\u578B\u3002\u7559\u7A7A\u8868\u793A\u4F7F\u7528 DSH \u9ED8\u8BA4\u503C\u3002"
+      ),
+      React.createElement(
+        "div",
+        { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 10 } },
+        ...[
+          ["cwd", "\u5DE5\u4F5C\u533A\u76EE\u5F55", "\u7559\u7A7A = \u9996\u4E2A\u5DF2\u6CE8\u518C\u5DE5\u4F5C\u533A"],
+          ["agentPreset", "Agent \u9884\u8BBE", "\u7559\u7A7A = DSH \u9ED8\u8BA4\u9884\u8BBE"],
+          ["agentProvider", "\u6A21\u578B\u63D0\u4F9B\u65B9", "\u7559\u7A7A = \u5F53\u524D\u9ED8\u8BA4"],
+          ["agentModel", "\u6A21\u578B", "\u7559\u7A7A = \u5F53\u524D\u9ED8\u8BA4"]
+        ].map(
+          ([key, label, placeholder]) => React.createElement(
+            "div",
+            { key },
+            React.createElement("div", { style: { ...s.muted, fontSize: 12, marginBottom: 4 } }, label),
+            React.createElement("input", {
+              style: s.input,
+              placeholder,
+              value: cfgDraft[key] ?? "",
+              onChange: (e) => setCfgDraft((d) => ({ ...d, [key]: e.target.value }))
+            })
+          )
+        )
+      ),
+      React.createElement(
+        "div",
+        { style: { display: "flex", gap: 8, marginTop: 10, alignItems: "center" } },
+        React.createElement("button", {
+          type: "button",
+          style: cfgDirty ? s.btnPri : { ...s.btnPri, opacity: 0.5, cursor: "default" },
+          disabled: !cfgDirty,
+          onClick: saveConfig
+        }, "\u4FDD\u5B58\u9AD8\u7EA7\u8BBE\u7F6E"),
+        React.createElement("button", {
+          type: "button",
+          style: s.btnGhost,
+          onClick: resetDefaults
+        }, "\u6062\u590D\u63A8\u8350\u8282\u594F"),
+        cfgDirty && React.createElement("span", { style: { ...s.muted, fontSize: 12 } }, "\u6709\u672A\u4FDD\u5B58\u7684\u6539\u52A8")
+      )
+    ),
     // 已配置：结构化状态看板 + 白名单
     platform?.configured && React.createElement(
       "div",
@@ -2327,91 +2395,6 @@ function RestartDshCard({ rpcCall }) {
     )
   );
 }
-function RemoteWorkspaceCard({ rpcCall }) {
-  const [workspaces, setWorkspaces] = React.useState([]);
-  const [loading, setLoading] = React.useState(false);
-  const load = React.useCallback(async () => {
-    if (!rpcCall) return;
-    setLoading(true);
-    try {
-      const res = await rpcCall(BRIDGE_ENDPOINTS.listWorkspaces, {});
-      const list = res?.value || res;
-      if (Array.isArray(list)) setWorkspaces(list);
-      else if (list?.workspaces && Array.isArray(list.workspaces)) setWorkspaces(list.workspaces);
-    } catch {
-    } finally {
-      setLoading(false);
-    }
-  }, [rpcCall]);
-  React.useEffect(() => {
-    load();
-  }, [load]);
-  return React.createElement(
-    "div",
-    { style: { ...s.card, marginBottom: 16 } },
-    React.createElement(
-      "div",
-      {
-        style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, flexWrap: "wrap", gap: 8 }
-      },
-      React.createElement(
-        "div",
-        null,
-        React.createElement(
-          "div",
-          { style: { ...s.label, fontSize: 13, display: "flex", alignItems: "center", gap: 6 } },
-          "\u{1F5C2}\uFE0F \u8FDC\u7A0B\u5DE5\u4F5C\u533A\u7BA1\u7406 (\u76EE\u5F55\u6D4F\u89C8\u5668)"
-        ),
-        React.createElement(
-          "div",
-          { style: { ...s.muted, marginTop: 3 } },
-          "\u5728\u79FB\u52A8\u7AEF\u6216\u8FDC\u7A0B\u8BBE\u5907\u4E0A\u53EF\u89C6\u70B9\u9009\u7535\u8111\u4E0A\u7684\u6587\u4EF6\u5939\u6216\u76F4\u63A5\u8F93\u5165\u8DEF\u5F84\u6DFB\u52A0\u81F3 DSH\u3002"
-        )
-      ),
-      React.createElement("button", {
-        type: "button",
-        style: { ...s.btnPri, height: 32, fontSize: 12, padding: "0 14px" },
-        onClick: () => {
-          if (typeof window.__dshOpenRemoteWorkspaceModal === "function") {
-            window.__dshOpenRemoteWorkspaceModal();
-          } else if (typeof showRemoteWorkspaceDialog === "function") {
-            showRemoteWorkspaceDialog(rpcCall, () => load());
-          }
-        }
-      }, "+ \u8FDC\u7A0B\u6DFB\u52A0\u5DE5\u4F5C\u533A")
-    ),
-    workspaces.length > 0 ? React.createElement(
-      "div",
-      {
-        style: { display: "flex", flexDirection: "column", gap: 6, marginTop: 8 }
-      },
-      workspaces.map((ws, i) => React.createElement(
-        "div",
-        {
-          key: ws.path || i,
-          style: {
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "7px 12px",
-            background: "var(--dsw-alias-bg-layer-1,#ffffff)",
-            border: "1px solid var(--dsw-alias-border-l2,#e5e7eb)",
-            borderRadius: 8,
-            fontSize: 12
-          }
-        },
-        React.createElement(
-          "div",
-          { style: { display: "flex", alignItems: "center", gap: 8, overflow: "hidden" } },
-          React.createElement("span", { style: { fontWeight: 600, color: "var(--dsw-alias-brand-primary,#4f6ef7)", flexShrink: 0 } }, `@${i + 1} ${ws.title || ""}`),
-          React.createElement("span", { style: { ...s.code, color: "var(--dsw-alias-label-tertiary,#6b7280)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, ws.path)
-        )
-      ))
-    ) : React.createElement("div", {
-      style: { ...s.muted, marginTop: 6, padding: "10px 14px", background: "var(--dsw-alias-bg-layer-1,#ffffff)", border: "1px solid var(--dsw-alias-border-l2,#e5e7eb)", borderRadius: 8, textAlign: "center" }
-    }, loading ? "\u6B63\u5728\u8BFB\u53D6\u5DE5\u4F5C\u533A\u5217\u8868\u2026" : "\u6682\u65E0\u5DF2\u6CE8\u518C\u5DE5\u4F5C\u533A\uFF0C\u70B9\u51FB\u53F3\u4E0A\u89D2\u300C+ \u8FDC\u7A0B\u6DFB\u52A0\u5DE5\u4F5C\u533A\u300D\u5373\u53EF\u6D4F\u89C8\u6DFB\u52A0\u3002")
-  );
-}
 function VersionBanner({ rpcCall }) {
   const [info, setInfo] = React.useState(null);
   const [loading, setLoading] = React.useState(false);
@@ -3134,7 +3117,6 @@ function BridgePanel({ rpcCall }) {
       React.Fragment,
       null,
       React.createElement(SystemMetricsWidget, { metrics: status?.system }),
-      React.createElement(RemoteWorkspaceCard, { rpcCall: authRpcCall }),
       React.createElement(NetworkDiagnosticWidget, { rpcCall: authRpcCall }),
       React.createElement(BackupRestoreWidget, {
         rpcCall: authRpcCall,
@@ -3262,7 +3244,7 @@ function BridgePanel({ rpcCall }) {
           },
           React.createElement("div", { style: { fontWeight: 600, color: "var(--dsw-alias-label-primary,currentColor)", marginBottom: 4 } }, "\u{1F6DF} \u6551\u6025\u89E3\u9664\u9501\u5B9A\u6307\u5F15\uFF1A"),
           React.createElement("div", null, "1. ", React.createElement("strong", null, "\u7535\u8111\u672C\u673A\u76F4\u8FDE\u4FEE\u6539"), "\uFF1A\u76F4\u63A5\u5728\u8FD0\u884C\u672C\u7A0B\u5E8F\u7684\u7535\u8111\u672C\u673A\u6253\u5F00\u672C\u63A7\u5236\u53F0\uFF08127.0.0.1 \u4EAB\u6709\u7269\u7406\u514D\u9501\u7279\u6743\uFF09\uFF0C\u53EF\u968F\u65F6\u4FEE\u6539\u7B56\u7565\u6216\u6E05\u9664\u5BC6\u7801\u3002"),
-          React.createElement("div", { style: { marginTop: 4 } }, "2. ", React.createElement("strong", null, "\u670D\u52A1\u5668\u6551\u6025\u6307\u4EE4"), "\uFF1A\u5728\u5BBF\u4E3B\u7535\u8111/\u670D\u52A1\u5668\u7EC8\u7AEF\u6267\u884C ", React.createElement("code", { style: s.code }, "touch ~/.dsh/dsh-bridge/reset-auth"), " \u5373\u53EF\u77AC\u95F4\u6E05\u7A7A\u5BC6\u7801\u6062\u590D\u521D\u59CB\u72B6\u6001\u3002")
+          React.createElement("div", { style: { marginTop: 4 } }, "2. ", React.createElement("strong", null, "\u670D\u52A1\u5668\u6551\u6025\u6307\u4EE4"), "\uFF1A\u5728\u5BBF\u4E3B\u7535\u8111/\u670D\u52A1\u5668\u7EC8\u7AEF\u6267\u884C ", React.createElement("code", { style: s.code }, "touch ~/.dsh/dsh-bridge-gateway/reset-auth"), " \u5373\u53EF\u77AC\u95F4\u6E05\u7A7A\u5BC6\u7801\u6062\u590D\u521D\u59CB\u72B6\u6001\u3002")
         )
       ) : React.createElement(
         "div",
@@ -3329,7 +3311,7 @@ function BridgePanel({ rpcCall }) {
           },
           React.createElement("div", { style: { fontWeight: 600, color: "var(--dsw-alias-label-primary,currentColor)", marginBottom: 4 } }, "\u{1F6DF} \u627E\u56DE\u4E0E\u91CD\u7F6E\u5BC6\u7801\u6307\u5F15\uFF1A"),
           React.createElement("div", null, "1. ", React.createElement("strong", null, "\u7535\u8111\u672C\u673A\u76F4\u8FDE\u4FEE\u6539"), "\uFF1A\u76F4\u63A5\u5728\u8FD0\u884C\u672C\u7A0B\u5E8F\u7684\u7535\u8111\u672C\u673A\u6253\u5F00\u672C\u63A7\u5236\u53F0\uFF08127.0.0.1 \u4EAB\u6709\u7269\u7406\u514D\u9501\u7279\u6743\uFF09\uFF0C\u53EF\u968F\u65F6\u4FEE\u6539\u7BA1\u7406\u5BC6\u7801\u3002"),
-          React.createElement("div", { style: { marginTop: 4 } }, "2. ", React.createElement("strong", null, "\u670D\u52A1\u5668\u6551\u6025\u6307\u4EE4"), "\uFF1A\u5728\u5BBF\u4E3B\u7535\u8111\u7EC8\u7AEF\u6267\u884C ", React.createElement("code", { style: s.code }, "touch ~/.dsh/dsh-bridge/reset-auth"), " \u5373\u53EF\u77AC\u95F4\u6E05\u7A7A\u5BC6\u7801\u6062\u590D\u521D\u59CB\u72B6\u6001\u3002")
+          React.createElement("div", { style: { marginTop: 4 } }, "2. ", React.createElement("strong", null, "\u670D\u52A1\u5668\u6551\u6025\u6307\u4EE4"), "\uFF1A\u5728\u5BBF\u4E3B\u7535\u8111\u7EC8\u7AEF\u6267\u884C ", React.createElement("code", { style: s.code }, "touch ~/.dsh/dsh-bridge-gateway/reset-auth"), " \u5373\u53EF\u77AC\u95F4\u6E05\u7A7A\u5BC6\u7801\u6062\u590D\u521D\u59CB\u72B6\u6001\u3002")
         )
       )
     );
@@ -4617,80 +4599,6 @@ function injectMobileStyles() {
       }
     }
 
-    /* \u8FDC\u7A0B\u5DE5\u4F5C\u533A\u9009\u62E9\u5F39\u7A97\u79FB\u52A8\u7AEF/\u684C\u9762\u7AEF\u81EA\u9002\u5E94\u6837\u5F0F */
-    #dsh-remote-workspace-modal {
-      position: fixed !important;
-      inset: 0 !important;
-      z-index: 100000 !important;
-      background: rgba(0, 0, 0, 0.65) !important;
-      backdrop-filter: blur(5px) !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      padding: 16px !important;
-      box-sizing: border-box !important;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-      color: var(--dsw-alias-label-primary, #111827) !important;
-    }
-
-    .dsh-ws-dialog-card {
-      background: var(--dsw-alias-bg-layer-1, #ffffff) !important;
-      border: 1px solid var(--dsw-alias-border-l1, #e5e7eb) !important;
-      border-radius: 16px !important;
-      width: 100% !important;
-      max-width: 620px !important;
-      max-height: 88vh !important;
-      display: flex !important;
-      flex-direction: column !important;
-      box-shadow: 0 25px 35px -5px rgba(0,0,0,0.3), 0 12px 16px -5px rgba(0,0,0,0.2) !important;
-      overflow: hidden !important;
-      animation: dshModalFadeIn 0.2s ease-out !important;
-    }
-
-    .dsh-ws-chips-scroll {
-      display: flex !important;
-      align-items: center !important;
-      gap: 6px !important;
-      overflow-x: auto !important;
-      white-space: nowrap !important;
-      scrollbar-width: none !important;
-      -ms-overflow-style: none !important;
-      -webkit-overflow-scrolling: touch !important;
-      padding: 2px 0 !important;
-    }
-    .dsh-ws-chips-scroll::-webkit-scrollbar {
-      display: none !important;
-    }
-
-    @media (max-width: 640px) {
-      #dsh-remote-workspace-modal {
-        align-items: flex-end !important;
-        padding: 0 !important;
-      }
-
-      .dsh-ws-dialog-card {
-        max-height: 92dvh !important;
-        height: 92dvh !important;
-        border-bottom-left-radius: 0 !important;
-        border-bottom-right-radius: 0 !important;
-        border-left: none !important;
-        border-right: none !important;
-        border-bottom: none !important;
-        max-width: 100vw !important;
-        width: 100vw !important;
-        margin: 0 !important;
-        animation: dshBottomSheetUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
-      }
-
-      .dsh-ws-drag-handle {
-        display: block !important;
-      }
-    }
-
-    @keyframes dshModalFadeIn {
-      from { opacity: 0; transform: scale(0.96); }
-      to { opacity: 1; transform: scale(1); }
-    }
 
     @keyframes dshBottomSheetUp {
       from { transform: translateY(100%); }
@@ -5077,637 +4985,27 @@ function setupMobileExperience(rpcCall, ctx) {
       }
     }
   }, { passive: true });
-  document.addEventListener("click", (e) => {
-    if (isLocalEnvironment()) return;
-    const btn = e.target.closest('button, [role="button"], a');
-    if (!btn) return;
-    if (btn.closest("#dsh-remote-workspace-modal")) return;
-    const label = (btn.getAttribute("aria-label") || btn.innerText || btn.title || "").trim();
-    const isAddWorkspace = label === "\u6DFB\u52A0\u5DE5\u4F5C\u533A" || label === "\u65B0\u5EFA\u5DE5\u4F5C\u533A" || label === "\u6253\u5F00\u5DE5\u4F5C\u533A" || label === "\u6253\u5F00\u6587\u4EF6\u5939" || label === "Add Workspace" || label === "Open Folder" || label.includes("\u6DFB\u52A0\u5DE5\u4F5C\u533A") || label.includes("\u6253\u5F00\u5DE5\u4F5C\u533A") || label.includes("\u6253\u5F00\u6587\u4EF6\u5939") || btn.matches('button[aria-label*="\u5DE5\u4F5C\u533A"][aria-label*="\u6DFB\u52A0"], button[aria-label*="\u5DE5\u4F5C\u533A"][aria-label*="\u6253\u5F00"]');
-    if (isAddWorkspace) {
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
-      if (typeof window.__dshOpenRemoteWorkspaceModal === "function") {
-        window.__dshOpenRemoteWorkspaceModal();
-      }
-    }
-  }, true);
-}
-function escapeHtml(str) {
-  if (!str) return "";
-  return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-}
-function showRemoteWorkspaceDialog(rpcCall, onWorkspaceAdded, clientCtx, onPicked, onCancel) {
-  if (typeof document === "undefined" || typeof window === "undefined") return;
-  const existing = document.getElementById("dsh-remote-workspace-modal");
-  if (existing) existing.remove();
-  const overlay = document.createElement("div");
-  overlay.id = "dsh-remote-workspace-modal";
-  overlay.style.cssText = `
-    position: fixed;
-    inset: 0;
-    z-index: 100000;
-    background: rgba(0, 0, 0, 0.65);
-    backdrop-filter: blur(5px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-    box-sizing: border-box;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    color: var(--dsw-alias-label-primary, #111827);
-  `;
-  const modal = document.createElement("div");
-  modal.className = "dsh-ws-dialog-card";
-  let currentPath = "";
-  let parentPath = null;
-  let breadcrumbs = [];
-  let entries = [];
-  let roots = [];
-  let drives = [];
-  let workspaces = [];
-  let filterQuery = "";
-  let showManualInput = false;
-  let isLoading = false;
-  let isSubmitting = false;
-  let statusMessage = null;
-  let isErrorMessage = false;
-  function closeModal() {
-    document.removeEventListener("keydown", handleKeydown);
-    overlay.style.opacity = "0";
-    overlay.style.transition = "opacity 0.15s ease";
-    setTimeout(() => overlay.remove(), 150);
-    if (typeof onCancel === "function") {
-      try {
-        onCancel();
-      } catch (e) {
-      }
-    }
-  }
-  overlay.addEventListener("click", (e) => {
-    if (e.target === overlay) closeModal();
-  });
-  const handleKeydown = (e) => {
-    if (e.key === "Escape") {
-      closeModal();
-    }
-  };
-  document.addEventListener("keydown", handleKeydown);
-  function render() {
-    const filteredEntries = (entries || []).filter((e) => {
-      if (!filterQuery.trim()) return true;
-      return e.name.toLowerCase().includes(filterQuery.trim().toLowerCase());
-    });
-    modal.innerHTML = `
-      <!-- \u79FB\u52A8\u7AEF\u9876\u90E8\u4E0B\u62C9\u6307\u793A\u6761 -->
-      <div class="dsh-ws-drag-handle" style="width: 36px; height: 4px; background: var(--dsw-alias-border-l2, #d1d5db); border-radius: 2px; margin: 8px auto 0 auto; display: none;"></div>
-
-      <!-- \u5F39\u7A97\u9876\u90E8\u6807\u9898\u680F -->
-      <div style="padding: 12px 16px; border-bottom: 1px solid var(--dsw-alias-border-l2, #e5e7eb); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; background: var(--dsw-alias-bg-layer-2, #f9fafb);">
-        <div style="display: flex; align-items: center; gap: 8px; overflow: hidden;">
-          <span style="font-size: 20px; flex-shrink: 0;">\u{1F5C2}\uFE0F</span>
-          <div style="overflow: hidden;">
-            <div style="font-size: 15px; font-weight: 600; color: var(--dsw-alias-label-primary, #111827); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">\u9009\u62E9\u7535\u8111\u5DE5\u4F5C\u533A</div>
-            <div style="font-size: 11px; color: var(--dsw-alias-label-tertiary, #6b7280); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">\u70B9\u51FB\u8FDB\u5165\u6587\u4EF6\u5939\uFF0C\u6216\u70B9\u51FB\u300C+ \u9009\u4E3A\u5DE5\u4F5C\u533A\u300D\u76F4\u63A5\u6DFB\u52A0\u5E76\u5207\u6362</div>
-          </div>
-        </div>
-        <button id="dsh-ws-close-btn" style="border: none; background: none; font-size: 18px; cursor: pointer; color: var(--dsw-alias-label-tertiary, #9ca3af); padding: 4px 8px; border-radius: 6px; line-height: 1; flex-shrink: 0;">\u2715</button>
-      </div>
-
-      <div style="padding: 12px 16px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 10px;">
-        <!-- \u63D0\u793A\u4FE1\u606F\u6A2A\u5E45 -->
-        ${statusMessage ? `
-          <div style="padding: 8px 12px; border-radius: 8px; font-size: 12px; line-height: 1.5; font-weight: 500; display: flex; align-items: center; gap: 8px; ${isErrorMessage ? "background: var(--dsw-alias-state-error-bg, #fef2f2); border: 1px solid var(--dsw-alias-state-error-border, #fecaca); color: var(--dsw-alias-state-error-primary, #dc2626);" : "background: var(--dsw-alias-state-success-bg, #ecfdf5); border: 1px solid var(--dsw-alias-state-success-border, #a7f3d0); color: var(--dsw-alias-state-success-primary, #059669);"}">
-            <span>${isErrorMessage ? "\u26A0\uFE0F" : "\u{1F389}"}</span>
-            <span>${escapeHtml(statusMessage)}</span>
-          </div>
-        ` : ""}
-
-        <!-- \u5FEB\u901F\u76F4\u8FBE\u4E0E\u78C1\u76D8\u6A2A\u5411\u6ED1\u52A8\u680F (\u6781\u7B80\u7701\u7A7A\u95F4) -->
-        <div class="dsh-ws-chips-scroll">
-          ${(drives || []).map((d) => {
-      const isActive = currentPath.startsWith(d.path) || currentPath === d.path;
-      return `
-              <button class="dsh-ws-quick-btn" data-path="${escapeHtml(d.path)}" style="border: 1px solid ${isActive ? "var(--dsw-alias-brand-primary, #4f6ef7)" : "var(--dsw-alias-border-l2, #d1d5db)"}; background: ${isActive ? "var(--dsw-alias-brand-primary, #4f6ef7)" : "var(--dsw-alias-bg-layer-2, #f9fafb)"}; color: ${isActive ? "#fff" : "var(--dsw-alias-label-primary, #111827)"}; border-radius: 14px; padding: 4px 10px; font-size: 11px; cursor: pointer; font-weight: 500; flex-shrink: 0; transition: all 0.1s;">
-                \u{1F4BE} ${escapeHtml(d.name)}
-              </button>
-            `;
-    }).join("")}
-          <span style="color: var(--dsw-alias-border-l2, #d1d5db); margin: 0 1px; flex-shrink: 0;">|</span>
-          ${(roots || []).map((r) => {
-      const isActive = currentPath === r.path;
-      return `
-              <button class="dsh-ws-quick-btn" data-path="${escapeHtml(r.path)}" style="border: 1px solid ${isActive ? "var(--dsw-alias-brand-primary, #4f6ef7)" : "var(--dsw-alias-border-l2, #d1d5db)"}; background: ${isActive ? "var(--dsw-alias-state-info-bg, #eff6ff)" : "var(--dsw-alias-bg-layer-2, #f9fafb)"}; color: ${isActive ? "var(--dsw-alias-brand-primary, #4f6ef7)" : "var(--dsw-alias-label-secondary, #374151)"}; border-radius: 14px; padding: 4px 10px; font-size: 11px; cursor: pointer; font-weight: 500; flex-shrink: 0;">
-                ${escapeHtml(r.name)}
-              </button>
-            `;
-    }).join("")}
-        </div>
-
-        <!-- \u4EA4\u4E92\u5F0F\u9762\u5305\u5C51\u8DEF\u5F84\u5BFC\u822A\u6761 (Breadcrumbs Bar) -->
-        <div style="background: var(--dsw-alias-bg-layer-3, #f3f4f6); border: 1px solid var(--dsw-alias-border-l2, #e5e7eb); border-radius: 10px; padding: 6px 10px; display: flex; align-items: center; justify-content: space-between; gap: 6px;">
-          <div class="dsh-ws-chips-scroll" style="flex: 1;">
-            <span style="font-size: 12px; margin-right: 2px; flex-shrink: 0;">\u{1F4C2}</span>
-            ${(breadcrumbs || []).map((crumb, idx) => {
-      const isLast = idx === breadcrumbs.length - 1;
-      return `
-                <button class="dsh-ws-crumb-btn" data-path="${escapeHtml(crumb.path)}" style="border: none; background: ${isLast ? "var(--dsw-alias-bg-layer-1, #fff)" : "transparent"}; color: ${isLast ? "var(--dsw-alias-brand-primary, #4f6ef7)" : "var(--dsw-alias-label-secondary, #4b5563)"}; font-family: ui-monospace, Menlo, monospace; font-size: 11px; font-weight: ${isLast ? "700" : "500"}; padding: 3px 6px; border-radius: 4px; cursor: pointer; text-decoration: ${isLast ? "none" : "underline"}; text-underline-offset: 2px; flex-shrink: 0; box-shadow: ${isLast ? "0 1px 2px rgba(0,0,0,0.06)" : "none"};">
-                  ${escapeHtml(crumb.name)}
-                </button>
-                ${!isLast ? `<span style="color: var(--dsw-alias-label-tertiary, #9ca3af); font-size: 11px; font-weight: 600; flex-shrink: 0;">/</span>` : ""}
-              `;
-    }).join("")}
-          </div>
-
-          <div style="display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
-            ${parentPath ? `
-              <button id="dsh-ws-up-btn" data-path="${escapeHtml(parentPath)}" title="\u8FD4\u56DE\u4E0A\u4E00\u7EA7" style="border: 1px solid var(--dsw-alias-border-l2, #d1d5db); background: var(--dsw-alias-bg-layer-1, #fff); color: var(--dsw-alias-label-primary, #111827); padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 2px;">
-                \u2B06\uFE0F \u4E0A\u7EA7
-              </button>
-            ` : ""}
-            <button id="dsh-ws-refresh-btn" title="\u5237\u65B0\u76EE\u5F55" style="border: 1px solid var(--dsw-alias-border-l2, #d1d5db); background: var(--dsw-alias-bg-layer-1, #fff); color: var(--dsw-alias-label-primary, #111827); padding: 3px 6px; border-radius: 6px; font-size: 11px; cursor: pointer;">
-              \u{1F504}
-            </button>
-          </div>
-        </div>
-
-        <!-- \u5F53\u524D\u6240\u5728\u76EE\u5F55\u786E\u8BA4\u5361\u7247 (Primary Action Card) -->
-        <div style="background: var(--dsw-alias-state-info-bg, #eff6ff); border: 1px solid var(--dsw-alias-state-info-border, #bfdbfe); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
-            <span style="font-size: 11px; font-weight: 600; color: var(--dsw-alias-brand-primary, #2563eb); flex-shrink: 0;">\u5F53\u524D\u76EE\u5F55:</span>
-            <span style="font-family: ui-monospace, Menlo, monospace; font-size: 11px; color: var(--dsw-alias-label-primary, #1e3a8a); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; text-align: right; font-weight: 600;">${escapeHtml(currentPath)}</span>
-          </div>
-          <button id="dsh-ws-add-current-btn" style="border: none; background: var(--dsw-alias-brand-primary, #2563eb); color: #fff; height: 36px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; box-shadow: 0 2px 4px rgba(37,99,235,0.25); transition: opacity 0.1s;" ${isSubmitting ? "disabled" : ""}>
-            ${isSubmitting ? "\u6B63\u5728\u6DFB\u52A0\u5E76\u5207\u6362\u2026" : "\u{1F449} \u8BBE\u4E3A\u5F53\u524D\u5DE5\u4F5C\u533A\u5E76\u8FDB\u5165"}
-          </button>
-        </div>
-
-        <!-- \u5B50\u76EE\u5F55\u5217\u8868\u4E0E\u8FC7\u6EE4\u680F -->
-        <div style="border: 1px solid var(--dsw-alias-border-l2, #e5e7eb); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; background: var(--dsw-alias-bg-layer-1, #fff);">
-          <!-- \u5B9E\u65F6\u8FC7\u6EE4\u641C\u7D22\u6846 -->
-          <div style="padding: 7px 10px; background: var(--dsw-alias-bg-layer-2, #f9fafb); border-bottom: 1px solid var(--dsw-alias-border-l2, #e5e7eb); display: flex; align-items: center; justify-content: space-between; gap: 6px;">
-            <div style="display: flex; align-items: center; gap: 6px; flex: 1;">
-              <span style="font-size: 11px; color: var(--dsw-alias-label-tertiary, #9ca3af);">\u{1F50D}</span>
-              <input id="dsh-ws-filter-input" type="text" value="${escapeHtml(filterQuery)}" placeholder="\u8FC7\u6EE4\u5B50\u6587\u4EF6\u5939\u2026" style="border: none; background: transparent; font-size: 12px; width: 100%; color: var(--dsw-alias-label-primary, #111827); outline: none;" />
-            </div>
-            <span style="font-size: 10px; color: var(--dsw-alias-label-tertiary, #6b7280); flex-shrink: 0;">
-              ${filteredEntries.length} \u4E2A\u6587\u4EF6\u5939
-            </span>
-          </div>
-
-          <!-- \u5B50\u6587\u4EF6\u5939\u6EDA\u52A8\u5217\u8868 (\u79FB\u52A8\u7AEF\u8212\u9002\u5927\u70B9\u6309\u533A\u57DF) -->
-          <div style="max-height: 240px; min-height: 120px; overflow-y: auto; padding: 2px 0;">
-            ${isLoading ? `
-              <div style="padding: 32px; text-align: center; font-size: 12px; color: var(--dsw-alias-label-tertiary, #6b7280); display: flex; flex-direction: column; align-items: center; gap: 6px;">
-                <span style="font-size: 20px;">\u23F3</span>
-                <span>\u6B63\u5728\u8BFB\u53D6\u76EE\u5F55\u5185\u5BB9\u2026</span>
-              </div>
-            ` : filteredEntries.length === 0 ? `
-              <div style="padding: 26px 16px; text-align: center; font-size: 12px; color: var(--dsw-alias-label-tertiary, #6b7280); display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                <span style="font-size: 22px;">\u{1F4C1}</span>
-                <span>${filterQuery ? "\u672A\u627E\u5230\u5339\u914D\u7684\u5B50\u6587\u4EF6\u5939" : "\u5F53\u524D\u6587\u4EF6\u5939\u4E0B\u6CA1\u6709\u66F4\u591A\u5B50\u6587\u4EF6\u5939"}</span>
-                <span style="font-size: 11px; color: var(--dsw-alias-label-tertiary, #9ca3af);">\uFF08\u76F4\u63A5\u70B9\u51FB\u4E0A\u65B9\u84DD\u8272\u6309\u94AE\u5373\u53EF\u8FDB\u5165\u5F53\u524D\u76EE\u5F55\uFF09</span>
-              </div>
-            ` : filteredEntries.map((e) => `
-              <div class="dsh-ws-entry-row" data-path="${escapeHtml(e.path)}" style="display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; border-bottom: 1px solid var(--dsw-alias-border-l2, #f3f4f6); cursor: pointer; font-size: 12px; transition: background 0.1s; min-height: 40px;">
-                <div class="dsh-ws-drill-btn" data-path="${escapeHtml(e.path)}" style="display: flex; align-items: center; gap: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; padding: 2px 0;">
-                  <span style="font-size: 16px; flex-shrink: 0;">\u{1F4C1}</span>
-                  <span style="font-family: ui-monospace, Menlo, monospace; font-weight: 500; color: var(--dsw-alias-label-primary, #111827); overflow: hidden; text-overflow: ellipsis;">${escapeHtml(e.name)}</span>
-                  <span style="color: var(--dsw-alias-label-tertiary, #9ca3af); font-size: 12px; margin-left: 2px; flex-shrink: 0;">\u203A</span>
-                </div>
-                <button class="dsh-ws-pick-entry-btn" data-path="${escapeHtml(e.path)}" title="\u76F4\u63A5\u6DFB\u52A0\u6B64\u5B50\u6587\u4EF6\u5939\u4E3A\u5DE5\u4F5C\u533A\u5E76\u8FDB\u5165" style="border: 1px solid var(--dsw-alias-state-success-border, #a7f3d0); background: var(--dsw-alias-state-success-bg, #ecfdf5); color: var(--dsw-alias-state-success-primary, #059669); padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 2px; flex-shrink: 0; margin-left: 8px; white-space: nowrap; transition: all 0.1s;">
-                  + \u9009\u4E3A\u5DE5\u4F5C\u533A
-                </button>
-              </div>
-            `).join("")}
-          </div>
-        </div>
-
-        <!-- \u624B\u52A8\u8F93\u5165\u8DEF\u5F84\u6298\u53E0\u533A -->
-        <div>
-          <div style="display: flex; align-items: center; justify-content: space-between;">
-            <button id="dsh-ws-toggle-manual" style="border: none; background: none; color: var(--dsw-alias-label-tertiary, #6b7280); font-size: 11px; cursor: pointer; padding: 2px 0; text-decoration: underline;">
-              ${showManualInput ? "\u25BC \u6536\u8D77\u7EDD\u5BF9\u8DEF\u5F84\u624B\u52A8\u8F93\u5165" : "\u25B6 \u624B\u52A8\u7C98\u8D34/\u8F93\u5165\u7EDD\u5BF9\u8DEF\u5F84"}
-            </button>
-          </div>
-          ${showManualInput ? `
-            <div style="margin-top: 6px; display: flex; gap: 6px;">
-              <input id="dsh-ws-manual-input" type="text" value="${escapeHtml(currentPath)}" placeholder="\u8F93\u5165\u7535\u8111\u7EDD\u5BF9\u8DEF\u5F84\uFF0C\u4F8B\u5982 C:\\Projects\\my-app" style="flex: 1; font-family: ui-monospace, Menlo, monospace; font-size: 11px; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--dsw-alias-border-l2, #d1d5db); background: var(--dsw-alias-bg-layer-1, #fff); color: var(--dsw-alias-label-primary, #111827); outline: none;" />
-              <button id="dsh-ws-manual-jump-btn" style="border: 1px solid var(--dsw-alias-border-l2, #d1d5db); background: var(--dsw-alias-bg-layer-2, #f9fafb); color: var(--dsw-alias-label-primary, #111827); padding: 0 10px; border-radius: 8px; font-size: 11px; cursor: pointer; white-space: nowrap;">
-                \u524D\u5F80
-              </button>
-              <button id="dsh-ws-manual-add-btn" style="border: none; background: var(--dsw-alias-brand-primary, #4f6ef7); color: #fff; padding: 0 12px; border-radius: 8px; font-size: 11px; font-weight: 500; cursor: pointer; white-space: nowrap;">
-                \u6DFB\u52A0\u5E76\u8FDB\u5165
-              </button>
-            </div>
-          ` : ""}
-        </div>
-
-        <!-- \u5DF2\u5728 DSH \u6CE8\u518C\u7684\u5DE5\u4F5C\u533A\u5C55\u793A (\u652F\u6301\u4E00\u952E\u5207\u6362) -->
-        ${workspaces && workspaces.length > 0 ? `
-          <div style="padding-top: 2px;">
-            <div style="font-size: 11px; font-weight: 600; color: var(--dsw-alias-label-tertiary, #6b7280); margin-bottom: 4px;">\u5DF2\u6CE8\u518C\u5DE5\u4F5C\u533A (${workspaces.length} \u4E2A\uFF0C\u70B9\u51FB\u76F4\u63A5\u5207\u6362)\uFF1A</div>
-            <div style="display: flex; flex-direction: column; gap: 4px; max-height: 80px; overflow-y: auto;">
-              ${workspaces.map((w, i) => `
-                <div class="dsh-ws-registered-row" data-ws-id="${escapeHtml(w.id || "")}" data-ws-path="${escapeHtml(w.path)}" style="display: flex; align-items: center; justify-content: space-between; background: var(--dsw-alias-bg-layer-2, #f9fafb); border: 1px solid var(--dsw-alias-border-l2, #e5e7eb); border-radius: 6px; padding: 4px 8px; font-size: 11px; cursor: pointer; transition: background 0.1s;">
-                  <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">
-                    <span style="font-weight: 600; color: var(--dsw-alias-brand-primary, #4f6ef7);">@${i + 1} ${escapeHtml(w.title || "")}</span>
-                    <span style="color: var(--dsw-alias-label-tertiary, #6b7280); margin-left: 6px; font-family: ui-monospace, Menlo, monospace; font-size: 10px;">${escapeHtml(w.path)}</span>
-                  </div>
-                  <button class="dsh-ws-switch-btn" data-ws-id="${escapeHtml(w.id || "")}" data-ws-path="${escapeHtml(w.path)}" style="border: 1px solid var(--dsw-alias-brand-primary, #4f6ef7); background: var(--dsw-alias-state-info-bg, #eff6ff); color: var(--dsw-alias-brand-primary, #4f6ef7); padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 600; cursor: pointer; flex-shrink: 0; margin-left: 6px; white-space: nowrap;">
-                    \u8FDB\u5165 \u2794
-                  </button>
-                </div>
-              `).join("")}
-            </div>
-          </div>
-        ` : ""}
-      </div>
-
-      <!-- \u5F39\u7A97\u5E95\u90E8\u64CD\u4F5C\u6761 -->
-      <div style="padding: 8px 16px; border-top: 1px solid var(--dsw-alias-border-l2, #e5e7eb); display: flex; align-items: center; justify-content: space-between; background: var(--dsw-alias-bg-layer-2, #f9fafb); flex-shrink: 0;">
-        <span style="font-size: 10px; color: var(--dsw-alias-label-tertiary, #6b7280);">
-          \u{1F4A1} \u70B9\u51FB\u6587\u4EF6\u5939\u53EF\u9010\u7EA7\u8FDB\u5165
-        </span>
-        <button id="dsh-ws-cancel-btn" style="border: 1px solid var(--dsw-alias-border-l2, #d1d5db); background: var(--dsw-alias-bg-layer-1, #fff); color: var(--dsw-alias-label-primary, #111827); padding: 5px 14px; border-radius: 8px; font-size: 12px; cursor: pointer; font-weight: 500;">\u5173\u95ED</button>
-      </div>
-    `;
-    modal.querySelector("#dsh-ws-close-btn")?.addEventListener("click", closeModal);
-    modal.querySelector("#dsh-ws-cancel-btn")?.addEventListener("click", closeModal);
-    modal.querySelectorAll(".dsh-ws-crumb-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const p = btn.getAttribute("data-path");
-        if (p) loadDirectory(p);
-      });
-    });
-    modal.querySelectorAll(".dsh-ws-quick-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const p = btn.getAttribute("data-path");
-        if (p) loadDirectory(p);
-      });
-    });
-    modal.querySelector("#dsh-ws-up-btn")?.addEventListener("click", (e) => {
-      const p = e.currentTarget.getAttribute("data-path");
-      if (p) loadDirectory(p);
-    });
-    modal.querySelector("#dsh-ws-refresh-btn")?.addEventListener("click", () => {
-      loadDirectory(currentPath);
-    });
-    modal.querySelector("#dsh-ws-add-current-btn")?.addEventListener("click", () => {
-      doSubmit(currentPath);
-    });
-    const filterInput = modal.querySelector("#dsh-ws-filter-input");
-    if (filterInput) {
-      filterInput.addEventListener("input", (e) => {
-        filterQuery = e.target.value;
-        render();
-        const nextInput = modal.querySelector("#dsh-ws-filter-input");
-        if (nextInput) {
-          nextInput.focus();
-          nextInput.selectionStart = nextInput.selectionEnd = nextInput.value.length;
-        }
-      });
-    }
-    modal.querySelectorAll(".dsh-ws-drill-btn").forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const p = btn.getAttribute("data-path");
-        if (p) loadDirectory(p);
-      });
-    });
-    modal.querySelectorAll(".dsh-ws-entry-row").forEach((row) => {
-      row.addEventListener("click", (e) => {
-        if (e.target.closest(".dsh-ws-pick-entry-btn")) return;
-        const p = row.getAttribute("data-path");
-        if (p) loadDirectory(p);
-      });
-    });
-    modal.querySelectorAll(".dsh-ws-pick-entry-btn").forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const p = btn.getAttribute("data-path");
-        if (p) doSubmit(p);
-      });
-    });
-    modal.querySelectorAll(".dsh-ws-registered-row, .dsh-ws-switch-btn").forEach((el) => {
-      el.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const wsId = el.getAttribute("data-ws-id");
-        const wsPath = el.getAttribute("data-ws-path");
-        if (wsId || wsPath) {
-          switchToWorkspace(wsId, wsPath);
-        }
-      });
-    });
-    modal.querySelector("#dsh-ws-toggle-manual")?.addEventListener("click", () => {
-      showManualInput = !showManualInput;
-      render();
-    });
-    const manualInput = modal.querySelector("#dsh-ws-manual-input");
-    modal.querySelector("#dsh-ws-manual-jump-btn")?.addEventListener("click", () => {
-      if (manualInput && manualInput.value.trim()) {
-        loadDirectory(manualInput.value.trim());
-      }
-    });
-    modal.querySelector("#dsh-ws-manual-add-btn")?.addEventListener("click", () => {
-      if (manualInput && manualInput.value.trim()) {
-        doSubmit(manualInput.value.trim());
-      }
-    });
-    if (manualInput) {
-      manualInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          doSubmit(manualInput.value.trim());
-        }
-      });
-    }
-  }
-  async function authRpc(endpoint, payload = {}) {
-    let token = getGlobalAdminToken();
-    if (!token && isLocalEnvironment()) {
-      try {
-        const res = await fetch("/__dsh_bridge__/loopback-token", { method: "POST" });
-        if (res.ok) {
-          const data = await res.json();
-          if (data?.adminToken) {
-            token = data.adminToken;
-            setGlobalAdminToken(token);
-          }
-        }
-      } catch {
-      }
-    }
-    return rpcCall(endpoint, {
-      ...payload,
-      ...token ? { adminToken: token } : {},
-      ...isLocalEnvironment() ? { isLocalhost: true } : {}
-    });
-  }
-  async function switchToWorkspace(wsId, wsPath) {
-    if (isSubmitting) return;
-    isSubmitting = true;
-    statusMessage = `\u6B63\u5728\u5207\u6362\u5DE5\u4F5C\u533A\u2026`;
-    isErrorMessage = false;
-    render();
-    if (typeof onPicked === "function" && wsPath) {
-      try {
-        onPicked(wsPath);
-      } catch (e) {
-      }
-    }
-    let switched = false;
-    if (clientCtx?.workspaces?.startSession && wsId) {
-      try {
-        clientCtx.workspaces.startSession(wsId);
-        switched = true;
-      } catch (e) {
-        console.warn("[dsh-bridge] startSession failed:", e);
-      }
-    }
-    if (!switched && wsPath) {
-      try {
-        if (clientCtx?.workspaces?.create) {
-          const ws = await clientCtx.workspaces.create({ path: wsPath });
-          if (ws?.workspaceId && clientCtx?.workspaces?.startSession) {
-            clientCtx.workspaces.startSession(ws.workspaceId);
-            switched = true;
-          }
-        }
-        if (!switched) {
-          const raw = await authRpc(BRIDGE_ENDPOINTS.addRemoteWorkspace, { path: wsPath });
-          const res = raw?.value || raw;
-          if (res?.workspaceId && clientCtx?.workspaces?.startSession) {
-            try {
-              clientCtx.workspaces.startSession(res.workspaceId);
-              switched = true;
-            } catch (e) {
-            }
-          }
-          if (!switched && res?.sessionId && clientCtx?.sessions?.open) {
-            try {
-              clientCtx.sessions.open(res.sessionId);
-              switched = true;
-            } catch (e) {
-            }
-          }
-        }
-      } catch (e) {
-      }
-    }
-    statusMessage = `\u2713 \u5DF2\u5207\u6362\u81F3\u5DE5\u4F5C\u533A\uFF01`;
-    render();
-    setTimeout(() => {
-      closeModal();
-      document.body.classList.remove("dsh-drawer-open");
-    }, 400);
-  }
-  async function loadDirectory(targetPath) {
-    if (isSubmitting) return;
-    if (!rpcCall) return;
-    isLoading = true;
-    filterQuery = "";
-    statusMessage = null;
-    isErrorMessage = false;
-    render();
-    try {
-      const raw = await authRpc(BRIDGE_ENDPOINTS.listRemoteDirectories, { path: targetPath });
-      const res = raw?.value || raw;
-      if (res) {
-        currentPath = res.currentPath || targetPath || "";
-        parentPath = res.parentPath || null;
-        breadcrumbs = res.breadcrumbs || [];
-        entries = res.entries || [];
-        roots = res.roots || [];
-        drives = res.drives || [];
-        workspaces = res.workspaces || [];
-        if (res.error) {
-          statusMessage = res.error;
-          isErrorMessage = true;
-        }
-      }
-    } catch (err) {
-      statusMessage = err.message || "\u8BFB\u53D6\u76EE\u5F55\u5931\u8D25";
-      isErrorMessage = true;
-    } finally {
-      isLoading = false;
-      render();
-    }
-  }
-  async function doSubmit(pathToRegister) {
-    if (isSubmitting) return;
-    const p = (pathToRegister || currentPath || "").trim();
-    if (!p) {
-      statusMessage = "\u8BF7\u8F93\u5165\u6216\u9009\u62E9\u5DE5\u4F5C\u533A\u8DEF\u5F84";
-      isErrorMessage = true;
-      render();
-      return;
-    }
-    if (!rpcCall) return;
-    isSubmitting = true;
-    statusMessage = null;
-    isErrorMessage = false;
-    render();
-    try {
-      let clientWs = null;
-      if (clientCtx?.workspaces?.create) {
-        try {
-          clientWs = await clientCtx.workspaces.create({ path: p });
-        } catch (e) {
-          console.warn("[dsh-bridge] clientCtx.workspaces.create failed:", e);
-        }
-      }
-      const raw = await authRpc(BRIDGE_ENDPOINTS.addRemoteWorkspace, { path: p });
-      const res = raw?.value || raw;
-      if (res && res.ok) {
-        statusMessage = `\u2713 \u5DE5\u4F5C\u533A\u300C${res.title || p}\u300D\u5DF2\u9009\u5B9A\uFF0C\u6B63\u5728\u5207\u6362\u2026`;
-        isErrorMessage = false;
-        workspaces = res.workspaces || [];
-        render();
-        const targetWorkspaceId = clientWs?.workspaceId || res.workspaceId;
-        if (typeof onPicked === "function") {
-          try {
-            onPicked(p);
-          } catch (e) {
-          }
-        }
-        let switched = false;
-        if (clientCtx?.workspaces?.startSession && targetWorkspaceId) {
-          try {
-            clientCtx.workspaces.startSession(targetWorkspaceId);
-            switched = true;
-          } catch (e) {
-            console.warn("[dsh-bridge] startSession failed:", e);
-          }
-        }
-        if (!switched && clientCtx?.sessions?.open && res.sessionId) {
-          try {
-            clientCtx.sessions.open(res.sessionId);
-            switched = true;
-          } catch (e) {
-            console.warn("[dsh-bridge] sessions.open failed:", e);
-          }
-        }
-        if (typeof onWorkspaceAdded === "function") {
-          onWorkspaceAdded(res);
-        }
-        setTimeout(() => {
-          closeModal();
-          document.body.classList.remove("dsh-drawer-open");
-        }, 500);
-      } else {
-        statusMessage = res?.error || raw?.error || "\u6DFB\u52A0\u5DE5\u4F5C\u533A\u5931\u8D25";
-        isErrorMessage = true;
-        render();
-      }
-    } catch (err) {
-      statusMessage = err.message || "\u6DFB\u52A0\u5DE5\u4F5C\u533A\u5F02\u5E38";
-      isErrorMessage = true;
-      render();
-    } finally {
-      isSubmitting = false;
-    }
-  }
-  overlay.appendChild(modal);
-  document.body.appendChild(overlay);
-  loadDirectory("");
-}
-function RemoteDirectoryFlow(props) {
-  const { open, pick } = props;
-  const outcome = React.useRef(props);
-  outcome.current = props;
-  const armed = React.useRef(false);
-  const openRemoteModal = () => {
-    if (typeof window.__dshOpenRemoteWorkspaceModal === "function") {
-      window.__dshOpenRemoteWorkspaceModal(
-        (res) => {
-          if (res?.path && outcome.current?.onPicked) {
-            outcome.current.onPicked(res.path);
-          }
-        },
-        (chosenPath) => {
-          if (chosenPath && outcome.current?.onPicked) {
-            outcome.current.onPicked(chosenPath);
-          }
-        },
-        () => {
-          if (outcome.current?.onCancel) {
-            outcome.current.onCancel();
-          }
-        }
-      );
-    } else if (outcome.current?.onCancel) {
-      outcome.current.onCancel();
-    }
-  };
-  React.useEffect(() => {
-    if (!open) {
-      armed.current = false;
-      return;
-    }
-    if (armed.current) return;
-    armed.current = true;
-    const isNativeHost = typeof window !== "undefined" && (window.electron || window.__DSH_NATIVE_HOST__);
-    if (isNativeHost || isLocalEnvironment()) {
-      const pickFn = typeof pick === "function" ? pick : typeof window.__dshClientCtx?.workspaces?.pickDirectory === "function" ? () => window.__dshClientCtx.workspaces.pickDirectory() : null;
-      if (pickFn) {
-        try {
-          const promise = pickFn();
-          if (promise && typeof promise.then === "function") {
-            promise.then((chosenPath) => {
-              if (chosenPath === null) {
-                if (outcome.current?.onCancel) outcome.current.onCancel();
-              } else if (chosenPath) {
-                if (outcome.current?.onPicked) outcome.current.onPicked(chosenPath);
-              }
-            }).catch(() => {
-              openRemoteModal();
-            });
-            return;
-          }
-        } catch {
-          openRemoteModal();
-          return;
-        }
-      }
-    }
-    openRemoteModal();
-  }, [open, pick]);
-  return null;
 }
 function apply(ctx) {
   window.__dshClientCtx = ctx;
-  const rpcCall = (endpoint, payload, signal) => ctx.connection.rpc.call(BRIDGE_RPC_CHANNEL, endpoint, payload, signal);
-  window.__dshOpenRemoteWorkspaceModal = (onAdded, onPickDirect, onCancel) => showRemoteWorkspaceDialog(rpcCall, onAdded, ctx, onPickDirect, onCancel);
+  const rpcCall = async (endpoint, payload, signal) => {
+    try {
+      return await ctx.connection.rpc.call(BRIDGE_RPC_CHANNEL, endpoint, payload, signal);
+    } catch (err) {
+      if (!BRIDGE_RPC_CHANNEL_LEGACY || BRIDGE_RPC_CHANNEL_LEGACY === BRIDGE_RPC_CHANNEL) throw err;
+      if (typeof console !== "undefined") {
+        console.warn("[dsh-bridge-gateway] \u65B0 RPC \u901A\u9053\u8C03\u7528\u5931\u8D25\uFF0C\u56DE\u843D\u5230\u517C\u5BB9\u901A\u9053:", err?.message ?? err);
+      }
+      return ctx.connection.rpc.call(BRIDGE_RPC_CHANNEL_LEGACY, endpoint, payload, signal);
+    }
+  };
   setupMobileExperience(rpcCall, ctx);
-  const injected = () => ({ pick: () => ctx.workspaces?.pickDirectory?.() });
-  ctx.slots.inject(
-    "conversation.hero.workspace.directoryFlow",
-    () => ctx.slots.inject("sidebar.workspaces.directoryFlow", function* () {
-      yield ctx.slots.register(
-        {
-          name: "conversation.hero.workspace.directoryFlow",
-          priority: -10,
-          inject: injected
-        },
-        RemoteDirectoryFlow
-      );
-      yield ctx.slots.register(
-        {
-          name: "sidebar.workspaces.directoryFlow",
-          priority: -10,
-          inject: injected
-        },
-        RemoteDirectoryFlow
-      );
-    })
-  );
   ctx.slots.inject(
     "settings.section",
     () => ctx.slots.register(
       {
         name: "settings.section",
-        id: "dsh-bridge",
+        id: "dsh-bridge-gateway",
         order: 10,
         label: () => "\u8FDC\u7A0B\u8BBF\u95EE",
         inject: () => ({ rpcCall })
