@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { AuthManager } from '../lib/auth/manager.js'
 import { installBridgeRpc, BRIDGE_ENDPOINTS } from '../lib/bridge-rpc.js'
+import { BRIDGE_RPC_CHANNEL, BRIDGE_RPC_CHANNELS } from '../lib/bridge-rpc-constants.js'
 import { BridgeService } from '../lib/index.js'
 
 // 0.1.5 适配：RPC 入口从 connection.rpc.handle 迁到 ctx.inject(['connection','webServer'])
@@ -9,6 +10,9 @@ import { BridgeService } from '../lib/index.js'
 // call() 走完整 wire 路径（POST JSON {rpcId,type:'client-request',method,payload}），
 // 返回解包后的 result（与旧 connection.rpc.handle 直调的返回形状一致）。
 function makeRpcHarness() {
+  // 服务端现在同时注册新/旧两条通道路径（见 lib/bridge-rpc.js）。
+  // 按 path 建表，测试取当前通道对应的 handler，避免依赖注册顺序。
+  const routeHandlers = new Map()
   let routeHandler = null
   const ctx = {
     connection: {},
@@ -17,8 +21,9 @@ function makeRpcHarness() {
         connection: {},
         webServer: {
           register: (route) => {
-            routeHandler = route.handler
-            return () => {}
+            routeHandlers.set(route.path, route.handler)
+            if (route.path === BRIDGE_RPC_CHANNEL) routeHandler = route.handler
+            return () => { routeHandlers.delete(route.path) }
           },
         },
         effect: (f) => f(),
@@ -30,7 +35,7 @@ function makeRpcHarness() {
     const body = JSON.stringify({ rpcId: 'test-rpc-1', type: 'client-request', method: endpoint, payload })
     const req = {
       method: 'POST',
-      url: `/dsh-bridge/${endpoint}`,
+      url: `${BRIDGE_RPC_CHANNEL}/${endpoint}`,
       headers: { 'content-type': 'application/json', host: 'localhost' },
       [Symbol.asyncIterator]: async function* () {
         yield Buffer.from(body)
