@@ -199,10 +199,16 @@ function forwardRequest(ws, req, res, forwardPath) {
   req.on('data', c => chunks.push(c));
   req.on('end', () => {
     const requestId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+    // 注入真实客户端 IP：本端鉴权层（黑名单/日志）依赖 x-forwarded-for
+    // 辨别隧道背后的来源；已有代理链时追加到末段。
+    const headers = { ...req.headers };
+    const prior = String(headers['x-forwarded-for'] ?? '').trim();
+    const realIp = String(req.socket?.remoteAddress ?? '').replace(/^::ffff:/, '');
+    headers['x-forwarded-for'] = prior ? `${prior}, ${realIp}` : realIp;
     ws.send(JSON.stringify({
       type: 'request', requestId,
       method: req.method, path: forwardPath,
-      headers: req.headers,
+      headers,
       body: Buffer.concat(chunks).toString('base64'),
     }));
     // API 请求（历史记录等大响应）用更长超时
@@ -284,12 +290,17 @@ httpServer.on('upgrade', (req, socket, head) => {
   }
 
   const wsId = `ws-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
-  pendingWsUpgrades.set(wsId, { socket, head, req: { url: forwardPath, headers: req.headers } });
+  // WS 同样注入真实来源（与 HTTP 侧 forwardRequest 一致）
+  const wsHeaders = { ...req.headers };
+  const wsPrior = String(wsHeaders['x-forwarded-for'] ?? '').trim();
+  const wsRealIp = String(req.socket?.remoteAddress ?? '').replace(/^::ffff:/, '');
+  wsHeaders['x-forwarded-for'] = wsPrior ? `${wsPrior}, ${wsRealIp}` : wsRealIp;
+  pendingWsUpgrades.set(wsId, { socket, head, req: { url: forwardPath, headers: wsHeaders } });
 
   tunnelWs.send(JSON.stringify({
     type: 'ws-open', wsId,
     path: forwardPath,
-    headers: req.headers,
+    headers: wsHeaders,
   }));
 
   // 超时清理

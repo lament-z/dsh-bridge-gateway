@@ -1,8 +1,8 @@
 {
   "name": "dsh-bridge-gateway",
-  "version": "0.1.7",
-  "description": "以 dsh-bridge 为根基、融合 remote-gateway 能力的 DSH 远程访问网关：局域网 / Cloudflare 隧道 / 自建隧道之外，新增「公网直连网关」（0.0.0.0 监听 + 自带 HTTPS 自签证书 + 强制登录门禁），解决移动端外网直连操控电脑。",
-  "releaseNotes": "【dsh-bridge-gateway 0.1.5】\n• 🔧 适配 DSH 0.1.5：RPC 通道迁移到 webServer 直注册 + requestRejection 鉴权\n• 📱 移动端深度适配：顶栏防重叠、分支 chip 不再裁切、输入框宽度对齐并 sticky 固定、44px 点击热区、侧边栏焦点陷阱消除\n• 默认不启用，安装后原有局域网/隧道/IM 行为完全不变",
+  "version": "0.2.0",
+  "description": "以 dsh-bridge 为根基的 DSH 远程访问网关：局域网 / Cloudflare 隧道 / Tailscale 隧道 / 自建隧道 / 公网直连网关 / IM Bot，全部在 Web 面板中配置。",
+  "releaseNotes": "【dsh-bridge-gateway 0.2.0】\n• 🆕 Tailscale 隧道卡片：网关自动探测 `tailscale serve` 地址（只读，不代改配置），支持一键填入、手动编辑与二维码扫码直连\n• 🗂️ 访问配置 Tab：原「局域网」「公网访问」两块合并，直连网关 / Cloudflare / Tailscale / 自建隧道 / 局域网五张卡片，默认只展开直连网关\n• 👥 访客管理 Tab：远程连接监控与持久黑名单从公网 Tab 独立出来\n• 📱 移除 dsh-mobile 协议舱（/ws/mobile 设备配对）及其 Linux 一键部署 CLI（init / setup / status / remove）\n• 🎨 卡片支持折叠，折叠时保留状态标签与一行关键信息\n• 🐛 修复 Tab 数量超出容器宽度导致「运维监控」在桌面端不可见（Tab 合并后恢复）",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -61,9 +61,7 @@
     "remote-access",
     "tunnel",
     "cloudflare",
-    "mobile",
-    "smartphone",
-    "tablet",
+    "tailscale",
     "qr-code",
     "qrcode",
     "websocket",

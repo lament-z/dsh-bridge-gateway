@@ -1,4 +1,4 @@
-// dsh-bridge 客户端打包：client/index.js → client/client.js
+// dsh-bridge-gateway 客户端打包：client/index.js → client/client.js
 import { mkdir, writeFile } from 'node:fs/promises';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';

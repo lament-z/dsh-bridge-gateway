@@ -104,13 +104,13 @@ const s = {
   muted:    { color: 'var(--dsw-alias-label-tertiary,#8b93a1)', fontSize: 12, lineHeight: 1.5 },
   label:    { color: 'var(--dsw-alias-label-primary,currentColor)', fontSize: 13, fontWeight: 500 },
   code:     { fontFamily: 'ui-monospace,Menlo,monospace', fontSize: 12, wordBreak: 'break-all', color: 'var(--dsw-alias-label-primary,currentColor)' },
-  btnPri:   { font: 'inherit', cursor: 'pointer', border: 'none', background: 'var(--dsw-alias-brand-primary,#4f6ef7)', color: 'var(--dsw-alias-label-primary-foreground,#fff)', height: 32, padding: '0 14px', borderRadius: 999, fontSize: 13, fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 4 },
+  btnPri:   { font: 'inherit', cursor: 'pointer', border: 'none', background: 'var(--dsw-alias-button-info-fill,#4176e6)', color: '#fff', height: 32, padding: '0 14px', borderRadius: 999, fontSize: 13, fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 4 },
   btnGhost: { font: 'inherit', cursor: 'pointer', border: '1px solid var(--dsw-alias-border-l2,#d1d5db)', background: 'var(--dsw-alias-bg-layer-2,#f9fafb)', color: 'var(--dsw-alias-label-primary,currentColor)', height: 32, padding: '0 14px', borderRadius: 999, fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 4, textDecoration: 'none' },
-  btnLink:  { font: 'inherit', cursor: 'pointer', border: 'none', background: 'none', color: 'var(--dsw-alias-brand-primary,#4f6ef7)', fontSize: 12, padding: 0, display: 'inline-flex', alignItems: 'center', gap: 3, textDecoration: 'none' },
+  btnLink:  { font: 'inherit', cursor: 'pointer', border: 'none', background: 'none', color: 'var(--dsw-alias-state-business-primary,#4176e6)', fontSize: 12, padding: 0, display: 'inline-flex', alignItems: 'center', gap: 3, textDecoration: 'none' },
   qr:       { width: 200, height: 200, maxWidth: '100%', borderRadius: 10, border: '1px solid var(--dsw-alias-border-l2,#e5e7eb)', margin: '8px 0', display: 'block', background: '#ffffff', padding: 6, boxSizing: 'border-box' },
   tag:      { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '3px 10px', borderRadius: 999, fontSize: 12, fontWeight: 500, whiteSpace: 'nowrap', flexShrink: 0, minWidth: 'max-content', lineHeight: 1.4 },
   input:    { width: '100%', font: 'inherit', fontSize: 13, padding: '7px 10px', borderRadius: 8, border: '1px solid var(--dsw-alias-border-l2,#d1d5db)', background: 'var(--dsw-alias-bg-layer-2,#f9fafb)', color: 'var(--dsw-alias-label-primary,currentColor)', outline: 'none', boxSizing: 'border-box' },
-  warn:     { background: 'var(--dsw-alias-state-warn-bg,#fffbeb)', border: '1px solid var(--dsw-alias-state-warn-border,#fde68a)', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: 'var(--dsw-alias-state-warn-primary,#92400e)', lineHeight: 1.6 },
+  warn:     { background: 'var(--dsw-alias-state-warn-tertiary,#fffbeb)', border: '1px solid var(--dsw-alias-border-l2,#fde68a)', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: 'var(--dsw-alias-state-warn-primary,#92400e)', lineHeight: 1.6 },
   tip:      { background: 'var(--dsw-alias-bg-layer-2,#f9fafb)', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: 'var(--dsw-alias-label-secondary,#6b7280)', lineHeight: 1.6 },
 };
 
@@ -129,14 +129,16 @@ const Icons = {
   telegram: (props) => React.createElement('svg', { viewBox: '0 0 24 24', width: 18, height: 18, fill: 'currentColor', ...props },
     React.createElement('path', { d: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z' })
   ),
-  lan: (props) => React.createElement('svg', { viewBox: '0 0 24 24', width: 16, height: 16, fill: 'currentColor', ...props },
-    React.createElement('path', { d: 'M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.29 19.3a1 1 0 0 0 1.41 1.41l1.7-1.7C9.02 19.64 10.46 20 12 20c4.97 0 9-4.03 9-9s-4.03-9-9-9zm0 15c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6zm0-9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z' })
-  ),
   tunnel: (props) => React.createElement('svg', { viewBox: '0 0 24 24', width: 16, height: 16, fill: 'currentColor', ...props },
     React.createElement('path', { d: 'M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM19 18H6c-2.21 0-4-1.79-4-4 0-2.05 1.53-3.76 3.56-3.97l1.07-.11.5-.95C8.08 7.14 9.94 6 12 6c2.62 0 4.88 1.86 5.39 4.43l.3 1.5 1.53.11c1.56.1 2.78 1.41 2.78 2.96 0 1.65-1.35 3-3 3z' })
   ),
   security: (props) => React.createElement('svg', { viewBox: '0 0 24 24', width: 16, height: 16, fill: 'currentColor', ...props },
     React.createElement('path', { d: 'M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z' })
+  ),
+  visitor: (props) => React.createElement('svg', { viewBox: '0 0 24 24', width: 16, height: 16, fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', ...props },
+    React.createElement('circle', { cx: '9', cy: '7.5', r: '3.5' }),
+    React.createElement('path', { d: 'M2.5 20c0-3.6 2.9-6.5 6.5-6.5 1.6 0 3.1.6 4.2 1.5' }),
+    React.createElement('path', { d: 'M17.5 12.5l3.5 1.4v3.3c0 2.2-1.5 3.9-3.5 4.3-2-.4-3.5-2.1-3.5-4.3v-3.3z' })
   ),
   bot: (props) => React.createElement('svg', { viewBox: '0 0 24 24', width: 16, height: 16, fill: 'currentColor', ...props },
     React.createElement('path', { d: 'M20 9V7c0-1.1-.9-2-2-2h-3c0-1.66-1.34-3-3-3S9 3.34 9 5H6c-1.1 0-2 .9-2 2v2c-1.66 0-3 1.34-3 3s1.34 3 3 3v4c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-4c1.66 0 3-1.34 3-3s-1.34-3-3-3zm-2 10H6V7h12v12zm-9-6c-.83 0-1.5-.67-1.5-1.5S8.17 10 9 10s1.5.67 1.5 1.5S9.83 13 9 13zm6 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z' })
@@ -194,27 +196,27 @@ function StatusTag({ running, status }) {
   let text = running ? '运行中' : '未启动';
 
   if (status === 'connected') {
-    bg = 'var(--dsw-alias-state-success-bg,#ecfdf5)';
+    bg = 'var(--dsw-alias-state-success-tertiary,#ecfdf5)';
     color = 'var(--dsw-alias-state-success-primary,#059669)';
     text = '已连接';
   } else if (status === 'starting') {
-    bg = 'var(--dsw-alias-state-info-bg,#eff6ff)';
-    color = 'var(--dsw-alias-state-info-primary,#3b82f6)';
+    bg = 'var(--dsw-alias-bg-layer-2,#eff6ff)';
+    color = 'var(--dsw-alias-label-secondary,#3b82f6)';
     text = '连接中…';
   } else if (status === 'reconnecting') {
-    bg = 'var(--dsw-alias-state-warn-bg,#fffbeb)';
+    bg = 'var(--dsw-alias-state-warn-tertiary,#fffbeb)';
     color = 'var(--dsw-alias-state-warn-primary,#d97706)';
     text = '重连中…';
   } else if (status === 'paused') {
-    bg = 'var(--dsw-alias-state-warn-bg,#fffbeb)';
+    bg = 'var(--dsw-alias-state-warn-tertiary,#fffbeb)';
     color = 'var(--dsw-alias-state-warn-primary,#d97706)';
     text = '暂停中';
   } else if (status === 'error') {
-    bg = 'var(--dsw-alias-state-error-bg,#fef2f2)';
+    bg = 'var(--dsw-alias-interactive-bg-hover-danger,#fef2f2)';
     color = 'var(--dsw-alias-state-error-primary,#dc2626)';
     text = '异常';
   } else if (running) {
-    bg = 'var(--dsw-alias-state-success-bg,#ecfdf5)';
+    bg = 'var(--dsw-alias-state-success-tertiary,#ecfdf5)';
     color = 'var(--dsw-alias-state-success-primary,#059669)';
     text = '运行中';
   }
@@ -265,7 +267,7 @@ function QrBlock({ url, qr, onReset, auth, onNavigateSecurity }) {
       ? React.createElement('div', {
           style: {
             display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, padding: '6px 10px',
-            background: 'var(--dsw-alias-state-success-bg,#ecfdf5)',
+            background: 'var(--dsw-alias-state-success-tertiary,#ecfdf5)',
             border: '1px solid var(--dsw-alias-state-success-primary,#10b981)',
             borderRadius: 8, fontSize: 12, color: 'var(--dsw-alias-state-success-primary,#059669)',
             marginBottom: 8, fontWeight: 500, flexWrap: 'wrap',
@@ -283,7 +285,7 @@ function QrBlock({ url, qr, onReset, auth, onNavigateSecurity }) {
           title: onNavigateSecurity ? '点击前往「安全认证」开启访问保护' : undefined,
         },
           React.createElement('span', null, '⚠️ 当前未开启访问认证，建议在「安全认证」开启密码或扫码保护。'),
-          onNavigateSecurity && React.createElement('span', { style: { fontWeight: 600, textDecoration: 'underline', fontSize: 12, color: 'var(--dsw-alias-brand-primary,#4f6ef7)' } }, '去开启 ➔')
+          onNavigateSecurity && React.createElement('span', { style: { fontWeight: 600, textDecoration: 'underline', fontSize: 12, color: 'var(--dsw-alias-state-business-primary,#4176e6)' } }, '去开启 ➔')
         ),
     React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 } },
       React.createElement('div', { style: { padding: '6px 10px', background: 'var(--dsw-alias-bg-layer-1,#ffffff)', border: '1px solid var(--dsw-alias-border-l2,#e5e7eb)', borderRadius: 8 } },
@@ -472,6 +474,65 @@ const CustomTunnelConfigForm = React.memo(function CustomTunnelConfigForm({ serv
   );
 });
 
+// ---- 可折叠卡片外壳（访问配置 / 安全认证的卡片共用）----
+// 折叠触发区是整行标题；右侧的状态标签、勾选框、按钮包一层 stopPropagation，
+// 点它们只触发自身动作、不连带折叠。折叠时用 hint 保留一行关键信息
+// （当前地址 / 报错 / 未配置提示），避免折叠后完全看不到状态。
+const CardShell = React.memo(function CardShell({
+  title,
+  desc,
+  running,
+  statusText,
+  withStatus = true,
+  titleSize = 13,
+  headerRight,
+  hint,
+  open,
+  onToggle,
+  children,
+}) {
+  const collapsible = typeof onToggle === 'function';
+  return React.createElement('div', { style: s.card },
+    React.createElement('div', {
+      style: {
+        display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10,
+        ...(collapsible ? { cursor: 'pointer', userSelect: 'none' } : null),
+      },
+      ...(collapsible ? {
+        onClick: onToggle,
+        role: 'button',
+        tabIndex: 0,
+        'aria-expanded': Boolean(open),
+        title: open ? '点击折叠' : '点击展开',
+        onKeyDown: (e) => {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle(); }
+        },
+      } : null),
+    },
+      React.createElement('div', { style: { flex: '1 1 auto', minWidth: 0 } },
+        React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 6 } },
+          collapsible && React.createElement('span', {
+            style: { ...s.muted, fontSize: 11, flexShrink: 0, lineHeight: 1 },
+          }, open ? '▾' : '▸'),
+          React.createElement('div', { style: { ...s.label, fontSize: titleSize } }, title),
+        ),
+        React.createElement('div', { style: { ...s.muted, marginTop: 2 } }, desc),
+        collapsible && !open && hint
+          ? React.createElement('div', { style: { ...s.muted, marginTop: 4, fontSize: 11.5 } }, hint)
+          : null,
+      ),
+      React.createElement('div', {
+        style: { display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 },
+        ...(collapsible ? { onClick: (e) => e.stopPropagation() } : null),
+      },
+        withStatus ? React.createElement(StatusTag, { running, status: statusText }) : null,
+        headerRight,
+      ),
+    ),
+    collapsible && !open ? null : children,
+  );
+});
+
 const TunnelCard = React.memo(function TunnelCard({
   title,
   desc,
@@ -483,40 +544,45 @@ const TunnelCard = React.memo(function TunnelCard({
   onReset,
   auth,
   onNavigateSecurity,
+  open,
+  onToggle,
   children
 }) {
   const { running, configured, url, qr, state } = data ?? {};
   const phase = state?.phase ?? 'idle';
 
-  return React.createElement('div', { style: s.card },
-    React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 } },
-      React.createElement('div', { style: { flex: '1 1 auto', minWidth: 0 } },
-        React.createElement('div', { style: s.label }, title),
-        React.createElement('div', { style: { ...s.muted, marginTop: 2 } }, desc),
-      ),
-      React.createElement('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 } },
-        React.createElement(StatusTag, { running }),
-        onToggleAutoStart && React.createElement('label', {
-          style: {
-            display: 'flex',
-            alignItems: 'center',
-            gap: 4,
-            fontSize: 11,
-            color: 'var(--dsw-alias-label-secondary,#6b7280)',
-            cursor: 'pointer',
-            userSelect: 'none',
-          },
-          title: 'DSH 启动时自动恢复该隧道的运行状态',
-        },
-          React.createElement('input', {
-            type: 'checkbox',
-            checked: Boolean(autoStart),
-            onChange: (e) => onToggleAutoStart(e.target.checked),
-          }),
-          '随 DSH 启动自动开启',
-        ),
-      ),
+  // 折叠时保留一行关键信息：优先显示异常/进行中的阶段，其次当前地址
+  const hint = phase !== 'idle' && phase !== 'ready'
+    ? (state?.detail ?? phase)
+    : (url || (configured === false ? '尚未配置' : null));
+
+  return React.createElement(CardShell, {
+    title,
+    desc,
+    running,
+    open,
+    onToggle,
+    hint,
+    headerRight: onToggleAutoStart && React.createElement('label', {
+      style: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 4,
+        fontSize: 11,
+        color: 'var(--dsw-alias-label-secondary,#6b7280)',
+        cursor: 'pointer',
+        userSelect: 'none',
+      },
+      title: 'DSH 启动时自动恢复该隧道的运行状态',
+    },
+      React.createElement('input', {
+        type: 'checkbox',
+        checked: Boolean(autoStart),
+        onChange: (e) => onToggleAutoStart(e.target.checked),
+      }),
+      '随 DSH 启动自动开启',
     ),
+  },
     children,
     phase !== 'idle' && phase !== 'ready' && React.createElement('div', {
       style: {
@@ -569,7 +635,7 @@ const CloudflareConfigForm = React.memo(function CloudflareConfigForm({ token, h
   return React.createElement('div', {
     style: {
       ...s.block,
-      borderTop: '1px solid var(--dsw-alias-border-secondary, #e5e7eb)',
+      borderTop: '1px solid var(--dsw-alias-border-l2, #e5e7eb)',
       paddingTop: 10,
       marginTop: 10,
     },
@@ -630,7 +696,7 @@ const CloudflareConfigForm = React.memo(function CloudflareConfigForm({ token, h
 });
 
 // 公网直连网关（0.0.0.0:port 自带 HTTPS 自签证书 + 强制登录门禁）
-const GatewayCard = React.memo(function GatewayCard({ gw, onStart, onStop, onSaveConfig, onToggleAutoStart }) {
+const GatewayCard = React.memo(function GatewayCard({ gw, onStart, onStop, onSaveConfig, onToggleAutoStart, open, onToggle }) {
   const running = Boolean(gw?.running);
   const port = gw?.port ?? 7443;
   const [portVal, setPortVal] = React.useState(String(port));
@@ -660,32 +726,30 @@ const GatewayCard = React.memo(function GatewayCard({ gw, onStart, onStop, onSav
     }
   };
 
-  return React.createElement('div', { style: s.card },
-    React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 } },
-      React.createElement('div', { style: { flex: '1 1 auto', minWidth: 0 } },
-        React.createElement('div', { style: s.label }, '直连网关'),
-        React.createElement('div', { style: { ...s.muted, marginTop: 2 } },
-          '绕过隧道，由电脑直接监听公网端口：(端口自带 HTTPS 自签证书 + 强制登录门禁)',
-        ),
-      ),
-      React.createElement('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 } },
-        React.createElement(StatusTag, { running }),
-        onToggleAutoStart && React.createElement('label', {
-          style: {
-            display: 'flex', alignItems: 'center', gap: 4, fontSize: 11,
-            color: 'var(--dsw-alias-label-secondary,#6b7280)', cursor: 'pointer', userSelect: 'none',
-          },
-          title: 'DSH 启动时自动恢复直连网关的运行状态',
-        },
-          React.createElement('input', {
-            type: 'checkbox',
-            checked: Boolean(gw?.autoStart),
-            onChange: (e) => onToggleAutoStart(e.target.checked),
-          }),
-          '随 DSH 启动自动开启',
-        ),
-      ),
+  return React.createElement(CardShell, {
+    title: '直连网关',
+    desc: '绕过隧道，由电脑直接监听公网端口：(端口自带 HTTPS 自签证书 + 强制登录门禁)',
+    running,
+    open,
+    onToggle,
+    hint: running
+      ? `已监听 0.0.0.0:${port}`
+      : `未监听 · 端口 ${port}（需在路由器/云服务器做端口映射）`,
+    headerRight: onToggleAutoStart && React.createElement('label', {
+      style: {
+        display: 'flex', alignItems: 'center', gap: 4, fontSize: 11,
+        color: 'var(--dsw-alias-label-secondary,#6b7280)', cursor: 'pointer', userSelect: 'none',
+      },
+      title: 'DSH 启动时自动恢复直连网关的运行状态',
+    },
+      React.createElement('input', {
+        type: 'checkbox',
+        checked: Boolean(gw?.autoStart),
+        onChange: (e) => onToggleAutoStart(e.target.checked),
+      }),
+      '随 DSH 启动自动开启',
     ),
+  },
     React.createElement('div', { style: s.block, fontSize: 12, lineHeight: 1.7, color: 'var(--dsw-alias-label-secondary,#6b7280)' },
       React.createElement('div', { style: { marginBottom: 6 } },
         '✅ 公网直达：' ,
@@ -694,13 +758,13 @@ const GatewayCard = React.memo(function GatewayCard({ gw, onStart, onStop, onSav
       ),
       React.createElement('div', { style: { marginBottom: 6 } },
         '🔒 强制门禁：该网关始终要求登录（自动继承你在「安全认证」中设置的密码，与局域网策略相互独立），' ,
-        gw?.havePassword ? '公网访问必须输入密码。' : React.createElement('span', { style: { color: 'var(--dsw-alias-state-warning-primary,#d97706)' } }, '当前尚未设置访问密码，请先前往「安全认证」中设置。'),
+        gw?.havePassword ? '公网访问必须输入密码。' : React.createElement('span', { style: { color: 'var(--dsw-alias-state-warn-label,#d97706)' } }, '当前尚未设置访问密码，请先前往「安全认证」中设置。'),
       ),
       React.createElement('div', null,
         '🔐 传输加密：本机自动生成 HTTPS 自签证书，浏览器会提示不安全，在证书详情中勾选「始终允许」后即可正常访问。',
       ),
     ),
-    React.createElement('form', { onSubmit: handleSave, style: { ...s.block, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', borderTop: '1px solid var(--dsw-alias-border-secondary,#e5e7eb)', paddingTop: 10 } },
+    React.createElement('form', { onSubmit: handleSave, style: { ...s.block, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', borderTop: '1px solid var(--dsw-alias-border-l2,#e5e7eb)', paddingTop: 10 } },
       React.createElement('div', { style: { fontSize: 12, color: 'var(--dsw-alias-label-secondary,#6b7280)', flex: '0 0 auto' } }, '公网端口'),
       React.createElement('input', {
         style: { ...s.input, width: 120, height: 30 },
@@ -727,9 +791,309 @@ const GatewayCard = React.memo(function GatewayCard({ gw, onStart, onStop, onSav
   );
 });
 
+// ---- 访客管理 Tab：远程连接监控（已连接 IP 可见 / 强踢 / 黑名单）----
+function RemoteConnectionsCard({ rpcCall }) {
+  const [data, setData] = React.useState(null);
+  const [err, setErr] = React.useState('');
+  const [busy, setBusy] = React.useState(false);
+  const [msg, setMsg] = React.useState('');
+  const [newIp, setNewIp] = React.useState('');
+
+  const refresh = React.useCallback(async () => {
+    try {
+      const res = await rpcCall(BRIDGE_ENDPOINTS.connectionsGet, {});
+      if (res?.ok === false) { setErr(res?.error?.message ?? '加载失败'); setData(null); return; }
+      setData(res.value);
+      setErr('');
+    } catch (e) {
+      setErr(e?.message ?? String(e));
+    }
+  }, [rpcCall]);
+
+  React.useEffect(() => {
+    void refresh();
+    const t = setInterval(refresh, 8000);
+    return () => clearInterval(t);
+  }, [refresh]);
+
+  const kick = React.useCallback(async (ip, blacklist) => {
+    setBusy(true); setMsg('');
+    try {
+      const res = await rpcCall(BRIDGE_ENDPOINTS.connectionKick, { ip, blacklist });
+      if (res?.ok === false) { setMsg(res?.error?.message ?? '操作失败'); return; }
+      setMsg(blacklist
+        ? `已断开并拉黑 ${ip}（该 IP 此后所有连接将被拒绝）`
+        : `已断开 ${ip} 的 ${res.value?.kicked ?? 0} 条连接（对方可重新连接）`);
+      void refresh();
+    } catch (e) {
+      setMsg(e?.message ?? String(e));
+    } finally {
+      setBusy(false);
+    }
+  }, [rpcCall, refresh]);
+
+  const setBlacklist = React.useCallback(async (ip, action) => {
+    setBusy(true); setMsg('');
+    try {
+      const res = await rpcCall(BRIDGE_ENDPOINTS.blacklistSet, { ip, action });
+      if (res?.ok === false) { setMsg(res?.error?.message ?? '操作失败'); return; }
+      setMsg(action === 'add' ? `已拉黑 ${ip}` : `已将 ${ip} 移出黑名单`);
+      setNewIp('');
+      void refresh();
+    } catch (e) {
+      setMsg(e?.message ?? String(e));
+    } finally {
+      setBusy(false);
+    }
+  }, [rpcCall, refresh]);
+
+  const connections = data?.connections ?? [];
+  const blacklist = data?.blacklist ?? [];
+  // 查看对所有访客开放；断开/拉黑等写操作需管理员身份（服务端 checkAdminAuth 兜底）
+  const canManage = Boolean(data?.canManage);
+
+  return React.createElement('div', { style: { ...s.card } },
+    React.createElement('div', { style: { ...s.label, fontSize: 13, fontWeight: 600, marginBottom: 4 } }, '远程连接监控'),
+    React.createElement('div', { style: { ...s.muted, marginBottom: 10 } },
+      '当前通过 局域网 / 直连网关 / 隧道 连到本机的来源 IP。隧道场景显示的是访客真实 IP。',
+      canManage ? null : '断开与拉黑需要管理员权限。'),
+
+    err ? React.createElement('div', { style: { ...s.warn, marginBottom: 8 } }, err)
+      : !data ? React.createElement('div', { style: { ...s.muted } }, '加载中…')
+        : connections.length === 0
+          ? React.createElement('div', { style: { ...s.muted } }, '当前没有外部连接。')
+          : React.createElement('div', null,
+              connections.map((c) => React.createElement('div', {
+                key: c.ip,
+                style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, padding: '8px 0', borderBottom: '1px solid var(--dsw-alias-border-l2,#e5e7eb)', flexWrap: 'wrap' },
+              },
+                React.createElement('div', { style: { minWidth: 0 } },
+                  React.createElement('div', { style: { display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' } },
+                    React.createElement('code', { style: { ...s.code, fontSize: 12.5, fontWeight: 600 } }, c.ip),
+                    blacklist.includes(c.ip) ? React.createElement(StatusTag, { running: false, status: '已拉黑' }) : null,
+                  ),
+                  React.createElement('div', { style: { ...s.muted, fontSize: 11, marginTop: 2 } },
+                    `${c.count} 条连接 · 已建立 ${c.oldestSec >= 60 ? Math.floor(c.oldestSec / 60) + ' 分' : c.oldestSec + ' 秒'}`,
+                    c.sources?.length ? ` · ${c.sources.join('/')}` : '',
+                    c.via ? ` · ${c.via}` : ''),
+                ),
+                canManage && React.createElement('div', { style: { display: 'flex', gap: 6, flexShrink: 0 } },
+                  React.createElement('button', {
+                    disabled: busy, onClick: () => kick(c.ip, false),
+                    style: { ...s.btnGhost, height: 26, padding: '0 10px', fontSize: 11.5 }, title: '断开该 IP 当前所有连接；对方可以重新连接',
+                  }, '断开'),
+                  blacklist.includes(c.ip)
+                    ? React.createElement('button', {
+                        disabled: busy, onClick: () => setBlacklist(c.ip, 'remove'),
+                        style: { ...s.btnGhost, height: 26, padding: '0 10px', fontSize: 11.5 },
+                      }, '解除拉黑')
+                    : React.createElement('button', {
+                        disabled: busy, onClick: () => kick(c.ip, true),
+                        style: { ...s.btnGhost, height: 26, padding: '0 10px', fontSize: 11.5, color: '#dc4c64', borderColor: 'rgba(220,76,100,.5)' },
+                        title: '断开并把该 IP 加入黑名单（持久生效）',
+                      }, '断开并拉黑'),
+                )))),
+
+    msg ? React.createElement('div', { style: { ...s.tip, marginTop: 8 } }, msg) : null,
+
+    // 黑名单：列表可见，管理操作（添加/移除）仅管理员
+    React.createElement('div', { style: { ...s.block, paddingTop: 12, marginTop: 12 } },
+      React.createElement('div', { style: { ...s.label, fontSize: 13, fontWeight: 600, marginBottom: 4 } }, `黑名单（${blacklist.length}）`),
+      React.createElement('div', { style: { ...s.muted, marginBottom: 8, fontSize: 11.5 } },
+        '黑名单中的 IP 在进入任何页面/连接前即被拒绝（优先级最高，隧道真实来源同样生效）。不会自动拉黑 —— 运营商共享出口 IP 下自动拉黑容易误伤。'),
+      canManage && React.createElement('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 } },
+        React.createElement('input', {
+          style: { ...s.input, flex: '1 1 180px', width: 'auto' },
+          placeholder: '输入 IP，如 203.0.113.7',
+          value: newIp, onChange: (e) => setNewIp(e.target.value),
+        }),
+        React.createElement('button', {
+          disabled: busy || !newIp.trim(), onClick: () => setBlacklist(newIp.trim(), 'add'),
+          style: { ...s.btnGhost, height: 34 },
+        }, '添加'),
+      ),
+      blacklist.length > 0 && React.createElement('div', { style: { marginTop: 8 } },
+        blacklist.map((ip) => React.createElement('div', {
+          key: ip, style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0', borderBottom: '1px solid var(--dsw-alias-border-l2,#e5e7eb)' },
+        },
+          React.createElement('code', { style: { ...s.code, fontSize: 12 } }, ip),
+          canManage && React.createElement('button', {
+            disabled: busy, onClick: () => setBlacklist(ip, 'remove'),
+            style: { ...s.btnGhost, height: 24, padding: '0 10px', fontSize: 11 },
+          }, '移除')))),
+    ),
+  );
+}
+
+// ---- Tailscale 隧道卡片（访问配置 Tab）----
+// 与 Cloudflare 卡片同构：标题行 + 状态 + URL/二维码 + QRBlock。
+// 区别在地址来源：Tailscale 地址由网关自动探测（tailscale serve status 反查），
+// 也支持手动编辑；探测只读，绝不代用户执行 serve 改 tailscale 配置。
+const TailscaleCard = React.memo(function TailscaleCard({
+  data, rpcCall, auth, onNavigateSecurity, open, onToggle, onRefresh,
+}) {
+  const savedUrl = data?.savedUrl ?? '';
+  const detectedUrl = data?.detectedUrl ?? '';
+  const effectiveUrl = savedUrl || detectedUrl;
+  const running = Boolean(effectiveUrl);
+
+  const [editing, setEditing] = React.useState(false);
+  const [draft, setDraft] = React.useState(savedUrl);
+  const [detecting, setDetecting] = React.useState(false);
+  const [busy, setBusy] = React.useState(false);
+  const [msg, setMsg] = React.useState('');
+  const [cmdCopied, setCmdCopied] = React.useState(false);
+
+  React.useEffect(() => { if (!editing) setDraft(savedUrl); }, [savedUrl, editing]);
+
+  const detect = React.useCallback(async () => {
+    setDetecting(true); setMsg('');
+    try {
+      const res = await rpcCall(BRIDGE_ENDPOINTS.tailscaleDetect, {});
+      if (res?.ok === false) { setMsg(res?.error?.message ?? '探测失败'); return; }
+      const d = res.value ?? {};
+      if (!d.available) {
+        setMsg(d.hint || d.reason || '未检测到可用的 Tailscale 地址');
+        void onRefresh?.();
+        return;
+      }
+      // 探测成功只填入草稿，不自动保存 —— 地址所有权归用户
+      setEditing(true);
+      setDraft((prev) => (prev.trim() === d.endpoint ? prev : d.endpoint));
+      setMsg(`已探测到 Tailscale 地址：${d.endpoint}（已填入，请保存）`);
+      void onRefresh?.();
+    } catch (err) {
+      setMsg(err?.message ?? String(err));
+    } finally {
+      setDetecting(false);
+    }
+  }, [rpcCall, onRefresh]);
+
+  const save = React.useCallback(async () => {
+    setBusy(true); setMsg('');
+    try {
+      const res = await rpcCall(BRIDGE_ENDPOINTS.tailscaleSaveUrl, { url: draft });
+      if (res?.ok === false) { setMsg(res?.error?.message ?? '保存失败'); return; }
+      setEditing(false);
+      setMsg(draft.trim() ? 'Tailscale 地址已保存' : '已清除保存的 Tailscale 地址');
+      void onRefresh?.();
+    } catch (err) {
+      setMsg(err?.message ?? String(err));
+    } finally {
+      setBusy(false);
+    }
+  }, [rpcCall, draft, onRefresh]);
+
+  const copyServeCommand = React.useCallback(() => {
+    const text = data?.serveCommand || '';
+    const done = () => { setCmdCopied(true); setTimeout(() => setCmdCopied(false), 2000); };
+    const fallback = () => {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      const okc = document.execCommand('copy');
+      document.body.removeChild(ta);
+      if (okc) done();
+    };
+    if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text).then(done).catch(fallback);
+    else fallback();
+  }, [data?.serveCommand]);
+
+  // 折叠时保留一行关键信息：优先异常提示，其次地址
+  const hint = msg || data?.hint || effectiveUrl || data?.reason || '尚未配置地址';
+
+  return React.createElement(CardShell, {
+    title: 'Tailscale 隧道',
+    desc: running
+      ? 'Tailscale Serve 转发本机 WebUI（自动 TLS，扫码即连）'
+      : '把本机 WebUI 发布到 tailnet（需先执行一次 tailscale serve）',
+    running,
+    open,
+    onToggle,
+    hint,
+  },
+    // 地址区（自动探测 / 手动编辑；复制由下方 QrBlock 的「复制链接」承担）
+    React.createElement('div', { style: { ...s.block, paddingTop: 12, marginTop: 12 } },
+      React.createElement('div', { style: { ...s.label, fontSize: 12.5, fontWeight: 600, marginBottom: 4 } }, '接入地址'),
+      React.createElement('div', { style: { ...s.muted, marginBottom: 8 } },
+        '网关自动探测本机 Tailscale Serve 地址；也可手动填写（如 wss/https 反代入口）。地址保存后用于生成下方二维码。'),
+
+      !editing
+        ? React.createElement('div', null,
+            effectiveUrl
+              ? React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 6, padding: '4px 0' } },
+                  React.createElement('span', { style: { fontSize: 11 } }, savedUrl ? '🥇' : '🔍'),
+                  React.createElement('code', { style: { ...s.code, fontSize: 11.5, flex: 1, minWidth: 0 } }, effectiveUrl),
+                  !savedUrl && React.createElement('span', { style: { ...s.muted, fontSize: 11, flexShrink: 0 } }, '探测结果'))
+              : React.createElement('div', { style: { ...s.muted, fontSize: 11.5, marginBottom: 4 } }, '尚未配置地址'),
+            React.createElement('div', { style: { display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap' } },
+              React.createElement('button', {
+                style: { ...s.btnGhost, height: 28, padding: '0 12px', fontSize: 12 },
+                disabled: detecting,
+                onClick: detect,
+                title: '只读探测本机 Tailscale 地址（不修改 tailscale 配置）',
+              }, detecting ? '探测中…' : '🔍 自动探测并填入'),
+              React.createElement('button', {
+                style: { ...s.btnGhost, height: 28, padding: '0 12px', fontSize: 12 },
+                onClick: () => { setEditing(true); setDraft(savedUrl || detectedUrl); },
+              }, savedUrl ? '✎ 手动编辑' : '✎ 手动输入')),
+          )
+        : React.createElement('div', null,
+            React.createElement('input', {
+              style: { ...s.input, fontFamily: 'ui-monospace,Menlo,monospace', fontSize: 11.5 },
+              type: 'text',
+              placeholder: 'https://my-host.tailnet-name.ts.net',
+              value: draft,
+              onChange: (e) => setDraft(e.target.value),
+            }),
+            React.createElement('div', { style: { display: 'flex', gap: 8, marginTop: 8 } },
+              React.createElement('button', {
+                disabled: busy, onClick: save,
+                style: { ...s.btnGhost, height: 28, padding: '0 12px', fontSize: 12 },
+              }, busy ? '保存中…' : '保存'),
+              React.createElement('button', {
+                onClick: () => { setEditing(false); setDraft(savedUrl); },
+                style: { ...s.btnGhost, height: 28, padding: '0 12px', fontSize: 12 },
+              }, '取消'))),
+    ),
+
+    // 探测异常提示：未安装 / 离线 / 未 serve（附可复制的 serve 命令）
+    React.createElement('div', { style: { ...s.block, paddingTop: 10, marginTop: 8 } },
+      data?.detected
+        ? React.createElement('div', { style: { ...s.muted, fontSize: 11.5 } },
+            data.online ? `Tailscale 在线 · ${data.dnsName || '已登录'}` : (data.reason || 'Tailscale 状态未知'))
+        : React.createElement('div', { style: { ...s.muted, fontSize: 11.5 } }, '正在读取 Tailscale 状态…'),
+      data?.hint
+        ? React.createElement('div', { style: { marginTop: 6, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' } },
+            React.createElement('code', { style: { ...s.code, fontSize: 11.5, padding: '3px 8px', background: 'var(--dsw-alias-bg-layer-1,#ffffff)', border: '1px solid var(--dsw-alias-border-l2,#e5e7eb)', borderRadius: 6 } },
+              data.serveCommand),
+            React.createElement('button', {
+              style: { ...s.btnGhost, height: 26, padding: '0 10px', fontSize: 11.5 },
+              onClick: copyServeCommand,
+              title: '复制该命令，在本机终端执行一次即可',
+            }, cmdCopied ? '✓ 已复制' : '复制命令'))
+        : null,
+      data?.unsaved
+        ? React.createElement('div', { style: { ...s.muted, fontSize: 11.5, marginTop: 6, color: 'var(--dsw-alias-state-warn-primary,#d97706)' } },
+            '当前地址来自自动探测、尚未保存。建议点击「手动编辑 → 保存」，避免 Tailscale 离线后二维码失效。')
+        : null,
+      msg ? React.createElement('div', { style: { ...s.tip, marginTop: 8, fontSize: 11.5 } }, msg) : null,
+    ),
+
+    running && React.createElement(QrBlock, {
+      url: data?.url,
+      qr: data?.qr,
+      auth,
+      onNavigateSecurity,
+    }),
+    !running && React.createElement('div', { style: { ...s.tip, marginTop: 10, fontSize: 12 } },
+      '尚无可用地址。请先在本机终端执行上方 serve 命令，然后点击「🔍 自动探测并填入」。'),
+  );
+});
+
 // ---- 访问安全认证卡片 ----
 
-const AccessAuthCard = React.memo(function AccessAuthCard({ auth, rpcCall, onUpdate }) {
+const AccessAuthCard = React.memo(function AccessAuthCard({ auth, rpcCall, onUpdate, openCards, onToggleCard }) {
   const [enabled, setEnabled] = React.useState(auth?.enabled ?? false);
   const [mode, setMode] = React.useState(auth?.mode ?? 'token_and_password');
   const [scope, setScope] = React.useState(auth?.scope ?? 'all');
@@ -877,25 +1241,28 @@ const AccessAuthCard = React.memo(function AccessAuthCard({ auth, rpcCall, onUpd
   const modeLabel = mode === 'token_and_password' ? '扫码免密 + 密码' : mode === 'password_only' ? '仅密码登录' : '仅安全 Token';
   const adminLabel = adminPolicy === 'password_unlock' ? '需密码解锁' : adminPolicy === 'local_only' ? '仅限电脑本机管理' : '宽松模式';
 
+  // 折叠态由 BridgePanel 持有（卡片内部 state 会在切换 Tab 卸载时丢失）。
+  // 未收到 props 时退回“全部展开”，保证组件单独渲染也能用。
+  const isCardOpen = (id) => (openCards ? openCards[id] !== false : true);
+  const toggleCard = (id) => onToggleCard?.(id);
+
   return React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 14 } },
     // ---- 顶部总控与状态概览卡片 ----
-    React.createElement('div', { style: s.card },
-      React.createElement('div', {
-        style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 },
-      },
-        React.createElement('div', { style: { flex: '1 1 260px' } },
-          React.createElement('div', { style: { ...s.label, fontSize: 15, display: 'flex', alignItems: 'center', gap: 8 } },
-            '🔐 全局访问安全防护体系',
-          ),
-          React.createElement('div', { style: { ...s.muted, marginTop: 4 } },
-            '集成外部访问门禁拦截与管理后台防篡改控制，双重守护远程会话与网络配置安全',
-          ),
-        ),
-        React.createElement('button', {
-          style: { ...(enabled ? s.btnPri : s.btnGhost), whiteSpace: 'nowrap', flexShrink: 0 },
-          onClick: handleToggleEnabled,
-        }, enabled ? '✓ 已启用安全防护' : '未开启安全防护'),
-      ),
+    React.createElement(CardShell, {
+      title: '🔐 全局访问安全防护体系',
+      desc: '集成外部访问门禁拦截与管理后台防篡改控制，双重守护远程会话与网络配置安全',
+      titleSize: 15,
+      withStatus: false,
+      open: isCardOpen('auth1'),
+      onToggle: () => onToggleCard?.('auth1'),
+      hint: enabled
+        ? `保护范围: ${scopeLabel} · 外部验证: ${modeLabel} · 后台防篡改: ${adminLabel}`
+        : '未开启安全防护',
+      headerRight: React.createElement('button', {
+        style: { ...(enabled ? s.btnPri : s.btnGhost), whiteSpace: 'nowrap', flexShrink: 0 },
+        onClick: handleToggleEnabled,
+      }, enabled ? '✓ 已启用安全防护' : '未开启安全防护'),
+    },
 
       enabled && React.createElement('div', {
         style: {
@@ -909,14 +1276,14 @@ const AccessAuthCard = React.memo(function AccessAuthCard({ auth, rpcCall, onUpd
             borderRadius: 16, fontSize: 11, background: 'var(--dsw-alias-bg-layer-2,#f3f4f6)',
             color: 'var(--dsw-alias-label-secondary,#4b5563)',
           },
-        }, '🌐 保护范围: ', React.createElement('strong', { style: { color: 'var(--dsw-alias-brand-primary,#4f6ef7)' } }, scopeLabel)),
+        }, '🌐 保护范围: ', React.createElement('strong', { style: { color: 'var(--dsw-alias-state-business-primary,#4176e6)' } }, scopeLabel)),
         React.createElement('div', {
           style: {
             display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px',
             borderRadius: 16, fontSize: 11, background: 'var(--dsw-alias-bg-layer-2,#f3f4f6)',
             color: 'var(--dsw-alias-label-secondary,#4b5563)',
           },
-        }, '🔑 外部验证: ', React.createElement('strong', { style: { color: 'var(--dsw-alias-brand-primary,#4f6ef7)' } }, modeLabel)),
+        }, '🔑 外部验证: ', React.createElement('strong', { style: { color: 'var(--dsw-alias-state-business-primary,#4176e6)' } }, modeLabel)),
         React.createElement('div', {
           style: {
             display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px',
@@ -929,7 +1296,7 @@ const AccessAuthCard = React.memo(function AccessAuthCard({ auth, rpcCall, onUpd
       topMsg && React.createElement('div', {
         style: {
           marginTop: 12, padding: '8px 12px', borderRadius: 6, fontSize: 12,
-          background: topMsg.ok ? 'var(--dsw-alias-state-success-bg,#ecfdf5)' : 'var(--dsw-alias-state-error-bg,#fef2f2)',
+          background: topMsg.ok ? 'var(--dsw-alias-state-success-tertiary,#ecfdf5)' : 'var(--dsw-alias-interactive-bg-hover-danger,#fef2f2)',
           color: topMsg.ok ? 'var(--dsw-alias-state-success-primary,#059669)' : 'var(--dsw-alias-state-error-primary,#dc2626)',
         },
       }, topMsg.text),
@@ -939,15 +1306,15 @@ const AccessAuthCard = React.memo(function AccessAuthCard({ auth, rpcCall, onUpd
       // =========================================================================
       // ---- 第一道防线：外部访问门禁（控制谁能进入 Web 界面使用 AI） ----
       // =========================================================================
-      React.createElement('div', { style: s.card },
-        React.createElement('div', { style: { marginBottom: 14 } },
-          React.createElement('div', { style: { ...s.label, fontSize: 14, display: 'flex', alignItems: 'center', gap: 6 } },
-            '🛡️ 第一道防线：外部访问门禁（控制谁能使用 AI）',
-          ),
-          React.createElement('div', { style: { ...s.muted, marginTop: 3 } },
-            '控制外部设备通过局域网 IP 或公网隧道（Cloudflare/自建隧道）进入 DSH 聊天界面时的身份验证方式',
-          ),
-        ),
+      React.createElement(CardShell, {
+        title: '🛡️ 第一道防线：外部访问门禁（控制谁能使用 AI）',
+        desc: '控制外部设备通过局域网 IP 或公网隧道（Cloudflare/自建隧道）进入 DSH 聊天界面时的身份验证方式',
+        titleSize: 14,
+        withStatus: false,
+        open: isCardOpen('auth2'),
+        onToggle: () => toggleCard('auth2'),
+        hint: `验证模式: ${modeLabel}`,
+      },
 
         // 验证模式选择
         React.createElement('div', { style: { marginBottom: 16 } },
@@ -966,13 +1333,13 @@ const AccessAuthCard = React.memo(function AccessAuthCard({ auth, rpcCall, onUpd
                   flex: '1 1 200px',
                   padding: '10px 12px',
                   borderRadius: 8,
-                  border: `1px solid ${isSel ? 'var(--dsw-alias-brand-primary,#4f6ef7)' : 'var(--dsw-alias-border-l2,#e5e7eb)'}`,
-                  background: isSel ? 'var(--dsw-alias-state-info-bg,#eff6ff)' : 'var(--dsw-alias-bg-layer-2,#f9fafb)',
+                  border: `1px solid ${isSel ? 'var(--dsw-alias-state-business-primary,#4176e6)' : 'var(--dsw-alias-border-l2,#e5e7eb)'}`,
+                  background: isSel ? 'var(--dsw-alias-bg-layer-2,#eff6ff)' : 'var(--dsw-alias-bg-layer-2,#f9fafb)',
                   cursor: 'pointer',
                   transition: 'all 0.15s ease',
                 },
               },
-                React.createElement('div', { style: { fontSize: 13, fontWeight: isSel ? 600 : 500, color: isSel ? 'var(--dsw-alias-brand-primary,#4f6ef7)' : 'var(--dsw-alias-label-primary,currentColor)' } }, opt.title),
+                React.createElement('div', { style: { fontSize: 13, fontWeight: isSel ? 600 : 500, color: isSel ? 'var(--dsw-alias-state-business-primary,#4176e6)' : 'var(--dsw-alias-label-primary,currentColor)' } }, opt.title),
                 React.createElement('div', { style: { ...s.muted, fontSize: 11, marginTop: 4 } }, opt.desc),
               );
             })
@@ -996,13 +1363,13 @@ const AccessAuthCard = React.memo(function AccessAuthCard({ auth, rpcCall, onUpd
                   flex: '1 1 180px',
                   padding: '9px 12px',
                   borderRadius: 8,
-                  border: `1px solid ${isSel ? 'var(--dsw-alias-brand-primary,#4f6ef7)' : 'var(--dsw-alias-border-l2,#e5e7eb)'}`,
-                  background: isSel ? 'var(--dsw-alias-state-info-bg,#eff6ff)' : 'var(--dsw-alias-bg-layer-2,#f9fafb)',
+                  border: `1px solid ${isSel ? 'var(--dsw-alias-state-business-primary,#4176e6)' : 'var(--dsw-alias-border-l2,#e5e7eb)'}`,
+                  background: isSel ? 'var(--dsw-alias-bg-layer-2,#eff6ff)' : 'var(--dsw-alias-bg-layer-2,#f9fafb)',
                   cursor: 'pointer',
                   transition: 'all 0.15s ease',
                 },
               },
-                React.createElement('div', { style: { fontSize: 13, fontWeight: isSel ? 600 : 500, color: isSel ? 'var(--dsw-alias-brand-primary,#4f6ef7)' : 'var(--dsw-alias-label-primary,currentColor)' } }, opt.title),
+                React.createElement('div', { style: { fontSize: 13, fontWeight: isSel ? 600 : 500, color: isSel ? 'var(--dsw-alias-state-business-primary,#4176e6)' : 'var(--dsw-alias-label-primary,currentColor)' } }, opt.title),
                 React.createElement('div', { style: { ...s.muted, fontSize: 11, marginTop: 3 } }, opt.desc),
               );
             })
@@ -1029,8 +1396,8 @@ const AccessAuthCard = React.memo(function AccessAuthCard({ auth, rpcCall, onUpd
             React.createElement('button', {
               style: {
                 ...s.btnPri, height: 32, fontSize: 12, whiteSpace: 'nowrap', flexShrink: 0,
-                background: saveAccessSuccess ? '#059669' : 'var(--dsw-alias-brand-primary, #4f6ef7)',
-                color: '#ffffff',
+                background: saveAccessSuccess ? 'var(--dsw-alias-state-success-primary,#059669)' : 'var(--dsw-alias-brand-primary, #4f6ef7)',
+                color: 'var(--dsw-alias-label-primary-foreground,#fff)',
                 cursor: savingAccess ? 'wait' : 'pointer',
               },
               onClick: handleSaveAccessPassword,
@@ -1043,7 +1410,7 @@ const AccessAuthCard = React.memo(function AccessAuthCard({ auth, rpcCall, onUpd
           msgAccess && React.createElement('div', {
             style: {
               marginTop: 8, padding: '6px 12px', borderRadius: 6, fontSize: 12,
-              background: msgAccess.ok ? 'var(--dsw-alias-state-success-bg,#ecfdf5)' : 'var(--dsw-alias-state-error-bg,#fef2f2)',
+              background: msgAccess.ok ? 'var(--dsw-alias-state-success-tertiary,#ecfdf5)' : 'var(--dsw-alias-interactive-bg-hover-danger,#fef2f2)',
               color: msgAccess.ok ? 'var(--dsw-alias-state-success-primary,#059669)' : 'var(--dsw-alias-state-error-primary,#dc2626)',
             },
           }, msgAccess.text),
@@ -1071,15 +1438,15 @@ const AccessAuthCard = React.memo(function AccessAuthCard({ auth, rpcCall, onUpd
       // =========================================================================
       // ---- 第二道防线：后台管理防篡改（控制谁能修改本插件所有设置） ----
       // =========================================================================
-      React.createElement('div', { style: s.card },
-        React.createElement('div', { style: { marginBottom: 14 } },
-          React.createElement('div', { style: { ...s.label, fontSize: 14, display: 'flex', alignItems: 'center', gap: 6 } },
-            '🔒 第二道防线：管理后台防篡改（控制谁能修改本插件所有设置）',
-          ),
-          React.createElement('div', { style: { ...s.muted, marginTop: 3 } },
-            '锁定整个插件设置后台（包含局域网、公网隧道、IM 机器人密钥与安全设置），防止他人随意篡改配置',
-          ),
-        ),
+      React.createElement(CardShell, {
+        title: '🔒 第二道防线：管理后台防篡改（控制谁能修改本插件所有设置）',
+        desc: '锁定整个插件设置后台（包含局域网、公网隧道、IM 机器人密钥与安全设置），防止他人随意篡改配置',
+        titleSize: 14,
+        withStatus: false,
+        open: isCardOpen('auth3'),
+        onToggle: () => toggleCard('auth3'),
+        hint: `管理权限策略: ${adminLabel}`,
+      },
 
         // 管理员密码设置
         React.createElement('div', { style: { marginBottom: 16 } },
@@ -1101,21 +1468,21 @@ const AccessAuthCard = React.memo(function AccessAuthCard({ auth, rpcCall, onUpd
             React.createElement('button', {
               style: {
                 ...s.btnPri, height: 32, fontSize: 12, whiteSpace: 'nowrap', flexShrink: 0,
-                background: saveAdminSuccess ? '#059669' : 'var(--dsw-alias-brand-primary, #4f6ef7)',
-                color: '#ffffff',
+                background: saveAdminSuccess ? 'var(--dsw-alias-state-success-primary,#059669)' : 'var(--dsw-alias-brand-primary, #4f6ef7)',
+                color: 'var(--dsw-alias-label-primary-foreground,#fff)',
                 cursor: savingAdmin ? 'wait' : 'pointer',
               },
               onClick: handleSaveAdminPassword,
               disabled: savingAdmin,
             }, savingAdmin ? '保存中…' : saveAdminSuccess ? '✓ 已成功保存！' : '保存管理密码'),
           ),
-          React.createElement('div', { style: { ...s.muted, fontSize: 11, marginTop: 4, color: 'var(--dsw-alias-brand-primary,#4f6ef7)' } },
+          React.createElement('div', { style: { ...s.muted, fontSize: 11, marginTop: 4, color: 'var(--dsw-alias-state-business-primary,#4176e6)' } },
             '🔑 核心作用：用于远程设备进入设置后台时的解锁验证。设置后，即便把访问密码告知他人，他人也无法进入设置后台改配置。'
           ),
           msgAdmin && React.createElement('div', {
             style: {
               marginTop: 8, padding: '6px 12px', borderRadius: 6, fontSize: 12,
-              background: msgAdmin.ok ? 'var(--dsw-alias-state-success-bg,#ecfdf5)' : 'var(--dsw-alias-state-error-bg,#fef2f2)',
+              background: msgAdmin.ok ? 'var(--dsw-alias-state-success-tertiary,#ecfdf5)' : 'var(--dsw-alias-interactive-bg-hover-danger,#fef2f2)',
               color: msgAdmin.ok ? 'var(--dsw-alias-state-success-primary,#059669)' : 'var(--dsw-alias-state-error-primary,#dc2626)',
             },
           }, msgAdmin.text),
@@ -1138,13 +1505,13 @@ const AccessAuthCard = React.memo(function AccessAuthCard({ auth, rpcCall, onUpd
                   flex: '1 1 180px',
                   padding: '10px 12px',
                   borderRadius: 8,
-                  border: `1px solid ${isSel ? 'var(--dsw-alias-brand-primary,#4f6ef7)' : 'var(--dsw-alias-border-l2,#e5e7eb)'}`,
-                  background: isSel ? 'var(--dsw-alias-state-info-bg,#eff6ff)' : 'var(--dsw-alias-bg-layer-2,#f9fafb)',
+                  border: `1px solid ${isSel ? 'var(--dsw-alias-state-business-primary,#4176e6)' : 'var(--dsw-alias-border-l2,#e5e7eb)'}`,
+                  background: isSel ? 'var(--dsw-alias-bg-layer-2,#eff6ff)' : 'var(--dsw-alias-bg-layer-2,#f9fafb)',
                   cursor: 'pointer',
                   transition: 'all 0.15s ease',
                 },
               },
-                React.createElement('div', { style: { fontSize: 13, fontWeight: isSel ? 600 : 500, color: isSel ? 'var(--dsw-alias-brand-primary,#4f6ef7)' : 'var(--dsw-alias-label-primary,currentColor)' } }, opt.title),
+                React.createElement('div', { style: { fontSize: 13, fontWeight: isSel ? 600 : 500, color: isSel ? 'var(--dsw-alias-state-business-primary,#4176e6)' : 'var(--dsw-alias-label-primary,currentColor)' } }, opt.title),
                 React.createElement('div', { style: { ...s.muted, fontSize: 11, marginTop: 4 } }, opt.desc),
               );
             })
@@ -1885,7 +2252,7 @@ function NetworkDiagnosticWidget({ rpcCall }) {
             display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8,
             padding: '8px 10px', borderRadius: 6,
             background: 'var(--dsw-alias-bg-layer-1, rgba(255,255,255,0.7))',
-            border: `1px solid ${isPass ? 'var(--dsw-alias-state-success-border, #a7f3d0)' : isWarn ? 'var(--dsw-alias-state-warn-border, #fde68a)' : 'var(--dsw-alias-state-error-border, #fecaca)'}`,
+            border: `1px solid ${isPass ? 'var(--dsw-alias-border-l2, #a7f3d0)' : isWarn ? 'var(--dsw-alias-border-l2, #fde68a)' : 'var(--dsw-alias-border-l2, #fecaca)'}`,
             boxSizing: 'border-box',
           },
         },
@@ -2000,7 +2367,7 @@ function BackupRestoreWidget({ rpcCall, onUpdate }) {
     msg && React.createElement('div', {
       style: {
         marginTop: 10, padding: '6px 12px', borderRadius: 6, fontSize: 12,
-        background: msg.ok ? 'var(--dsw-alias-state-success-bg,#ecfdf5)' : 'var(--dsw-alias-state-error-bg,#fef2f2)',
+        background: msg.ok ? 'var(--dsw-alias-state-success-tertiary,#ecfdf5)' : 'var(--dsw-alias-interactive-bg-hover-danger,#fef2f2)',
         color: msg.ok ? 'var(--dsw-alias-state-success-primary,#059669)' : 'var(--dsw-alias-state-error-primary,#dc2626)',
       },
     }, msg.text),
@@ -2065,7 +2432,7 @@ function RestartDshCard({ rpcCall }) {
           ? 'var(--dsw-alias-state-success-primary, #059669)'
           : status?.phase === 'timeout'
             ? 'var(--dsw-alias-state-error-primary, #dc2626)'
-            : 'var(--dsw-alias-state-info-primary, #2563eb)',
+            : 'var(--dsw-alias-label-secondary, #2563eb)',
         fontWeight: 500,
       },
     },
@@ -2195,12 +2562,12 @@ function VersionBanner({ rpcCall }) {
           style: {
             ...s.tag,
             background: hasUpdate
-              ? 'var(--dsw-alias-state-info-bg,#eff6ff)'
+              ? 'var(--dsw-alias-bg-layer-2,#eff6ff)'
               : isLatest
-                ? 'var(--dsw-alias-state-success-bg,#ecfdf5)'
+                ? 'var(--dsw-alias-state-success-tertiary,#ecfdf5)'
                 : 'var(--dsw-alias-bg-layer-2,#f3f4f6)',
             color: hasUpdate
-              ? 'var(--dsw-alias-state-info-primary,#2563eb)'
+              ? 'var(--dsw-alias-label-secondary,#2563eb)'
               : isLatest
                 ? 'var(--dsw-alias-state-success-primary,#059669)'
                 : 'var(--dsw-alias-label-secondary,#6b7280)',
@@ -2249,8 +2616,8 @@ function VersionBanner({ rpcCall }) {
     hasUpdate && React.createElement('div', {
       style: {
         ...s.card,
-        background: 'var(--dsw-alias-state-info-bg,#eff6ff)',
-        border: '1px solid var(--dsw-alias-state-info-border,#bfdbfe)',
+        background: 'var(--dsw-alias-bg-layer-2,#eff6ff)',
+        border: '1px solid var(--dsw-alias-border-l2,#bfdbfe)',
         padding: '14px 16px',
         marginTop: 10,
         marginBottom: 0,
@@ -2264,7 +2631,7 @@ function VersionBanner({ rpcCall }) {
               style: {
                 fontSize: 13,
                 fontWeight: 600,
-                color: 'var(--dsw-alias-state-info-primary,#1e40af)',
+                color: 'var(--dsw-alias-label-secondary,#1e40af)',
               },
             }, `发现新版本 v${info.latest}（当前 v${info.current}）`),
             React.createElement('button', {
@@ -2275,7 +2642,7 @@ function VersionBanner({ rpcCall }) {
                 padding: '0 14px',
                 background: upgradeResult?.ok
                   ? 'var(--dsw-alias-state-success-primary,#059669)'
-                  : 'var(--dsw-alias-brand-primary,#4f6ef7)',
+                  : 'var(--dsw-alias-state-business-primary,#4176e6)',
                 opacity: (upgrading || restarting) ? 0.6 : 1,
               },
               onClick: handleUpgrade,
@@ -2298,7 +2665,7 @@ function VersionBanner({ rpcCall }) {
               fontSize: 12,
               color: 'var(--dsw-alias-label-primary, #374151)',
               background: 'var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.85))',
-              border: '1px solid var(--dsw-alias-state-info-border, rgba(191, 219, 254, 0.8))',
+              border: '1px solid var(--dsw-alias-border-l2, rgba(191, 219, 254, 0.8))',
               borderRadius: 8,
               padding: '8px 12px',
               marginBottom: 10,
@@ -2306,7 +2673,7 @@ function VersionBanner({ rpcCall }) {
               whiteSpace: 'pre-line',
             },
           },
-            React.createElement('div', { style: { fontWeight: 600, color: 'var(--dsw-alias-state-info-primary, #2563eb)', marginBottom: 2 } }, '✨ 更新亮点：'),
+            React.createElement('div', { style: { fontWeight: 600, color: 'var(--dsw-alias-label-secondary, #2563eb)', marginBottom: 2 } }, '✨ 更新亮点：'),
             info.releaseNotes
           ),
 
@@ -2314,7 +2681,7 @@ function VersionBanner({ rpcCall }) {
           upgradeResult?.ok && !dismissRestart && React.createElement('div', {
             style: {
               background: 'var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.95))',
-              border: '1px solid var(--dsw-alias-state-success-border, #a7f3d0)',
+              border: '1px solid var(--dsw-alias-border-l2, #a7f3d0)',
               borderRadius: 8,
               padding: '12px 14px',
               marginBottom: 10,
@@ -2359,7 +2726,7 @@ function VersionBanner({ rpcCall }) {
                   ? 'var(--dsw-alias-state-success-primary, #059669)'
                   : restartStatus?.phase === 'timeout'
                     ? 'var(--dsw-alias-state-error-primary, #dc2626)'
-                    : 'var(--dsw-alias-state-info-primary, #2563eb)',
+                    : 'var(--dsw-alias-label-secondary, #2563eb)',
                 fontWeight: 500,
               },
             },
@@ -2373,8 +2740,8 @@ function VersionBanner({ rpcCall }) {
           // 失败提示
           upgradeResult && !upgradeResult.ok && React.createElement('div', {
             style: {
-              background: 'var(--dsw-alias-state-error-bg,#fef2f2)',
-              border: '1px solid var(--dsw-alias-state-error-border,#fecaca)',
+              background: 'var(--dsw-alias-interactive-bg-hover-danger,#fef2f2)',
+              border: '1px solid var(--dsw-alias-border-l2,#fecaca)',
               color: 'var(--dsw-alias-state-error-primary,#991b1b)',
               padding: '8px 12px',
               borderRadius: 6,
@@ -2407,8 +2774,8 @@ function VersionBanner({ rpcCall }) {
 // ---- Tab Bar ----
 
 const TABS = [
-  { id: 'lan',      label: '局域网',    icon: Icons.lan },
-  { id: 'tunnel',   label: '公网访问',  icon: Icons.tunnel },
+  { id: 'access',   label: '访问配置',  icon: Icons.tunnel },
+  { id: 'visitor',  label: '访客管理',  icon: Icons.visitor },
   { id: 'im',       label: 'IM 机器人', icon: Icons.bot },
   { id: 'security', label: '安全认证',  icon: Icons.security },
   { id: 'ops',      label: '运维监控',  icon: Icons.ops },
@@ -2436,7 +2803,7 @@ function TabBar({ active, onChange, dots }) {
           font: 'inherit', cursor: 'pointer', border: 'none', background: 'none',
           padding: '8px 14px', fontSize: 13, fontWeight: isActive ? 600 : 400,
           color: isActive
-            ? 'var(--dsw-alias-brand-primary,#4f6ef7)'
+            ? 'var(--dsw-alias-state-business-primary,#4176e6)'
             : 'var(--dsw-alias-label-secondary,#6b7280)',
           borderBottom: isActive
             ? '2px solid var(--dsw-alias-brand-primary,#4f6ef7)'
@@ -2449,7 +2816,7 @@ function TabBar({ active, onChange, dots }) {
       },
         TabIcon && React.createElement(TabIcon, {
           style: {
-            color: isActive ? 'var(--dsw-alias-brand-primary,#4f6ef7)' : 'var(--dsw-alias-label-tertiary,#9ca3af)',
+            color: isActive ? 'var(--dsw-alias-state-business-primary,#4176e6)' : 'var(--dsw-alias-label-tertiary,#9ca3af)',
             width: 16, height: 16, flexShrink: 0,
           },
         }),
@@ -2471,7 +2838,16 @@ function TabBar({ active, onChange, dots }) {
 function BridgePanel({ rpcCall }) {
   const [status, setStatus]       = React.useState(null);
   const [err, setErr]             = React.useState(null);
-  const [activeTab, setActiveTab] = React.useState('lan');
+  const [activeTab, setActiveTab] = React.useState('access');
+  // 卡片折叠态：由面板持有，切换 Tab 时不丢失（放卡片内部会在卸载后回弹）。
+  // 默认只展开每组的第一张卡：访问配置 → 直连网关；安全认证 → 全局总控。
+  const [openCards, setOpenCards] = React.useState({
+    gateway: true, cloudflare: false, tailscale: false, custom: false, lan: false,
+    auth1: true, auth2: false, auth3: false,
+  });
+  const toggleCard = React.useCallback((id) => {
+    setOpenCards((prev) => ({ ...prev, [id]: !prev[id] }));
+  }, []);
   // 平台列表和连接状态
   const [platforms, setPlatforms] = React.useState(null);
   const [selectedPlatform, setSelectedPlatform] = React.useState('wechat');
@@ -2707,37 +3083,25 @@ function BridgePanel({ rpcCall }) {
     p.status === 'connected' || p.status === 'starting' || p.status === 'reconnecting'
   );
   const dots = {
-    lan:      !!(status?.proxy?.running),
-    tunnel:   !!(status?.cloudflared?.running || ct?.running || status?.gateway?.running),
+    access:   !!(status?.proxy?.running || status?.cloudflared?.running || ct?.running || status?.gateway?.running || status?.tailscale?.running),
     im:       !!imConnected,
     security: !!(status?.auth?.enabled),
   };
 
   // Tab 内容
   let tabContent;
-  if (activeTab === 'lan') {
-    tabContent = React.createElement(TunnelCard, {
-      title: '局域网访问',
-      desc: '同一 Wi-Fi 下的设备可直接扫码访问',
-      data: { running: status?.proxy?.running, url: status?.lan?.url, qr: status?.lan?.qr },
-      auth: status?.auth,
-      onNavigateSecurity: navSecurity,
-    },
-      React.createElement(LanNetworkSelector, {
-        lan: status?.lan,
-        onSelectIp: onSelectLanIp,
-      })
-    );
-  } else if (activeTab === 'tunnel') {
+  if (activeTab === 'access') {
     tabContent = React.createElement(React.Fragment, null,
       React.createElement('div', { style: { ...s.label, fontSize: 13, margin: '4px 0 10px' } },
-        '公网访问方式（隧道 / 直连网关，按需选用）'),
+        '访问方式（直连网关 / 隧道 / 局域网，按需选用）'),
       React.createElement(GatewayCard, {
         gw: status?.gateway,
         onStart: onStartGateway,
         onStop: onStopGateway,
         onSaveConfig: saveGatewayConfig,
         onToggleAutoStart: onToggleGatewayAutoStart,
+        open: openCards.gateway,
+        onToggle: () => toggleCard('gateway'),
       }),
       React.createElement(TunnelCard, {
         title: 'Cloudflare 隧道',
@@ -2757,6 +3121,8 @@ function BridgePanel({ rpcCall }) {
         onStart: onStartCloudflared,
         onStop:  onStopCloudflared,
         onReset: status?.cloudflared?.running ? onResetCloudflared : null,
+        open: openCards.cloudflare,
+        onToggle: () => toggleCard('cloudflare'),
       },
         React.createElement(CloudflareConfigForm, {
           token: status?.cloudflared?.token ?? '',
@@ -2764,6 +3130,15 @@ function BridgePanel({ rpcCall }) {
           onSave: saveCloudflaredConfig,
         }),
       ),
+      React.createElement(TailscaleCard, {
+        data: status?.tailscale,
+        rpcCall: authRpcCall,
+        auth: status?.auth,
+        onNavigateSecurity: navSecurity,
+        onRefresh: () => load(true),
+        open: openCards.tailscale,
+        onToggle: () => toggleCard('tailscale'),
+      }),
       React.createElement(TunnelCard, {
         title: '自建隧道',
         desc: '连接自己部署的隧道服务器，获得固定域名',
@@ -2780,6 +3155,8 @@ function BridgePanel({ rpcCall }) {
         onNavigateSecurity: navSecurity,
         onStart: onStartCustom,
         onStop:  onStopCustom,
+        open: openCards.custom,
+        onToggle: () => toggleCard('custom'),
       },
         React.createElement(CustomTunnelGuide),
         React.createElement(CustomTunnelConfigForm, {
@@ -2788,12 +3165,32 @@ function BridgePanel({ rpcCall }) {
           onSave: saveConfig,
         }),
       ),
+      // 局域网访问：同为“访问方式”之一，排在最后并默认折叠
+      React.createElement(TunnelCard, {
+        title: '局域网访问',
+        desc: '同一 Wi-Fi 下的设备可直接扫码访问',
+        data: { running: status?.proxy?.running, url: status?.lan?.url, qr: status?.lan?.qr },
+        auth: status?.auth,
+        onNavigateSecurity: navSecurity,
+        open: openCards.lan,
+        onToggle: () => toggleCard('lan'),
+      },
+        React.createElement(LanNetworkSelector, {
+          lan: status?.lan,
+          onSelectIp: onSelectLanIp,
+        })
+      ),
     );
+  } else if (activeTab === 'visitor') {
+    // 访客管理：谁连进来了 / 强制断开 / 持久黑名单
+    tabContent = React.createElement(RemoteConnectionsCard, { rpcCall: authRpcCall });
   } else if (activeTab === 'security') {
     tabContent = React.createElement(AccessAuthCard, {
       auth: status?.auth,
       rpcCall: authRpcCall,
       onUpdate: () => load(true),
+      openCards,
+      onToggleCard: toggleCard,
     });
   } else if (activeTab === 'ops') {
     tabContent = React.createElement(React.Fragment, null,
@@ -2828,12 +3225,12 @@ function BridgePanel({ rpcCall }) {
             key: id,
             style: {
               flex: '1 1 135px',
-              border: `1px solid ${selectedPlatform === id ? 'var(--dsw-alias-brand-primary,#4f6ef7)' : active ? 'var(--dsw-alias-state-success-primary,#10b981)' : 'var(--dsw-alias-border-l2,#e5e7eb)'}`,
+              border: `1px solid ${selectedPlatform === id ? 'var(--dsw-alias-state-business-primary,#4176e6)' : active ? 'var(--dsw-alias-state-success-primary,#10b981)' : 'var(--dsw-alias-border-l2,#e5e7eb)'}`,
               borderRadius: 10,
               padding: '12px 14px',
               opacity: available ? 1 : 0.5,
               cursor: available ? 'pointer' : 'not-allowed',
-              background: selectedPlatform === id ? 'var(--dsw-alias-state-info-bg,#eff6ff)' : active ? 'var(--dsw-alias-state-success-bg,#ecfdf5)' : 'var(--dsw-alias-bg-layer-2,#f9fafb)',
+              background: selectedPlatform === id ? 'var(--dsw-alias-bg-layer-2,#eff6ff)' : active ? 'var(--dsw-alias-state-success-tertiary,#ecfdf5)' : 'var(--dsw-alias-bg-layer-2,#f9fafb)',
               boxShadow: selectedPlatform === id ? '0 0 0 1px var(--dsw-alias-brand-primary,#4f6ef7)' : 'none',
               transition: 'all 0.15s ease',
             },
@@ -2933,7 +3330,7 @@ function BridgePanel({ rpcCall }) {
             }, unlockErr),
             React.createElement('button', {
               type: 'submit',
-              style: { ...s.btnPri, width: '100%', justifyContent: 'center', height: 36, background: '#4f6ef7', color: '#ffffff' },
+              style: { ...s.btnPri, width: '100%', justifyContent: 'center', height: 36 },
               disabled: unlocking,
             }, unlocking ? '验证中…' : '解锁管理权限'),
           ),
@@ -2967,7 +3364,7 @@ function BridgePanel({ rpcCall }) {
     err && React.createElement('div', {
       style: {
         ...s.card,
-        background: 'var(--dsw-alias-state-error-bg,#fef2f2)',
+        background: 'var(--dsw-alias-interactive-bg-hover-danger,#fef2f2)',
         color: 'var(--dsw-alias-state-error-primary,#dc2626)',
         fontSize: 13,
         marginBottom: 16,
@@ -2986,7 +3383,7 @@ function BridgePanel({ rpcCall }) {
       }, '🔄 重试'),
       isInterceptionErr && React.createElement('button', {
         type: 'button',
-        style: { ...s.btnPri, background: '#dc2626', color: '#ffffff', height: 26, fontSize: 12, padding: '0 10px', flexShrink: 0 },
+        style: { ...s.btnPri, background: 'var(--dsw-alias-interactive-bg-hover-danger,#dc2626)', color: 'var(--dsw-alias-state-error-primary,#dc2626)', height: 26, fontSize: 12, padding: '0 10px', flexShrink: 0, border: '1px solid var(--dsw-alias-state-error-primary,#dc2626)' },
         onClick: () => {
           setUnlockErr(err);
           setShowUnlockModal(true);
@@ -2998,9 +3395,9 @@ function BridgePanel({ rpcCall }) {
     !isLocalhost && adminUnlocked && React.createElement('div', {
       style: {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '8px 14px', background: 'var(--dsw-alias-state-info-bg,#eff6ff)',
-        border: '1px solid var(--dsw-alias-brand-primary,#4f6ef7)', borderRadius: 8,
-        marginBottom: 14, fontSize: 12, color: 'var(--dsw-alias-brand-primary,#4f6ef7)',
+        padding: '8px 14px', background: 'var(--dsw-alias-bg-layer-2,#eff6ff)',
+        border: '1px solid var(--dsw-alias-state-business-primary,#4176e6)', borderRadius: 8,
+        marginBottom: 14, fontSize: 12, color: 'var(--dsw-alias-state-business-primary,#4176e6)',
       },
     },
       React.createElement('span', null, '🔓 管理员权限已解锁（当前临时会话有效）'),
@@ -3014,15 +3411,15 @@ function BridgePanel({ rpcCall }) {
     !isLocalhost && !adminUnlocked && auth?.enabled && policy !== 'open' && React.createElement('div', {
       style: {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '8px 14px', background: 'var(--dsw-alias-state-warn-bg,#fffbeb)',
-        border: '1px solid var(--dsw-alias-state-warn-border,#fde68a)', borderRadius: 8,
+        padding: '8px 14px', background: 'var(--dsw-alias-state-warn-tertiary,#fffbeb)',
+        border: '1px solid var(--dsw-alias-border-l2,#fde68a)', borderRadius: 8,
         marginBottom: 14, fontSize: 12, color: 'var(--dsw-alias-state-warn-primary,#92400e)',
       },
     },
       React.createElement('span', null, '🔒 后台管理权限未解锁（修改敏感配置需先解锁）'),
       React.createElement('button', {
         type: 'button',
-        style: { ...s.btnPri, height: 24, fontSize: 11, padding: '0 10px', background: '#d97706' },
+        style: { ...s.btnPri, height: 24, fontSize: 11, padding: '0 10px', background: 'var(--dsw-alias-state-warn-primary,#d97706)' },
         onClick: () => setShowUnlockModal(true),
       }, '🔑 解锁管理权限'),
     ),
@@ -3084,7 +3481,7 @@ function BridgePanel({ rpcCall }) {
             }, '取消'),
             React.createElement('button', {
               type: 'submit',
-              style: { ...s.btnPri, background: '#4f6ef7', color: '#fff' },
+              style: { ...s.btnPri },
               disabled: unlocking || !unlockPassword,
             }, unlocking ? '验证中…' : '立即解锁'),
           ),
@@ -4223,9 +4620,166 @@ function injectMobileStyles() {
   document.head.appendChild(style);
 }
 
+// =====================================================================
+// 上游 DOM 契约层（Upstream Contract Layer）
+// ---------------------------------------------------------------------
+// 移动端体验与 DSH WebUI 内部 DOM 的【唯一】耦合点。所有对上游内部
+// DOM 的读取（混淆类名 / aria-label 文案）都收敛在本表；上游升级
+//（类名哈希重生成、文案或多语言变化）时只需更新本表，不再翻找
+// 数百行适配代码。
+//
+// 解析优先级：官方 API（ctx.layout）> 语义属性 > 结构类名 > 文案。
+// ctx.layout 由 dsh-client-ui-layout 通过 ctx.reflect.provide("layout")
+// 暴露（注释原文 "Cross-plugin panel-action face"），selectPanel /
+// toggleSidebar 等方法在 0.1.5-rc.2 与 0.1.6-alpha.2 中签名一致，
+// 官方 sidebar / workspace 插件同样注入使用。
+// 这里刻意【不】把 "layout" 写进 inject —— 避免把上游内部服务升级成
+// 本插件的硬依赖（cordis inject 缺服务会导致整插件不激活）；
+// 运行期取不到时自动回落 DOM 方案（与旧行为一致）。
+// =====================================================================
+
+const UPSTREAM_ARIA = {
+  sidebarOpen: ['打开侧边栏', '展开侧边栏', 'Open sidebar', 'Show sidebar'],
+  sidebarClose: ['收起侧边栏', '折叠侧边栏', 'Close sidebar', 'Hide sidebar'],
+  collapse: ['收起', '折叠', 'Collapse', 'Hide'],
+  newSession: ['新建会话', '新的对话', '新会话', 'New session', 'New chat', 'New conversation'],
+  actions: ['操作', '更多', 'Actions', 'More', 'Options'],
+  view: ['视图', 'View'],
+  add: ['添加', '新增', 'Add'],
+  search: ['搜索', 'Search'],
+  settings: ['设置', 'Settings'],
+  workbench: ['面板', '工作区', '终端', 'Panel', 'Workspace', 'Terminal'],
+};
+
+// 0.1.5-rc.2 实测锚点。0.1.6-alpha.2 中 nArs4W_* / workbench_* / panelHidden
+// 已重新生成哈希（升级后需更新 panelOpen / panelHiddenClass / panelTabBar）；
+// wSkVaW_* / hHd-Xa_* / _sidebarCol / uV2eYG_* 实测仍存活。
+// panelOpenGeneric 为跨版本兜底（依赖上游一贯的 xxx_panel 命名习惯）。
+const UPSTREAM_SEL = {
+  sidebarCol: 'div[class*="_sidebarCol"]',
+  panelOpen: 'div[class*="nArs4W_panel"]:not([class*="panelHidden"]), div[class*="workbench_panel"]:not([class*="panelHidden"])',
+  panelOpenGeneric: 'div[class*="_panel"]:not([class*="Hidden" i])',
+  panelHiddenClass: 'nArs4W_panelHidden',
+  panelTabBar: 'div[class*="tabBar"], div[class*="nArs4W_tabBar"]',
+  titleRow: 'div[class*="wSkVaW_titleRow"]',
+  titleCluster: 'div[class*="wSkVaW_titleCluster"]',
+  headerUtilities: 'div[class*="wSkVaW_headerUtilities"]',
+  collapsedToggle: 'div[class*="hHd-Xa_collapsed"] button[class*="hHd-Xa_toggle"]',
+  newSessionBtn: 'button[class*="newSession"]',
+  collapseBtn: 'button[class*="toggleButton"]',
+  reasoningBtn: 'div[class*="uV2eYG_trailing"] span > button:not([class])',
+  popoverGuard: 'div[class*="portal"], div[class*="_portal"], div[role="menu"], div[role="dialog"], div[class*="popup"], div[class*="dropdown"], div[class*="overlay"]',
+  sessionRow: 'a, div[class*="sessionRow"], div[role="treeitem"]',
+  formControl: 'input, select, textarea, div[class*="searchInput"]',
+  actionBtnFallback: 'button[class*="toggle"], button[class*="trigger"], button[class*="iconButton"], button[class*="searchButton"]',
+};
+
+function upstreamLayout(ctx) {
+  try {
+    return ctx?.layout && typeof ctx.layout.toggleSidebar === 'function' ? ctx.layout : null;
+  } catch {
+    return null;
+  }
+}
+
+function upstreamAriaFind(names) {
+  for (const label of names) {
+    const el = document.querySelector(`button[aria-label="${label}"], button[title="${label}"]`);
+    if (el) return el;
+  }
+  return null;
+}
+
+function upstreamLabelOf(el) {
+  return [
+    el?.getAttribute?.('aria-label') ?? '',
+    el?.getAttribute?.('title') ?? '',
+    typeof el?.innerText === 'string' ? el.innerText : '',
+  ].join('\n');
+}
+
+function upstreamLabelMatches(el, names) {
+  const hay = upstreamLabelOf(el).toLowerCase();
+  return names.some((n) => hay.includes(String(n).toLowerCase()));
+}
+
+// 移动端对上游 DOM / 服务的统一访问入口（U.*）
+function createUpstreamBridge(ctx) {
+  const layout = () => upstreamLayout(ctx);
+  return {
+    SEL: UPSTREAM_SEL,
+    ARIA: UPSTREAM_ARIA,
+    ariaFind: upstreamAriaFind,
+    labelMatches: upstreamLabelMatches,
+    hasLayout: () => upstreamLayout(ctx) !== null,
+    sidebar: () => document.querySelector(UPSTREAM_SEL.sidebarCol),
+    /** 当前打开的面板（0.1.5 精确锚点优先，generic 兜底） */
+    openPanels() {
+      const found = document.querySelectorAll(UPSTREAM_SEL.panelOpen);
+      return found.length ? found : document.querySelectorAll(UPSTREAM_SEL.panelOpenGeneric);
+    },
+    /** 回到对话视图：优先官方 layout API（0.1.5/0.1.6 行为一致），失败回落隐藏面板 */
+    backToConversation() {
+      const l = layout();
+      if (l) {
+        try {
+          l.selectPanel(null);
+          return;
+        } catch { /* fall through to DOM */ }
+      }
+      this.openPanels().forEach((p) => p.classList.add(UPSTREAM_SEL.panelHiddenClass));
+    },
+    /** 展开抽屉侧边栏 */
+    openSidebar() {
+      const l = layout();
+      if (l) {
+        try {
+          l.toggleSidebar();
+          return;
+        } catch { /* fall through to DOM */ }
+      }
+      (upstreamAriaFind(UPSTREAM_ARIA.sidebarOpen) || upstreamAriaFind(UPSTREAM_ARIA.sidebarClose))?.click();
+    },
+    /** 新建会话（多语言 + 类名回退） */
+    clickNewSession() {
+      (upstreamAriaFind(UPSTREAM_ARIA.newSession) || document.querySelector(UPSTREAM_SEL.newSessionBtn))?.click();
+    },
+    isNewSessionControl(btn) {
+      return upstreamLabelMatches(btn, UPSTREAM_ARIA.newSession)
+        || !!btn?.matches?.(UPSTREAM_SEL.newSessionBtn);
+    },
+    isDrawerRetainedControl(btn) {
+      return upstreamLabelMatches(btn, [
+        ...UPSTREAM_ARIA.actions, ...UPSTREAM_ARIA.view, ...UPSTREAM_ARIA.add,
+        ...UPSTREAM_ARIA.search, ...UPSTREAM_ARIA.settings,
+      ]) || !!btn?.matches?.(UPSTREAM_SEL.actionBtnFallback);
+    },
+    /** 面板顶栏收起按钮（多语言） */
+    clickCollapse() {
+      (upstreamAriaFind(UPSTREAM_ARIA.collapse) || document.querySelector(UPSTREAM_SEL.collapseBtn))?.click();
+    },
+    /** 折叠态侧边栏的展开开关（左右滑手势用） */
+    expandFromCollapsed() {
+      document.querySelector(UPSTREAM_SEL.collapsedToggle)?.click();
+    },
+    /** 会话行内的操作按钮：优先带文案/图标的，最后回退行内第一个按钮 */
+    sessionActionBtn(row) {
+      const btns = [...row.querySelectorAll('button')];
+      return btns.find((b) => upstreamLabelMatches(b, UPSTREAM_ARIA.actions))
+        || row.querySelector('button[class*="iconButton"]')
+        || btns[0]
+        || null;
+    },
+  };
+}
+
+// ---- 移动端自适应与触控交互增强 ----
+// 上游 DOM 依赖统一经上方契约层（U.*）访问；见 UPSTREAM_ARIA / UPSTREAM_SEL。
+
 function setupMobileExperience(rpcCall, ctx) {
   if (typeof document === 'undefined' || typeof window === 'undefined') return;
   injectMobileStyles();
+  const U = createUpstreamBridge(ctx);
 
   // 1. 创建顶部 DeepSeek App 风格导航条 (Header: 左侧双横线，中间当前会话标题，右侧(+))
   let header = document.querySelector('.dsh-mobile-app-header');
@@ -4247,10 +4801,7 @@ function setupMobileExperience(rpcCall, ctx) {
     leftBtn.onclick = (e) => {
       e.stopPropagation();
       const isOpen = document.body.classList.toggle('dsh-drawer-open');
-      if (isOpen) {
-        const expand = document.querySelector('button[aria-label*="打开侧边栏"], button[title*="打开侧边栏"]');
-        if (expand) expand.click();
-      }
+      if (isOpen) U.openSidebar();
     };
 
     // 中间动态会话标题 (居中展示当前会话名称，点击可快速切回对话流)
@@ -4258,8 +4809,7 @@ function setupMobileExperience(rpcCall, ctx) {
     titleEl.className = 'dsh-mobile-header-title';
     titleEl.innerText = '新会话';
     titleEl.onclick = () => {
-      const openPanels = document.querySelectorAll('div[class*="nArs4W_panel"]:not([class*="panelHidden"]), div[class*="workbench_panel"]:not([class*="panelHidden"])');
-      openPanels.forEach((p) => p.classList.add('nArs4W_panelHidden'));
+      U.backToConversation();
     };
 
     // 右侧 (+) 新建会话按钮 (DeepSeek App 圆形加号风格)
@@ -4274,10 +4824,8 @@ function setupMobileExperience(rpcCall, ctx) {
       </svg>
     `;
     rightBtn.onclick = () => {
-      const openPanels = document.querySelectorAll('div[class*="nArs4W_panel"]:not([class*="panelHidden"]), div[class*="workbench_panel"]:not([class*="panelHidden"])');
-      openPanels.forEach((p) => p.classList.add('nArs4W_panelHidden'));
-      const dshNewBtn = document.querySelector('button[aria-label="新建会话"]');
-      if (dshNewBtn) dshNewBtn.click();
+      U.backToConversation();
+      U.clickNewSession();
     };
 
     header.appendChild(leftBtn);
@@ -4312,8 +4860,7 @@ function setupMobileExperience(rpcCall, ctx) {
       // 仅在移动端切换会话时自动收起右侧面板回到对话（PC端绝不干扰）
       if (typeof window !== 'undefined' && window.innerWidth <= 768) {
         document.body.classList.remove('dsh-workbench-open');
-        const openPanels = document.querySelectorAll('div[class*="nArs4W_panel"]:not([class*="panelHidden"]), div[class*="workbench_panel"]:not([class*="panelHidden"])');
-        openPanels.forEach((p) => p.classList.add('nArs4W_panelHidden'));
+        U.backToConversation();
       }
     });
   }
@@ -4325,9 +4872,9 @@ function setupMobileExperience(rpcCall, ctx) {
       document.querySelectorAll('.dsh-mobile-panel-close-btn').forEach(btn => btn.remove());
       return;
     }
-    const panels = document.querySelectorAll('div[class*="nArs4W_panel"]:not([class*="panelHidden"]), div[class*="workbench_panel"]:not([class*="panelHidden"])');
+    const panels = U.openPanels();
     panels.forEach((p) => {
-      const bar = p.querySelector('div[class*="tabBar"], div[class*="nArs4W_tabBar"]');
+      const bar = p.querySelector(U.SEL.panelTabBar);
       if (bar && !bar.querySelector('.dsh-mobile-panel-close-btn')) {
         const btn = document.createElement('button');
         btn.className = 'dsh-mobile-panel-close-btn';
@@ -4335,9 +4882,8 @@ function setupMobileExperience(rpcCall, ctx) {
         btn.onclick = (e) => {
           e.stopPropagation();
           document.body.classList.remove('dsh-workbench-open');
-          p.classList.add('nArs4W_panelHidden');
-          const collapseBtn = document.querySelector('button[class*="toggleButton"][aria-label*="收起"]');
-          if (collapseBtn) collapseBtn.click();
+          p.classList.add(U.SEL.panelHiddenClass);
+          U.clickCollapse();
         };
         bar.appendChild(btn);
       }
@@ -4415,8 +4961,8 @@ function setupMobileExperience(rpcCall, ctx) {
 
   const ensureTabButton = () => {
     if (typeof window === 'undefined' || window.innerWidth > 768) return;
-    const titleRow = document.querySelector('div[class*="wSkVaW_titleRow"]');
-    const cluster = titleRow ? titleRow.querySelector('div[class*="wSkVaW_titleCluster"]') : null;
+    const titleRow = document.querySelector(U.SEL.titleRow);
+    const cluster = titleRow ? titleRow.querySelector(U.SEL.titleCluster) : null;
     if (!titleRow || !cluster) {
       closeTabDropdown();
       if (mobileTabState.btn) {
@@ -4433,8 +4979,8 @@ function setupMobileExperience(rpcCall, ctx) {
     const tabBtn = document.createElement('button');
     tabBtn.type = 'button';
     // 观感对齐：优先复刻标准模式胶囊的类，其次访达图标按钮，最后自有样式兜底
-    const pillBtn = titleRow.querySelector('div[class*="wSkVaW_titleCluster"] button');
-    const utilBtn = titleRow.querySelector('div[class*="wSkVaW_headerUtilities"] button');
+    const pillBtn = titleRow.querySelector(`${U.SEL.titleCluster} button`);
+    const utilBtn = titleRow.querySelector(`${U.SEL.headerUtilities} button`);
     const mimic = (pillBtn && pillBtn.className) || (utilBtn && utilBtn.className) || '';
     tabBtn.className = (mimic ? mimic + ' ' : '') + 'dsh-mobile-tab-btn';
     tabBtn.innerHTML = `<span class="dsh-mobile-tab-btn-label">对话</span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
@@ -4452,7 +4998,7 @@ function setupMobileExperience(rpcCall, ctx) {
   // 插件重渲染后新按钮由观察器重新清理
   const cleanReasoningButtons = () => {
     if (typeof window === 'undefined' || window.innerWidth > 768) return;
-    document.querySelectorAll('div[class*="uV2eYG_trailing"] span > button:not([class])').forEach((btn) => {
+    document.querySelectorAll(U.SEL.reasoningBtn).forEach((btn) => {
       if (btn.dataset.dshTextCleaned === '1') return;
       [...btn.childNodes].forEach((node) => {
         if (node.nodeType === Node.ELEMENT_NODE) {
@@ -4486,7 +5032,7 @@ function setupMobileExperience(rpcCall, ctx) {
   // 移动端点击面板/工作区触发按钮时，自动激活 dsh-workbench-open
   document.addEventListener('click', (e) => {
     if (typeof window === 'undefined' || window.innerWidth > 768) return;
-    const trigger = e.target.closest('button[aria-label*="面板"], button[aria-label*="工作区"], div[class*="toggleCluster"] button, button[class*="subagent"], div[class*="headerActions"] button, div[class*="titleRow"] button');
+    const trigger = e.target.closest(`button[aria-label*="${U.ARIA.workbench[0]}"], button[aria-label*="${U.ARIA.workbench[1]}"], div[class*="toggleCluster"] button, button[class*="subagent"], div[class*="headerActions"] button, div[class*="titleRow"] button`);
     if (trigger && !trigger.classList.contains('dsh-mobile-panel-close-btn') && !trigger.classList.contains('dsh-header-menu-btn') && !trigger.classList.contains('dsh-header-new-btn')) {
       document.body.classList.add('dsh-workbench-open');
     }
@@ -4495,8 +5041,8 @@ function setupMobileExperience(rpcCall, ctx) {
   // 移动端点击 DSH 自带的收起侧边栏图标时，自动收起抽屉
   document.addEventListener('click', (e) => {
     if (typeof window === 'undefined' || window.innerWidth > 768) return;
-    const toggle = e.target.closest('button[aria-label*="收起侧边栏"], button[title*="收起侧边栏"]');
-    if (toggle) {
+    const toggle = e.target.closest('button');
+    if (toggle && U.labelMatches(toggle, U.ARIA.sidebarClose)) {
       document.body.classList.remove('dsh-drawer-open');
     }
   }, true);
@@ -4526,35 +5072,28 @@ function setupMobileExperience(rpcCall, ctx) {
     }
 
     // 如果点击的是弹出层、菜单、下拉框、模态对话框内部，绝不收起抽屉
-    if (e.target.closest('div[class*="portal"], div[class*="_portal"], div[role="menu"], div[role="dialog"], div[class*="popup"], div[class*="dropdown"], div[class*="overlay"]')) {
+    if (e.target.closest(U.SEL.popoverGuard)) {
       return;
     }
 
-    const sidebar = document.querySelector('div[class*="_sidebarCol"]');
+    const sidebar = U.sidebar();
     if (sidebar && sidebar.contains(e.target)) {
       // 如果点击的是搜索框、输入框、选择器等
-      if (e.target.closest('input, select, textarea, div[class*="searchInput"]')) {
+      if (e.target.closest(U.SEL.formControl)) {
         return;
       }
 
       // 如果点击的是操作按钮、图标按钮（如三点菜单、添加工作区、视图选项、设置）
       const btn = e.target.closest('button, [role="button"]');
       if (btn) {
-        const label = btn.getAttribute('aria-label') || btn.innerText || '';
         // 视图选项、添加工作区、操作菜单、设置、折叠切换等保留在抽屉内操作
-        if (
-          label.includes('操作') ||
-          label.includes('视图') ||
-          label.includes('添加') ||
-          label.includes('搜索') ||
-          label.includes('设置') ||
-          btn.matches('button[class*="toggle"], button[class*="trigger"], button[class*="iconButton"], button[class*="searchButton"]')
-        ) {
+        // （多语言：经契约层按 aria-label/title/文本匹配，不再写死中文）
+        if (U.isDrawerRetainedControl(btn)) {
           return;
         }
 
         // 如果点击的是新建会话按钮，开始新会话并收起抽屉
-        if (label.includes('新会话') || btn.matches('button[class*="newSession"]')) {
+        if (U.isNewSessionControl(btn)) {
           document.body.classList.remove('dsh-drawer-open');
           return;
         }
@@ -4565,7 +5104,7 @@ function setupMobileExperience(rpcCall, ctx) {
       //   文件夹 → 带 aria-expanded，onClick 是 onToggle（展开/折叠）
       //   会话   → 无 aria-expanded，onClick 是切换会话
       // 此前不区分二者，导致点击文件夹（只是想展开）也会立刻收起抽屉。
-      const sessionRow = e.target.closest('a, div[class*="sessionRow"], div[role="treeitem"]');
+      const sessionRow = e.target.closest(U.SEL.sessionRow);
       if (sessionRow) {
         // 文件夹：点击是为了展开/折叠，保持抽屉打开
         if (sessionRow.hasAttribute('aria-expanded')) {
@@ -4586,7 +5125,7 @@ function setupMobileExperience(rpcCall, ctx) {
   //     CSS 的 visibility:hidden 不足以阻止 Tab 聚焦（实测仍可聚焦到屏幕外按钮），
   //     inert 能同时阻断键盘焦点、指针事件与屏幕阅读器访问。
   const syncSidebarInert = () => {
-    const sidebar = document.querySelector('div[class*="_sidebarCol"]');
+    const sidebar = U.sidebar();
     if (!sidebar) return;
     const open = document.body.classList.contains('dsh-drawer-open');
     const wantInert = window.innerWidth <= 768 && !open;
@@ -4605,7 +5144,7 @@ function setupMobileExperience(rpcCall, ctx) {
   let inertRetry = 0;
   const inertTimer = setInterval(() => {
     syncSidebarInert();
-    const sb = document.querySelector('div[class*="_sidebarCol"]');
+    const sb = U.sidebar();
     if ((sb && sb.hasAttribute('inert')) || ++inertRetry > 40) clearInterval(inertTimer);
   }, 250);
   syncSidebarInert();
@@ -4623,7 +5162,7 @@ function setupMobileExperience(rpcCall, ctx) {
 
     if (!document.body.classList.contains('dsh-drawer-open')) return;
 
-    const sidebar = document.querySelector('div[class*="_sidebarCol"]');
+    const sidebar = U.sidebar();
     if (!sidebar || !sidebar.contains(e.target)) return;
 
     const sessionRow = e.target.closest('div[class*="sessionRow"], div[role="treeitem"]');
@@ -4635,8 +5174,8 @@ function setupMobileExperience(rpcCall, ctx) {
         if (navigator.vibrate) navigator.vibrate(40);
       } catch (_) {}
 
-      // 寻找该会话项内的三点操作按钮并触发点击
-      const actionBtn = sessionRow.querySelector('button[aria-label*="操作"], button[class*="iconButton"], button');
+      // 寻找该会话项内的三点操作按钮并触发点击（文案/类名/兜底三级回退）
+      const actionBtn = U.sessionActionBtn(sessionRow);
       if (actionBtn) {
         actionBtn.click();
       }
@@ -4667,8 +5206,7 @@ function setupMobileExperience(rpcCall, ctx) {
     if (Math.abs(deltaX) > 60 && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
       if (deltaX > 0 && touchStartX <= 35) {
         document.body.classList.add('dsh-drawer-open');
-        const collapsedToggle = document.querySelector('div[class*="hHd-Xa_collapsed"] button[class*="hHd-Xa_toggle"]');
-        if (collapsedToggle) collapsedToggle.click();
+        U.expandFromCollapsed();
       } else if (deltaX < 0 && document.body.classList.contains('dsh-drawer-open')) {
         document.body.classList.remove('dsh-drawer-open');
       }

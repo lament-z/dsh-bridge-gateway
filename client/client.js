@@ -76,6 +76,13 @@ var BRIDGE_ENDPOINTS = {
   platformStop: "platformStop",
   platformStart: "platformStart",
   platformUnbind: "platformUnbind",
+  // Tailscale 隧道（访问配置 Tab：自动探测 Serve 地址 / 保存手动地址）
+  tailscaleDetect: "tailscaleDetect",
+  tailscaleSaveUrl: "tailscaleSaveUrl",
+  // 远程连接监控（访客管理 Tab：可见 / 踢除 / 黑名单）
+  connectionsGet: "connectionsGet",
+  connectionKick: "connectionKick",
+  blacklistSet: "blacklistSet",
   // 微信 Bot（v1.x 向后兼容别名，deprecated）
   wechatGetStatus: "wechatGetStatus",
   wechatLogin: "wechatLogin",
@@ -164,13 +171,13 @@ var s = {
   muted: { color: "var(--dsw-alias-label-tertiary,#8b93a1)", fontSize: 12, lineHeight: 1.5 },
   label: { color: "var(--dsw-alias-label-primary,currentColor)", fontSize: 13, fontWeight: 500 },
   code: { fontFamily: "ui-monospace,Menlo,monospace", fontSize: 12, wordBreak: "break-all", color: "var(--dsw-alias-label-primary,currentColor)" },
-  btnPri: { font: "inherit", cursor: "pointer", border: "none", background: "var(--dsw-alias-brand-primary,#4f6ef7)", color: "var(--dsw-alias-label-primary-foreground,#fff)", height: 32, padding: "0 14px", borderRadius: 999, fontSize: 13, fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 4 },
+  btnPri: { font: "inherit", cursor: "pointer", border: "none", background: "var(--dsw-alias-button-info-fill,#4176e6)", color: "#fff", height: 32, padding: "0 14px", borderRadius: 999, fontSize: 13, fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 4 },
   btnGhost: { font: "inherit", cursor: "pointer", border: "1px solid var(--dsw-alias-border-l2,#d1d5db)", background: "var(--dsw-alias-bg-layer-2,#f9fafb)", color: "var(--dsw-alias-label-primary,currentColor)", height: 32, padding: "0 14px", borderRadius: 999, fontSize: 13, display: "inline-flex", alignItems: "center", gap: 4, textDecoration: "none" },
-  btnLink: { font: "inherit", cursor: "pointer", border: "none", background: "none", color: "var(--dsw-alias-brand-primary,#4f6ef7)", fontSize: 12, padding: 0, display: "inline-flex", alignItems: "center", gap: 3, textDecoration: "none" },
+  btnLink: { font: "inherit", cursor: "pointer", border: "none", background: "none", color: "var(--dsw-alias-state-business-primary,#4176e6)", fontSize: 12, padding: 0, display: "inline-flex", alignItems: "center", gap: 3, textDecoration: "none" },
   qr: { width: 200, height: 200, maxWidth: "100%", borderRadius: 10, border: "1px solid var(--dsw-alias-border-l2,#e5e7eb)", margin: "8px 0", display: "block", background: "#ffffff", padding: 6, boxSizing: "border-box" },
   tag: { display: "inline-flex", alignItems: "center", justifyContent: "center", padding: "3px 10px", borderRadius: 999, fontSize: 12, fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, minWidth: "max-content", lineHeight: 1.4 },
   input: { width: "100%", font: "inherit", fontSize: 13, padding: "7px 10px", borderRadius: 8, border: "1px solid var(--dsw-alias-border-l2,#d1d5db)", background: "var(--dsw-alias-bg-layer-2,#f9fafb)", color: "var(--dsw-alias-label-primary,currentColor)", outline: "none", boxSizing: "border-box" },
-  warn: { background: "var(--dsw-alias-state-warn-bg,#fffbeb)", border: "1px solid var(--dsw-alias-state-warn-border,#fde68a)", borderRadius: 8, padding: "10px 14px", fontSize: 12, color: "var(--dsw-alias-state-warn-primary,#92400e)", lineHeight: 1.6 },
+  warn: { background: "var(--dsw-alias-state-warn-tertiary,#fffbeb)", border: "1px solid var(--dsw-alias-border-l2,#fde68a)", borderRadius: 8, padding: "10px 14px", fontSize: 12, color: "var(--dsw-alias-state-warn-primary,#92400e)", lineHeight: 1.6 },
   tip: { background: "var(--dsw-alias-bg-layer-2,#f9fafb)", borderRadius: 8, padding: "10px 14px", fontSize: 12, color: "var(--dsw-alias-label-secondary,#6b7280)", lineHeight: 1.6 }
 };
 var Icons = {
@@ -194,11 +201,6 @@ var Icons = {
     { viewBox: "0 0 24 24", width: 18, height: 18, fill: "currentColor", ...props },
     React.createElement("path", { d: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z" })
   ),
-  lan: (props) => React.createElement(
-    "svg",
-    { viewBox: "0 0 24 24", width: 16, height: 16, fill: "currentColor", ...props },
-    React.createElement("path", { d: "M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.29 19.3a1 1 0 0 0 1.41 1.41l1.7-1.7C9.02 19.64 10.46 20 12 20c4.97 0 9-4.03 9-9s-4.03-9-9-9zm0 15c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6zm0-9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z" })
-  ),
   tunnel: (props) => React.createElement(
     "svg",
     { viewBox: "0 0 24 24", width: 16, height: 16, fill: "currentColor", ...props },
@@ -208,6 +210,13 @@ var Icons = {
     "svg",
     { viewBox: "0 0 24 24", width: 16, height: 16, fill: "currentColor", ...props },
     React.createElement("path", { d: "M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z" })
+  ),
+  visitor: (props) => React.createElement(
+    "svg",
+    { viewBox: "0 0 24 24", width: 16, height: 16, fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round", ...props },
+    React.createElement("circle", { cx: "9", cy: "7.5", r: "3.5" }),
+    React.createElement("path", { d: "M2.5 20c0-3.6 2.9-6.5 6.5-6.5 1.6 0 3.1.6 4.2 1.5" }),
+    React.createElement("path", { d: "M17.5 12.5l3.5 1.4v3.3c0 2.2-1.5 3.9-3.5 4.3-2-.4-3.5-2.1-3.5-4.3v-3.3z" })
   ),
   bot: (props) => React.createElement(
     "svg",
@@ -242,27 +251,27 @@ function StatusTag({ running, status }) {
   let color = "var(--dsw-alias-label-secondary,#6b7280)";
   let text = running ? "\u8FD0\u884C\u4E2D" : "\u672A\u542F\u52A8";
   if (status === "connected") {
-    bg = "var(--dsw-alias-state-success-bg,#ecfdf5)";
+    bg = "var(--dsw-alias-state-success-tertiary,#ecfdf5)";
     color = "var(--dsw-alias-state-success-primary,#059669)";
     text = "\u5DF2\u8FDE\u63A5";
   } else if (status === "starting") {
-    bg = "var(--dsw-alias-state-info-bg,#eff6ff)";
-    color = "var(--dsw-alias-state-info-primary,#3b82f6)";
+    bg = "var(--dsw-alias-bg-layer-2,#eff6ff)";
+    color = "var(--dsw-alias-label-secondary,#3b82f6)";
     text = "\u8FDE\u63A5\u4E2D\u2026";
   } else if (status === "reconnecting") {
-    bg = "var(--dsw-alias-state-warn-bg,#fffbeb)";
+    bg = "var(--dsw-alias-state-warn-tertiary,#fffbeb)";
     color = "var(--dsw-alias-state-warn-primary,#d97706)";
     text = "\u91CD\u8FDE\u4E2D\u2026";
   } else if (status === "paused") {
-    bg = "var(--dsw-alias-state-warn-bg,#fffbeb)";
+    bg = "var(--dsw-alias-state-warn-tertiary,#fffbeb)";
     color = "var(--dsw-alias-state-warn-primary,#d97706)";
     text = "\u6682\u505C\u4E2D";
   } else if (status === "error") {
-    bg = "var(--dsw-alias-state-error-bg,#fef2f2)";
+    bg = "var(--dsw-alias-interactive-bg-hover-danger,#fef2f2)";
     color = "var(--dsw-alias-state-error-primary,#dc2626)";
     text = "\u5F02\u5E38";
   } else if (running) {
-    bg = "var(--dsw-alias-state-success-bg,#ecfdf5)";
+    bg = "var(--dsw-alias-state-success-tertiary,#ecfdf5)";
     color = "var(--dsw-alias-state-success-primary,#059669)";
     text = "\u8FD0\u884C\u4E2D";
   }
@@ -310,7 +319,7 @@ function QrBlock({ url, qr, onReset, auth, onNavigateSecurity }) {
           justifyContent: "space-between",
           gap: 6,
           padding: "6px 10px",
-          background: "var(--dsw-alias-state-success-bg,#ecfdf5)",
+          background: "var(--dsw-alias-state-success-tertiary,#ecfdf5)",
           border: "1px solid var(--dsw-alias-state-success-primary,#10b981)",
           borderRadius: 8,
           fontSize: 12,
@@ -333,7 +342,7 @@ function QrBlock({ url, qr, onReset, auth, onNavigateSecurity }) {
         title: onNavigateSecurity ? "\u70B9\u51FB\u524D\u5F80\u300C\u5B89\u5168\u8BA4\u8BC1\u300D\u5F00\u542F\u8BBF\u95EE\u4FDD\u62A4" : void 0
       },
       React.createElement("span", null, "\u26A0\uFE0F \u5F53\u524D\u672A\u5F00\u542F\u8BBF\u95EE\u8BA4\u8BC1\uFF0C\u5EFA\u8BAE\u5728\u300C\u5B89\u5168\u8BA4\u8BC1\u300D\u5F00\u542F\u5BC6\u7801\u6216\u626B\u7801\u4FDD\u62A4\u3002"),
-      onNavigateSecurity && React.createElement("span", { style: { fontWeight: 600, textDecoration: "underline", fontSize: 12, color: "var(--dsw-alias-brand-primary,#4f6ef7)" } }, "\u53BB\u5F00\u542F \u2794")
+      onNavigateSecurity && React.createElement("span", { style: { fontWeight: 600, textDecoration: "underline", fontSize: 12, color: "var(--dsw-alias-state-business-primary,#4176e6)" } }, "\u53BB\u5F00\u542F \u2794")
     ),
     React.createElement(
       "div",
@@ -554,6 +563,74 @@ var CustomTunnelConfigForm = React.memo(function CustomTunnelConfigForm2({ serve
     )
   );
 });
+var CardShell = React.memo(function CardShell2({
+  title,
+  desc,
+  running,
+  statusText,
+  withStatus = true,
+  titleSize = 13,
+  headerRight,
+  hint,
+  open,
+  onToggle,
+  children
+}) {
+  const collapsible = typeof onToggle === "function";
+  return React.createElement(
+    "div",
+    { style: s.card },
+    React.createElement(
+      "div",
+      {
+        style: {
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          gap: 10,
+          ...collapsible ? { cursor: "pointer", userSelect: "none" } : null
+        },
+        ...collapsible ? {
+          onClick: onToggle,
+          role: "button",
+          tabIndex: 0,
+          "aria-expanded": Boolean(open),
+          title: open ? "\u70B9\u51FB\u6298\u53E0" : "\u70B9\u51FB\u5C55\u5F00",
+          onKeyDown: (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onToggle();
+            }
+          }
+        } : null
+      },
+      React.createElement(
+        "div",
+        { style: { flex: "1 1 auto", minWidth: 0 } },
+        React.createElement(
+          "div",
+          { style: { display: "flex", alignItems: "center", gap: 6 } },
+          collapsible && React.createElement("span", {
+            style: { ...s.muted, fontSize: 11, flexShrink: 0, lineHeight: 1 }
+          }, open ? "\u25BE" : "\u25B8"),
+          React.createElement("div", { style: { ...s.label, fontSize: titleSize } }, title)
+        ),
+        React.createElement("div", { style: { ...s.muted, marginTop: 2 } }, desc),
+        collapsible && !open && hint ? React.createElement("div", { style: { ...s.muted, marginTop: 4, fontSize: 11.5 } }, hint) : null
+      ),
+      React.createElement(
+        "div",
+        {
+          style: { display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, flexShrink: 0 },
+          ...collapsible ? { onClick: (e) => e.stopPropagation() } : null
+        },
+        withStatus ? React.createElement(StatusTag, { running, status: statusText }) : null,
+        headerRight
+      )
+    ),
+    collapsible && !open ? null : children
+  );
+});
 var TunnelCard = React.memo(function TunnelCard2({
   title,
   desc,
@@ -565,49 +642,44 @@ var TunnelCard = React.memo(function TunnelCard2({
   onReset,
   auth,
   onNavigateSecurity,
+  open,
+  onToggle,
   children
 }) {
   const { running, configured, url, qr, state } = data ?? {};
   const phase = state?.phase ?? "idle";
+  const hint = phase !== "idle" && phase !== "ready" ? state?.detail ?? phase : url || (configured === false ? "\u5C1A\u672A\u914D\u7F6E" : null);
   return React.createElement(
-    "div",
-    { style: s.card },
-    React.createElement(
-      "div",
-      { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 } },
-      React.createElement(
-        "div",
-        { style: { flex: "1 1 auto", minWidth: 0 } },
-        React.createElement("div", { style: s.label }, title),
-        React.createElement("div", { style: { ...s.muted, marginTop: 2 } }, desc)
-      ),
-      React.createElement(
-        "div",
-        { style: { display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 } },
-        React.createElement(StatusTag, { running }),
-        onToggleAutoStart && React.createElement(
-          "label",
-          {
-            style: {
-              display: "flex",
-              alignItems: "center",
-              gap: 4,
-              fontSize: 11,
-              color: "var(--dsw-alias-label-secondary,#6b7280)",
-              cursor: "pointer",
-              userSelect: "none"
-            },
-            title: "DSH \u542F\u52A8\u65F6\u81EA\u52A8\u6062\u590D\u8BE5\u96A7\u9053\u7684\u8FD0\u884C\u72B6\u6001"
+    CardShell,
+    {
+      title,
+      desc,
+      running,
+      open,
+      onToggle,
+      hint,
+      headerRight: onToggleAutoStart && React.createElement(
+        "label",
+        {
+          style: {
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+            fontSize: 11,
+            color: "var(--dsw-alias-label-secondary,#6b7280)",
+            cursor: "pointer",
+            userSelect: "none"
           },
-          React.createElement("input", {
-            type: "checkbox",
-            checked: Boolean(autoStart),
-            onChange: (e) => onToggleAutoStart(e.target.checked)
-          }),
-          "\u968F DSH \u542F\u52A8\u81EA\u52A8\u5F00\u542F"
-        )
+          title: "DSH \u542F\u52A8\u65F6\u81EA\u52A8\u6062\u590D\u8BE5\u96A7\u9053\u7684\u8FD0\u884C\u72B6\u6001"
+        },
+        React.createElement("input", {
+          type: "checkbox",
+          checked: Boolean(autoStart),
+          onChange: (e) => onToggleAutoStart(e.target.checked)
+        }),
+        "\u968F DSH \u542F\u52A8\u81EA\u52A8\u5F00\u542F"
       )
-    ),
+    },
     children,
     phase !== "idle" && phase !== "ready" && React.createElement("div", {
       style: {
@@ -660,7 +732,7 @@ var CloudflareConfigForm = React.memo(function CloudflareConfigForm2({ token, ho
     {
       style: {
         ...s.block,
-        borderTop: "1px solid var(--dsw-alias-border-secondary, #e5e7eb)",
+        borderTop: "1px solid var(--dsw-alias-border-l2, #e5e7eb)",
         paddingTop: 10,
         marginTop: 10
       }
@@ -733,7 +805,7 @@ var CloudflareConfigForm = React.memo(function CloudflareConfigForm2({ token, ho
     )
   );
 });
-var GatewayCard = React.memo(function GatewayCard2({ gw, onStart, onStop, onSaveConfig, onToggleAutoStart }) {
+var GatewayCard = React.memo(function GatewayCard2({ gw, onStart, onStop, onSaveConfig, onToggleAutoStart, open, onToggle }) {
   const running = Boolean(gw?.running);
   const port = gw?.port ?? 7443;
   const [portVal, setPortVal] = React.useState(String(port));
@@ -761,48 +833,36 @@ var GatewayCard = React.memo(function GatewayCard2({ gw, onStart, onStop, onSave
     }
   };
   return React.createElement(
-    "div",
-    { style: s.card },
-    React.createElement(
-      "div",
-      { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 } },
-      React.createElement(
-        "div",
-        { style: { flex: "1 1 auto", minWidth: 0 } },
-        React.createElement("div", { style: s.label }, "\u76F4\u8FDE\u7F51\u5173"),
-        React.createElement(
-          "div",
-          { style: { ...s.muted, marginTop: 2 } },
-          "\u7ED5\u8FC7\u96A7\u9053\uFF0C\u7531\u7535\u8111\u76F4\u63A5\u76D1\u542C\u516C\u7F51\u7AEF\u53E3\uFF1A(\u7AEF\u53E3\u81EA\u5E26 HTTPS \u81EA\u7B7E\u8BC1\u4E66 + \u5F3A\u5236\u767B\u5F55\u95E8\u7981)"
-        )
-      ),
-      React.createElement(
-        "div",
-        { style: { display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 } },
-        React.createElement(StatusTag, { running }),
-        onToggleAutoStart && React.createElement(
-          "label",
-          {
-            style: {
-              display: "flex",
-              alignItems: "center",
-              gap: 4,
-              fontSize: 11,
-              color: "var(--dsw-alias-label-secondary,#6b7280)",
-              cursor: "pointer",
-              userSelect: "none"
-            },
-            title: "DSH \u542F\u52A8\u65F6\u81EA\u52A8\u6062\u590D\u76F4\u8FDE\u7F51\u5173\u7684\u8FD0\u884C\u72B6\u6001"
+    CardShell,
+    {
+      title: "\u76F4\u8FDE\u7F51\u5173",
+      desc: "\u7ED5\u8FC7\u96A7\u9053\uFF0C\u7531\u7535\u8111\u76F4\u63A5\u76D1\u542C\u516C\u7F51\u7AEF\u53E3\uFF1A(\u7AEF\u53E3\u81EA\u5E26 HTTPS \u81EA\u7B7E\u8BC1\u4E66 + \u5F3A\u5236\u767B\u5F55\u95E8\u7981)",
+      running,
+      open,
+      onToggle,
+      hint: running ? `\u5DF2\u76D1\u542C 0.0.0.0:${port}` : `\u672A\u76D1\u542C \xB7 \u7AEF\u53E3 ${port}\uFF08\u9700\u5728\u8DEF\u7531\u5668/\u4E91\u670D\u52A1\u5668\u505A\u7AEF\u53E3\u6620\u5C04\uFF09`,
+      headerRight: onToggleAutoStart && React.createElement(
+        "label",
+        {
+          style: {
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+            fontSize: 11,
+            color: "var(--dsw-alias-label-secondary,#6b7280)",
+            cursor: "pointer",
+            userSelect: "none"
           },
-          React.createElement("input", {
-            type: "checkbox",
-            checked: Boolean(gw?.autoStart),
-            onChange: (e) => onToggleAutoStart(e.target.checked)
-          }),
-          "\u968F DSH \u542F\u52A8\u81EA\u52A8\u5F00\u542F"
-        )
+          title: "DSH \u542F\u52A8\u65F6\u81EA\u52A8\u6062\u590D\u76F4\u8FDE\u7F51\u5173\u7684\u8FD0\u884C\u72B6\u6001"
+        },
+        React.createElement("input", {
+          type: "checkbox",
+          checked: Boolean(gw?.autoStart),
+          onChange: (e) => onToggleAutoStart(e.target.checked)
+        }),
+        "\u968F DSH \u542F\u52A8\u81EA\u52A8\u5F00\u542F"
       )
-    ),
+    },
     React.createElement(
       "div",
       { style: s.block, fontSize: 12, lineHeight: 1.7, color: "var(--dsw-alias-label-secondary,#6b7280)" },
@@ -817,7 +877,7 @@ var GatewayCard = React.memo(function GatewayCard2({ gw, onStart, onStop, onSave
         "div",
         { style: { marginBottom: 6 } },
         "\u{1F512} \u5F3A\u5236\u95E8\u7981\uFF1A\u8BE5\u7F51\u5173\u59CB\u7EC8\u8981\u6C42\u767B\u5F55\uFF08\u81EA\u52A8\u7EE7\u627F\u4F60\u5728\u300C\u5B89\u5168\u8BA4\u8BC1\u300D\u4E2D\u8BBE\u7F6E\u7684\u5BC6\u7801\uFF0C\u4E0E\u5C40\u57DF\u7F51\u7B56\u7565\u76F8\u4E92\u72EC\u7ACB\uFF09\uFF0C",
-        gw?.havePassword ? "\u516C\u7F51\u8BBF\u95EE\u5FC5\u987B\u8F93\u5165\u5BC6\u7801\u3002" : React.createElement("span", { style: { color: "var(--dsw-alias-state-warning-primary,#d97706)" } }, "\u5F53\u524D\u5C1A\u672A\u8BBE\u7F6E\u8BBF\u95EE\u5BC6\u7801\uFF0C\u8BF7\u5148\u524D\u5F80\u300C\u5B89\u5168\u8BA4\u8BC1\u300D\u4E2D\u8BBE\u7F6E\u3002")
+        gw?.havePassword ? "\u516C\u7F51\u8BBF\u95EE\u5FC5\u987B\u8F93\u5165\u5BC6\u7801\u3002" : React.createElement("span", { style: { color: "var(--dsw-alias-state-warn-label,#d97706)" } }, "\u5F53\u524D\u5C1A\u672A\u8BBE\u7F6E\u8BBF\u95EE\u5BC6\u7801\uFF0C\u8BF7\u5148\u524D\u5F80\u300C\u5B89\u5168\u8BA4\u8BC1\u300D\u4E2D\u8BBE\u7F6E\u3002")
       ),
       React.createElement(
         "div",
@@ -827,7 +887,7 @@ var GatewayCard = React.memo(function GatewayCard2({ gw, onStart, onStop, onSave
     ),
     React.createElement(
       "form",
-      { onSubmit: handleSave, style: { ...s.block, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", borderTop: "1px solid var(--dsw-alias-border-secondary,#e5e7eb)", paddingTop: 10 } },
+      { onSubmit: handleSave, style: { ...s.block, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", borderTop: "1px solid var(--dsw-alias-border-l2,#e5e7eb)", paddingTop: 10 } },
       React.createElement("div", { style: { fontSize: 12, color: "var(--dsw-alias-label-secondary,#6b7280)", flex: "0 0 auto" } }, "\u516C\u7F51\u7AEF\u53E3"),
       React.createElement("input", {
         style: { ...s.input, width: 120, height: 30 },
@@ -855,7 +915,378 @@ var GatewayCard = React.memo(function GatewayCard2({ gw, onStart, onStop, onSave
     )
   );
 });
-var AccessAuthCard = React.memo(function AccessAuthCard2({ auth, rpcCall, onUpdate }) {
+function RemoteConnectionsCard({ rpcCall }) {
+  const [data, setData] = React.useState(null);
+  const [err, setErr] = React.useState("");
+  const [busy, setBusy] = React.useState(false);
+  const [msg, setMsg] = React.useState("");
+  const [newIp, setNewIp] = React.useState("");
+  const refresh = React.useCallback(async () => {
+    try {
+      const res = await rpcCall(BRIDGE_ENDPOINTS.connectionsGet, {});
+      if (res?.ok === false) {
+        setErr(res?.error?.message ?? "\u52A0\u8F7D\u5931\u8D25");
+        setData(null);
+        return;
+      }
+      setData(res.value);
+      setErr("");
+    } catch (e) {
+      setErr(e?.message ?? String(e));
+    }
+  }, [rpcCall]);
+  React.useEffect(() => {
+    void refresh();
+    const t = setInterval(refresh, 8e3);
+    return () => clearInterval(t);
+  }, [refresh]);
+  const kick = React.useCallback(async (ip, blacklist2) => {
+    setBusy(true);
+    setMsg("");
+    try {
+      const res = await rpcCall(BRIDGE_ENDPOINTS.connectionKick, { ip, blacklist: blacklist2 });
+      if (res?.ok === false) {
+        setMsg(res?.error?.message ?? "\u64CD\u4F5C\u5931\u8D25");
+        return;
+      }
+      setMsg(blacklist2 ? `\u5DF2\u65AD\u5F00\u5E76\u62C9\u9ED1 ${ip}\uFF08\u8BE5 IP \u6B64\u540E\u6240\u6709\u8FDE\u63A5\u5C06\u88AB\u62D2\u7EDD\uFF09` : `\u5DF2\u65AD\u5F00 ${ip} \u7684 ${res.value?.kicked ?? 0} \u6761\u8FDE\u63A5\uFF08\u5BF9\u65B9\u53EF\u91CD\u65B0\u8FDE\u63A5\uFF09`);
+      void refresh();
+    } catch (e) {
+      setMsg(e?.message ?? String(e));
+    } finally {
+      setBusy(false);
+    }
+  }, [rpcCall, refresh]);
+  const setBlacklist = React.useCallback(async (ip, action) => {
+    setBusy(true);
+    setMsg("");
+    try {
+      const res = await rpcCall(BRIDGE_ENDPOINTS.blacklistSet, { ip, action });
+      if (res?.ok === false) {
+        setMsg(res?.error?.message ?? "\u64CD\u4F5C\u5931\u8D25");
+        return;
+      }
+      setMsg(action === "add" ? `\u5DF2\u62C9\u9ED1 ${ip}` : `\u5DF2\u5C06 ${ip} \u79FB\u51FA\u9ED1\u540D\u5355`);
+      setNewIp("");
+      void refresh();
+    } catch (e) {
+      setMsg(e?.message ?? String(e));
+    } finally {
+      setBusy(false);
+    }
+  }, [rpcCall, refresh]);
+  const connections = data?.connections ?? [];
+  const blacklist = data?.blacklist ?? [];
+  const canManage = Boolean(data?.canManage);
+  return React.createElement(
+    "div",
+    { style: { ...s.card } },
+    React.createElement("div", { style: { ...s.label, fontSize: 13, fontWeight: 600, marginBottom: 4 } }, "\u8FDC\u7A0B\u8FDE\u63A5\u76D1\u63A7"),
+    React.createElement(
+      "div",
+      { style: { ...s.muted, marginBottom: 10 } },
+      "\u5F53\u524D\u901A\u8FC7 \u5C40\u57DF\u7F51 / \u76F4\u8FDE\u7F51\u5173 / \u96A7\u9053 \u8FDE\u5230\u672C\u673A\u7684\u6765\u6E90 IP\u3002\u96A7\u9053\u573A\u666F\u663E\u793A\u7684\u662F\u8BBF\u5BA2\u771F\u5B9E IP\u3002",
+      canManage ? null : "\u65AD\u5F00\u4E0E\u62C9\u9ED1\u9700\u8981\u7BA1\u7406\u5458\u6743\u9650\u3002"
+    ),
+    err ? React.createElement("div", { style: { ...s.warn, marginBottom: 8 } }, err) : !data ? React.createElement("div", { style: { ...s.muted } }, "\u52A0\u8F7D\u4E2D\u2026") : connections.length === 0 ? React.createElement("div", { style: { ...s.muted } }, "\u5F53\u524D\u6CA1\u6709\u5916\u90E8\u8FDE\u63A5\u3002") : React.createElement(
+      "div",
+      null,
+      connections.map((c) => React.createElement(
+        "div",
+        {
+          key: c.ip,
+          style: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, padding: "8px 0", borderBottom: "1px solid var(--dsw-alias-border-l2,#e5e7eb)", flexWrap: "wrap" }
+        },
+        React.createElement(
+          "div",
+          { style: { minWidth: 0 } },
+          React.createElement(
+            "div",
+            { style: { display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" } },
+            React.createElement("code", { style: { ...s.code, fontSize: 12.5, fontWeight: 600 } }, c.ip),
+            blacklist.includes(c.ip) ? React.createElement(StatusTag, { running: false, status: "\u5DF2\u62C9\u9ED1" }) : null
+          ),
+          React.createElement(
+            "div",
+            { style: { ...s.muted, fontSize: 11, marginTop: 2 } },
+            `${c.count} \u6761\u8FDE\u63A5 \xB7 \u5DF2\u5EFA\u7ACB ${c.oldestSec >= 60 ? Math.floor(c.oldestSec / 60) + " \u5206" : c.oldestSec + " \u79D2"}`,
+            c.sources?.length ? ` \xB7 ${c.sources.join("/")}` : "",
+            c.via ? ` \xB7 ${c.via}` : ""
+          )
+        ),
+        canManage && React.createElement(
+          "div",
+          { style: { display: "flex", gap: 6, flexShrink: 0 } },
+          React.createElement("button", {
+            disabled: busy,
+            onClick: () => kick(c.ip, false),
+            style: { ...s.btnGhost, height: 26, padding: "0 10px", fontSize: 11.5 },
+            title: "\u65AD\u5F00\u8BE5 IP \u5F53\u524D\u6240\u6709\u8FDE\u63A5\uFF1B\u5BF9\u65B9\u53EF\u4EE5\u91CD\u65B0\u8FDE\u63A5"
+          }, "\u65AD\u5F00"),
+          blacklist.includes(c.ip) ? React.createElement("button", {
+            disabled: busy,
+            onClick: () => setBlacklist(c.ip, "remove"),
+            style: { ...s.btnGhost, height: 26, padding: "0 10px", fontSize: 11.5 }
+          }, "\u89E3\u9664\u62C9\u9ED1") : React.createElement("button", {
+            disabled: busy,
+            onClick: () => kick(c.ip, true),
+            style: { ...s.btnGhost, height: 26, padding: "0 10px", fontSize: 11.5, color: "#dc4c64", borderColor: "rgba(220,76,100,.5)" },
+            title: "\u65AD\u5F00\u5E76\u628A\u8BE5 IP \u52A0\u5165\u9ED1\u540D\u5355\uFF08\u6301\u4E45\u751F\u6548\uFF09"
+          }, "\u65AD\u5F00\u5E76\u62C9\u9ED1")
+        )
+      ))
+    ),
+    msg ? React.createElement("div", { style: { ...s.tip, marginTop: 8 } }, msg) : null,
+    // 黑名单：列表可见，管理操作（添加/移除）仅管理员
+    React.createElement(
+      "div",
+      { style: { ...s.block, paddingTop: 12, marginTop: 12 } },
+      React.createElement("div", { style: { ...s.label, fontSize: 13, fontWeight: 600, marginBottom: 4 } }, `\u9ED1\u540D\u5355\uFF08${blacklist.length}\uFF09`),
+      React.createElement(
+        "div",
+        { style: { ...s.muted, marginBottom: 8, fontSize: 11.5 } },
+        "\u9ED1\u540D\u5355\u4E2D\u7684 IP \u5728\u8FDB\u5165\u4EFB\u4F55\u9875\u9762/\u8FDE\u63A5\u524D\u5373\u88AB\u62D2\u7EDD\uFF08\u4F18\u5148\u7EA7\u6700\u9AD8\uFF0C\u96A7\u9053\u771F\u5B9E\u6765\u6E90\u540C\u6837\u751F\u6548\uFF09\u3002\u4E0D\u4F1A\u81EA\u52A8\u62C9\u9ED1 \u2014\u2014 \u8FD0\u8425\u5546\u5171\u4EAB\u51FA\u53E3 IP \u4E0B\u81EA\u52A8\u62C9\u9ED1\u5BB9\u6613\u8BEF\u4F24\u3002"
+      ),
+      canManage && React.createElement(
+        "div",
+        { style: { display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 } },
+        React.createElement("input", {
+          style: { ...s.input, flex: "1 1 180px", width: "auto" },
+          placeholder: "\u8F93\u5165 IP\uFF0C\u5982 203.0.113.7",
+          value: newIp,
+          onChange: (e) => setNewIp(e.target.value)
+        }),
+        React.createElement("button", {
+          disabled: busy || !newIp.trim(),
+          onClick: () => setBlacklist(newIp.trim(), "add"),
+          style: { ...s.btnGhost, height: 34 }
+        }, "\u6DFB\u52A0")
+      ),
+      blacklist.length > 0 && React.createElement(
+        "div",
+        { style: { marginTop: 8 } },
+        blacklist.map((ip) => React.createElement(
+          "div",
+          {
+            key: ip,
+            style: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 0", borderBottom: "1px solid var(--dsw-alias-border-l2,#e5e7eb)" }
+          },
+          React.createElement("code", { style: { ...s.code, fontSize: 12 } }, ip),
+          canManage && React.createElement("button", {
+            disabled: busy,
+            onClick: () => setBlacklist(ip, "remove"),
+            style: { ...s.btnGhost, height: 24, padding: "0 10px", fontSize: 11 }
+          }, "\u79FB\u9664")
+        ))
+      )
+    )
+  );
+}
+var TailscaleCard = React.memo(function TailscaleCard2({
+  data,
+  rpcCall,
+  auth,
+  onNavigateSecurity,
+  open,
+  onToggle,
+  onRefresh
+}) {
+  const savedUrl = data?.savedUrl ?? "";
+  const detectedUrl = data?.detectedUrl ?? "";
+  const effectiveUrl = savedUrl || detectedUrl;
+  const running = Boolean(effectiveUrl);
+  const [editing, setEditing] = React.useState(false);
+  const [draft, setDraft] = React.useState(savedUrl);
+  const [detecting, setDetecting] = React.useState(false);
+  const [busy, setBusy] = React.useState(false);
+  const [msg, setMsg] = React.useState("");
+  const [cmdCopied, setCmdCopied] = React.useState(false);
+  React.useEffect(() => {
+    if (!editing) setDraft(savedUrl);
+  }, [savedUrl, editing]);
+  const detect = React.useCallback(async () => {
+    setDetecting(true);
+    setMsg("");
+    try {
+      const res = await rpcCall(BRIDGE_ENDPOINTS.tailscaleDetect, {});
+      if (res?.ok === false) {
+        setMsg(res?.error?.message ?? "\u63A2\u6D4B\u5931\u8D25");
+        return;
+      }
+      const d = res.value ?? {};
+      if (!d.available) {
+        setMsg(d.hint || d.reason || "\u672A\u68C0\u6D4B\u5230\u53EF\u7528\u7684 Tailscale \u5730\u5740");
+        void onRefresh?.();
+        return;
+      }
+      setEditing(true);
+      setDraft((prev) => prev.trim() === d.endpoint ? prev : d.endpoint);
+      setMsg(`\u5DF2\u63A2\u6D4B\u5230 Tailscale \u5730\u5740\uFF1A${d.endpoint}\uFF08\u5DF2\u586B\u5165\uFF0C\u8BF7\u4FDD\u5B58\uFF09`);
+      void onRefresh?.();
+    } catch (err) {
+      setMsg(err?.message ?? String(err));
+    } finally {
+      setDetecting(false);
+    }
+  }, [rpcCall, onRefresh]);
+  const save = React.useCallback(async () => {
+    setBusy(true);
+    setMsg("");
+    try {
+      const res = await rpcCall(BRIDGE_ENDPOINTS.tailscaleSaveUrl, { url: draft });
+      if (res?.ok === false) {
+        setMsg(res?.error?.message ?? "\u4FDD\u5B58\u5931\u8D25");
+        return;
+      }
+      setEditing(false);
+      setMsg(draft.trim() ? "Tailscale \u5730\u5740\u5DF2\u4FDD\u5B58" : "\u5DF2\u6E05\u9664\u4FDD\u5B58\u7684 Tailscale \u5730\u5740");
+      void onRefresh?.();
+    } catch (err) {
+      setMsg(err?.message ?? String(err));
+    } finally {
+      setBusy(false);
+    }
+  }, [rpcCall, draft, onRefresh]);
+  const copyServeCommand = React.useCallback(() => {
+    const text = data?.serveCommand || "";
+    const done = () => {
+      setCmdCopied(true);
+      setTimeout(() => setCmdCopied(false), 2e3);
+    };
+    const fallback = () => {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      const okc = document.execCommand("copy");
+      document.body.removeChild(ta);
+      if (okc) done();
+    };
+    if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text).then(done).catch(fallback);
+    else fallback();
+  }, [data?.serveCommand]);
+  const hint = msg || data?.hint || effectiveUrl || data?.reason || "\u5C1A\u672A\u914D\u7F6E\u5730\u5740";
+  return React.createElement(
+    CardShell,
+    {
+      title: "Tailscale \u96A7\u9053",
+      desc: running ? "Tailscale Serve \u8F6C\u53D1\u672C\u673A WebUI\uFF08\u81EA\u52A8 TLS\uFF0C\u626B\u7801\u5373\u8FDE\uFF09" : "\u628A\u672C\u673A WebUI \u53D1\u5E03\u5230 tailnet\uFF08\u9700\u5148\u6267\u884C\u4E00\u6B21 tailscale serve\uFF09",
+      running,
+      open,
+      onToggle,
+      hint
+    },
+    // 地址区（自动探测 / 手动编辑；复制由下方 QrBlock 的「复制链接」承担）
+    React.createElement(
+      "div",
+      { style: { ...s.block, paddingTop: 12, marginTop: 12 } },
+      React.createElement("div", { style: { ...s.label, fontSize: 12.5, fontWeight: 600, marginBottom: 4 } }, "\u63A5\u5165\u5730\u5740"),
+      React.createElement(
+        "div",
+        { style: { ...s.muted, marginBottom: 8 } },
+        "\u7F51\u5173\u81EA\u52A8\u63A2\u6D4B\u672C\u673A Tailscale Serve \u5730\u5740\uFF1B\u4E5F\u53EF\u624B\u52A8\u586B\u5199\uFF08\u5982 wss/https \u53CD\u4EE3\u5165\u53E3\uFF09\u3002\u5730\u5740\u4FDD\u5B58\u540E\u7528\u4E8E\u751F\u6210\u4E0B\u65B9\u4E8C\u7EF4\u7801\u3002"
+      ),
+      !editing ? React.createElement(
+        "div",
+        null,
+        effectiveUrl ? React.createElement(
+          "div",
+          { style: { display: "flex", alignItems: "center", gap: 6, padding: "4px 0" } },
+          React.createElement("span", { style: { fontSize: 11 } }, savedUrl ? "\u{1F947}" : "\u{1F50D}"),
+          React.createElement("code", { style: { ...s.code, fontSize: 11.5, flex: 1, minWidth: 0 } }, effectiveUrl),
+          !savedUrl && React.createElement("span", { style: { ...s.muted, fontSize: 11, flexShrink: 0 } }, "\u63A2\u6D4B\u7ED3\u679C")
+        ) : React.createElement("div", { style: { ...s.muted, fontSize: 11.5, marginBottom: 4 } }, "\u5C1A\u672A\u914D\u7F6E\u5730\u5740"),
+        React.createElement(
+          "div",
+          { style: { display: "flex", gap: 8, marginTop: 6, flexWrap: "wrap" } },
+          React.createElement("button", {
+            style: { ...s.btnGhost, height: 28, padding: "0 12px", fontSize: 12 },
+            disabled: detecting,
+            onClick: detect,
+            title: "\u53EA\u8BFB\u63A2\u6D4B\u672C\u673A Tailscale \u5730\u5740\uFF08\u4E0D\u4FEE\u6539 tailscale \u914D\u7F6E\uFF09"
+          }, detecting ? "\u63A2\u6D4B\u4E2D\u2026" : "\u{1F50D} \u81EA\u52A8\u63A2\u6D4B\u5E76\u586B\u5165"),
+          React.createElement("button", {
+            style: { ...s.btnGhost, height: 28, padding: "0 12px", fontSize: 12 },
+            onClick: () => {
+              setEditing(true);
+              setDraft(savedUrl || detectedUrl);
+            }
+          }, savedUrl ? "\u270E \u624B\u52A8\u7F16\u8F91" : "\u270E \u624B\u52A8\u8F93\u5165")
+        )
+      ) : React.createElement(
+        "div",
+        null,
+        React.createElement("input", {
+          style: { ...s.input, fontFamily: "ui-monospace,Menlo,monospace", fontSize: 11.5 },
+          type: "text",
+          placeholder: "https://my-host.tailnet-name.ts.net",
+          value: draft,
+          onChange: (e) => setDraft(e.target.value)
+        }),
+        React.createElement(
+          "div",
+          { style: { display: "flex", gap: 8, marginTop: 8 } },
+          React.createElement("button", {
+            disabled: busy,
+            onClick: save,
+            style: { ...s.btnGhost, height: 28, padding: "0 12px", fontSize: 12 }
+          }, busy ? "\u4FDD\u5B58\u4E2D\u2026" : "\u4FDD\u5B58"),
+          React.createElement("button", {
+            onClick: () => {
+              setEditing(false);
+              setDraft(savedUrl);
+            },
+            style: { ...s.btnGhost, height: 28, padding: "0 12px", fontSize: 12 }
+          }, "\u53D6\u6D88")
+        )
+      )
+    ),
+    // 探测异常提示：未安装 / 离线 / 未 serve（附可复制的 serve 命令）
+    React.createElement(
+      "div",
+      { style: { ...s.block, paddingTop: 10, marginTop: 8 } },
+      data?.detected ? React.createElement(
+        "div",
+        { style: { ...s.muted, fontSize: 11.5 } },
+        data.online ? `Tailscale \u5728\u7EBF \xB7 ${data.dnsName || "\u5DF2\u767B\u5F55"}` : data.reason || "Tailscale \u72B6\u6001\u672A\u77E5"
+      ) : React.createElement("div", { style: { ...s.muted, fontSize: 11.5 } }, "\u6B63\u5728\u8BFB\u53D6 Tailscale \u72B6\u6001\u2026"),
+      data?.hint ? React.createElement(
+        "div",
+        { style: { marginTop: 6, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" } },
+        React.createElement(
+          "code",
+          { style: { ...s.code, fontSize: 11.5, padding: "3px 8px", background: "var(--dsw-alias-bg-layer-1,#ffffff)", border: "1px solid var(--dsw-alias-border-l2,#e5e7eb)", borderRadius: 6 } },
+          data.serveCommand
+        ),
+        React.createElement("button", {
+          style: { ...s.btnGhost, height: 26, padding: "0 10px", fontSize: 11.5 },
+          onClick: copyServeCommand,
+          title: "\u590D\u5236\u8BE5\u547D\u4EE4\uFF0C\u5728\u672C\u673A\u7EC8\u7AEF\u6267\u884C\u4E00\u6B21\u5373\u53EF"
+        }, cmdCopied ? "\u2713 \u5DF2\u590D\u5236" : "\u590D\u5236\u547D\u4EE4")
+      ) : null,
+      data?.unsaved ? React.createElement(
+        "div",
+        { style: { ...s.muted, fontSize: 11.5, marginTop: 6, color: "var(--dsw-alias-state-warn-primary,#d97706)" } },
+        "\u5F53\u524D\u5730\u5740\u6765\u81EA\u81EA\u52A8\u63A2\u6D4B\u3001\u5C1A\u672A\u4FDD\u5B58\u3002\u5EFA\u8BAE\u70B9\u51FB\u300C\u624B\u52A8\u7F16\u8F91 \u2192 \u4FDD\u5B58\u300D\uFF0C\u907F\u514D Tailscale \u79BB\u7EBF\u540E\u4E8C\u7EF4\u7801\u5931\u6548\u3002"
+      ) : null,
+      msg ? React.createElement("div", { style: { ...s.tip, marginTop: 8, fontSize: 11.5 } }, msg) : null
+    ),
+    running && React.createElement(QrBlock, {
+      url: data?.url,
+      qr: data?.qr,
+      auth,
+      onNavigateSecurity
+    }),
+    !running && React.createElement(
+      "div",
+      { style: { ...s.tip, marginTop: 10, fontSize: 12 } },
+      "\u5C1A\u65E0\u53EF\u7528\u5730\u5740\u3002\u8BF7\u5148\u5728\u672C\u673A\u7EC8\u7AEF\u6267\u884C\u4E0A\u65B9 serve \u547D\u4EE4\uFF0C\u7136\u540E\u70B9\u51FB\u300C\u{1F50D} \u81EA\u52A8\u63A2\u6D4B\u5E76\u586B\u5165\u300D\u3002"
+    )
+  );
+});
+var AccessAuthCard = React.memo(function AccessAuthCard2({ auth, rpcCall, onUpdate, openCards, onToggleCard }) {
   const [enabled, setEnabled] = React.useState(auth?.enabled ?? false);
   const [mode, setMode] = React.useState(auth?.mode ?? "token_and_password");
   const [scope, setScope] = React.useState(auth?.scope ?? "all");
@@ -986,37 +1417,27 @@ var AccessAuthCard = React.memo(function AccessAuthCard2({ auth, rpcCall, onUpda
   const scopeLabel = scope === "all" ? "\u5168\u90E8\u901A\u9053 (\u5C40\u57DF\u7F51+\u516C\u7F51)" : scope === "public_only" ? "\u4EC5\u516C\u7F51\u96A7\u9053" : "\u4EC5\u5C40\u57DF\u7F51";
   const modeLabel = mode === "token_and_password" ? "\u626B\u7801\u514D\u5BC6 + \u5BC6\u7801" : mode === "password_only" ? "\u4EC5\u5BC6\u7801\u767B\u5F55" : "\u4EC5\u5B89\u5168 Token";
   const adminLabel = adminPolicy === "password_unlock" ? "\u9700\u5BC6\u7801\u89E3\u9501" : adminPolicy === "local_only" ? "\u4EC5\u9650\u7535\u8111\u672C\u673A\u7BA1\u7406" : "\u5BBD\u677E\u6A21\u5F0F";
+  const isCardOpen = (id) => openCards ? openCards[id] !== false : true;
+  const toggleCard = (id) => onToggleCard?.(id);
   return React.createElement(
     "div",
     { style: { display: "flex", flexDirection: "column", gap: 14 } },
     // ---- 顶部总控与状态概览卡片 ----
     React.createElement(
-      "div",
-      { style: s.card },
-      React.createElement(
-        "div",
-        {
-          style: { display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }
-        },
-        React.createElement(
-          "div",
-          { style: { flex: "1 1 260px" } },
-          React.createElement(
-            "div",
-            { style: { ...s.label, fontSize: 15, display: "flex", alignItems: "center", gap: 8 } },
-            "\u{1F510} \u5168\u5C40\u8BBF\u95EE\u5B89\u5168\u9632\u62A4\u4F53\u7CFB"
-          ),
-          React.createElement(
-            "div",
-            { style: { ...s.muted, marginTop: 4 } },
-            "\u96C6\u6210\u5916\u90E8\u8BBF\u95EE\u95E8\u7981\u62E6\u622A\u4E0E\u7BA1\u7406\u540E\u53F0\u9632\u7BE1\u6539\u63A7\u5236\uFF0C\u53CC\u91CD\u5B88\u62A4\u8FDC\u7A0B\u4F1A\u8BDD\u4E0E\u7F51\u7EDC\u914D\u7F6E\u5B89\u5168"
-          )
-        ),
-        React.createElement("button", {
+      CardShell,
+      {
+        title: "\u{1F510} \u5168\u5C40\u8BBF\u95EE\u5B89\u5168\u9632\u62A4\u4F53\u7CFB",
+        desc: "\u96C6\u6210\u5916\u90E8\u8BBF\u95EE\u95E8\u7981\u62E6\u622A\u4E0E\u7BA1\u7406\u540E\u53F0\u9632\u7BE1\u6539\u63A7\u5236\uFF0C\u53CC\u91CD\u5B88\u62A4\u8FDC\u7A0B\u4F1A\u8BDD\u4E0E\u7F51\u7EDC\u914D\u7F6E\u5B89\u5168",
+        titleSize: 15,
+        withStatus: false,
+        open: isCardOpen("auth1"),
+        onToggle: () => onToggleCard?.("auth1"),
+        hint: enabled ? `\u4FDD\u62A4\u8303\u56F4: ${scopeLabel} \xB7 \u5916\u90E8\u9A8C\u8BC1: ${modeLabel} \xB7 \u540E\u53F0\u9632\u7BE1\u6539: ${adminLabel}` : "\u672A\u5F00\u542F\u5B89\u5168\u9632\u62A4",
+        headerRight: React.createElement("button", {
           style: { ...enabled ? s.btnPri : s.btnGhost, whiteSpace: "nowrap", flexShrink: 0 },
           onClick: handleToggleEnabled
         }, enabled ? "\u2713 \u5DF2\u542F\u7528\u5B89\u5168\u9632\u62A4" : "\u672A\u5F00\u542F\u5B89\u5168\u9632\u62A4")
-      ),
+      },
       enabled && React.createElement(
         "div",
         {
@@ -1040,7 +1461,7 @@ var AccessAuthCard = React.memo(function AccessAuthCard2({ auth, rpcCall, onUpda
             background: "var(--dsw-alias-bg-layer-2,#f3f4f6)",
             color: "var(--dsw-alias-label-secondary,#4b5563)"
           }
-        }, "\u{1F310} \u4FDD\u62A4\u8303\u56F4: ", React.createElement("strong", { style: { color: "var(--dsw-alias-brand-primary,#4f6ef7)" } }, scopeLabel)),
+        }, "\u{1F310} \u4FDD\u62A4\u8303\u56F4: ", React.createElement("strong", { style: { color: "var(--dsw-alias-state-business-primary,#4176e6)" } }, scopeLabel)),
         React.createElement("div", {
           style: {
             display: "inline-flex",
@@ -1052,7 +1473,7 @@ var AccessAuthCard = React.memo(function AccessAuthCard2({ auth, rpcCall, onUpda
             background: "var(--dsw-alias-bg-layer-2,#f3f4f6)",
             color: "var(--dsw-alias-label-secondary,#4b5563)"
           }
-        }, "\u{1F511} \u5916\u90E8\u9A8C\u8BC1: ", React.createElement("strong", { style: { color: "var(--dsw-alias-brand-primary,#4f6ef7)" } }, modeLabel)),
+        }, "\u{1F511} \u5916\u90E8\u9A8C\u8BC1: ", React.createElement("strong", { style: { color: "var(--dsw-alias-state-business-primary,#4176e6)" } }, modeLabel)),
         React.createElement("div", {
           style: {
             display: "inline-flex",
@@ -1072,7 +1493,7 @@ var AccessAuthCard = React.memo(function AccessAuthCard2({ auth, rpcCall, onUpda
           padding: "8px 12px",
           borderRadius: 6,
           fontSize: 12,
-          background: topMsg.ok ? "var(--dsw-alias-state-success-bg,#ecfdf5)" : "var(--dsw-alias-state-error-bg,#fef2f2)",
+          background: topMsg.ok ? "var(--dsw-alias-state-success-tertiary,#ecfdf5)" : "var(--dsw-alias-interactive-bg-hover-danger,#fef2f2)",
           color: topMsg.ok ? "var(--dsw-alias-state-success-primary,#059669)" : "var(--dsw-alias-state-error-primary,#dc2626)"
         }
       }, topMsg.text)
@@ -1084,22 +1505,16 @@ var AccessAuthCard = React.memo(function AccessAuthCard2({ auth, rpcCall, onUpda
       // ---- 第一道防线：外部访问门禁（控制谁能进入 Web 界面使用 AI） ----
       // =========================================================================
       React.createElement(
-        "div",
-        { style: s.card },
-        React.createElement(
-          "div",
-          { style: { marginBottom: 14 } },
-          React.createElement(
-            "div",
-            { style: { ...s.label, fontSize: 14, display: "flex", alignItems: "center", gap: 6 } },
-            "\u{1F6E1}\uFE0F \u7B2C\u4E00\u9053\u9632\u7EBF\uFF1A\u5916\u90E8\u8BBF\u95EE\u95E8\u7981\uFF08\u63A7\u5236\u8C01\u80FD\u4F7F\u7528 AI\uFF09"
-          ),
-          React.createElement(
-            "div",
-            { style: { ...s.muted, marginTop: 3 } },
-            "\u63A7\u5236\u5916\u90E8\u8BBE\u5907\u901A\u8FC7\u5C40\u57DF\u7F51 IP \u6216\u516C\u7F51\u96A7\u9053\uFF08Cloudflare/\u81EA\u5EFA\u96A7\u9053\uFF09\u8FDB\u5165 DSH \u804A\u5929\u754C\u9762\u65F6\u7684\u8EAB\u4EFD\u9A8C\u8BC1\u65B9\u5F0F"
-          )
-        ),
+        CardShell,
+        {
+          title: "\u{1F6E1}\uFE0F \u7B2C\u4E00\u9053\u9632\u7EBF\uFF1A\u5916\u90E8\u8BBF\u95EE\u95E8\u7981\uFF08\u63A7\u5236\u8C01\u80FD\u4F7F\u7528 AI\uFF09",
+          desc: "\u63A7\u5236\u5916\u90E8\u8BBE\u5907\u901A\u8FC7\u5C40\u57DF\u7F51 IP \u6216\u516C\u7F51\u96A7\u9053\uFF08Cloudflare/\u81EA\u5EFA\u96A7\u9053\uFF09\u8FDB\u5165 DSH \u804A\u5929\u754C\u9762\u65F6\u7684\u8EAB\u4EFD\u9A8C\u8BC1\u65B9\u5F0F",
+          titleSize: 14,
+          withStatus: false,
+          open: isCardOpen("auth2"),
+          onToggle: () => toggleCard("auth2"),
+          hint: `\u9A8C\u8BC1\u6A21\u5F0F: ${modeLabel}`
+        },
         // 验证模式选择
         React.createElement(
           "div",
@@ -1123,13 +1538,13 @@ var AccessAuthCard = React.memo(function AccessAuthCard2({ auth, rpcCall, onUpda
                     flex: "1 1 200px",
                     padding: "10px 12px",
                     borderRadius: 8,
-                    border: `1px solid ${isSel ? "var(--dsw-alias-brand-primary,#4f6ef7)" : "var(--dsw-alias-border-l2,#e5e7eb)"}`,
-                    background: isSel ? "var(--dsw-alias-state-info-bg,#eff6ff)" : "var(--dsw-alias-bg-layer-2,#f9fafb)",
+                    border: `1px solid ${isSel ? "var(--dsw-alias-state-business-primary,#4176e6)" : "var(--dsw-alias-border-l2,#e5e7eb)"}`,
+                    background: isSel ? "var(--dsw-alias-bg-layer-2,#eff6ff)" : "var(--dsw-alias-bg-layer-2,#f9fafb)",
                     cursor: "pointer",
                     transition: "all 0.15s ease"
                   }
                 },
-                React.createElement("div", { style: { fontSize: 13, fontWeight: isSel ? 600 : 500, color: isSel ? "var(--dsw-alias-brand-primary,#4f6ef7)" : "var(--dsw-alias-label-primary,currentColor)" } }, opt.title),
+                React.createElement("div", { style: { fontSize: 13, fontWeight: isSel ? 600 : 500, color: isSel ? "var(--dsw-alias-state-business-primary,#4176e6)" : "var(--dsw-alias-label-primary,currentColor)" } }, opt.title),
                 React.createElement("div", { style: { ...s.muted, fontSize: 11, marginTop: 4 } }, opt.desc)
               );
             })
@@ -1158,13 +1573,13 @@ var AccessAuthCard = React.memo(function AccessAuthCard2({ auth, rpcCall, onUpda
                     flex: "1 1 180px",
                     padding: "9px 12px",
                     borderRadius: 8,
-                    border: `1px solid ${isSel ? "var(--dsw-alias-brand-primary,#4f6ef7)" : "var(--dsw-alias-border-l2,#e5e7eb)"}`,
-                    background: isSel ? "var(--dsw-alias-state-info-bg,#eff6ff)" : "var(--dsw-alias-bg-layer-2,#f9fafb)",
+                    border: `1px solid ${isSel ? "var(--dsw-alias-state-business-primary,#4176e6)" : "var(--dsw-alias-border-l2,#e5e7eb)"}`,
+                    background: isSel ? "var(--dsw-alias-bg-layer-2,#eff6ff)" : "var(--dsw-alias-bg-layer-2,#f9fafb)",
                     cursor: "pointer",
                     transition: "all 0.15s ease"
                   }
                 },
-                React.createElement("div", { style: { fontSize: 13, fontWeight: isSel ? 600 : 500, color: isSel ? "var(--dsw-alias-brand-primary,#4f6ef7)" : "var(--dsw-alias-label-primary,currentColor)" } }, opt.title),
+                React.createElement("div", { style: { fontSize: 13, fontWeight: isSel ? 600 : 500, color: isSel ? "var(--dsw-alias-state-business-primary,#4176e6)" : "var(--dsw-alias-label-primary,currentColor)" } }, opt.title),
                 React.createElement("div", { style: { ...s.muted, fontSize: 11, marginTop: 3 } }, opt.desc)
               );
             })
@@ -1200,8 +1615,8 @@ var AccessAuthCard = React.memo(function AccessAuthCard2({ auth, rpcCall, onUpda
                 fontSize: 12,
                 whiteSpace: "nowrap",
                 flexShrink: 0,
-                background: saveAccessSuccess ? "#059669" : "var(--dsw-alias-brand-primary, #4f6ef7)",
-                color: "#ffffff",
+                background: saveAccessSuccess ? "var(--dsw-alias-state-success-primary,#059669)" : "var(--dsw-alias-brand-primary, #4f6ef7)",
+                color: "var(--dsw-alias-label-primary-foreground,#fff)",
                 cursor: savingAccess ? "wait" : "pointer"
               },
               onClick: handleSaveAccessPassword,
@@ -1219,7 +1634,7 @@ var AccessAuthCard = React.memo(function AccessAuthCard2({ auth, rpcCall, onUpda
               padding: "6px 12px",
               borderRadius: 6,
               fontSize: 12,
-              background: msgAccess.ok ? "var(--dsw-alias-state-success-bg,#ecfdf5)" : "var(--dsw-alias-state-error-bg,#fef2f2)",
+              background: msgAccess.ok ? "var(--dsw-alias-state-success-tertiary,#ecfdf5)" : "var(--dsw-alias-interactive-bg-hover-danger,#fef2f2)",
               color: msgAccess.ok ? "var(--dsw-alias-state-success-primary,#059669)" : "var(--dsw-alias-state-error-primary,#dc2626)"
             }
           }, msgAccess.text)
@@ -1254,22 +1669,16 @@ var AccessAuthCard = React.memo(function AccessAuthCard2({ auth, rpcCall, onUpda
       // ---- 第二道防线：后台管理防篡改（控制谁能修改本插件所有设置） ----
       // =========================================================================
       React.createElement(
-        "div",
-        { style: s.card },
-        React.createElement(
-          "div",
-          { style: { marginBottom: 14 } },
-          React.createElement(
-            "div",
-            { style: { ...s.label, fontSize: 14, display: "flex", alignItems: "center", gap: 6 } },
-            "\u{1F512} \u7B2C\u4E8C\u9053\u9632\u7EBF\uFF1A\u7BA1\u7406\u540E\u53F0\u9632\u7BE1\u6539\uFF08\u63A7\u5236\u8C01\u80FD\u4FEE\u6539\u672C\u63D2\u4EF6\u6240\u6709\u8BBE\u7F6E\uFF09"
-          ),
-          React.createElement(
-            "div",
-            { style: { ...s.muted, marginTop: 3 } },
-            "\u9501\u5B9A\u6574\u4E2A\u63D2\u4EF6\u8BBE\u7F6E\u540E\u53F0\uFF08\u5305\u542B\u5C40\u57DF\u7F51\u3001\u516C\u7F51\u96A7\u9053\u3001IM \u673A\u5668\u4EBA\u5BC6\u94A5\u4E0E\u5B89\u5168\u8BBE\u7F6E\uFF09\uFF0C\u9632\u6B62\u4ED6\u4EBA\u968F\u610F\u7BE1\u6539\u914D\u7F6E"
-          )
-        ),
+        CardShell,
+        {
+          title: "\u{1F512} \u7B2C\u4E8C\u9053\u9632\u7EBF\uFF1A\u7BA1\u7406\u540E\u53F0\u9632\u7BE1\u6539\uFF08\u63A7\u5236\u8C01\u80FD\u4FEE\u6539\u672C\u63D2\u4EF6\u6240\u6709\u8BBE\u7F6E\uFF09",
+          desc: "\u9501\u5B9A\u6574\u4E2A\u63D2\u4EF6\u8BBE\u7F6E\u540E\u53F0\uFF08\u5305\u542B\u5C40\u57DF\u7F51\u3001\u516C\u7F51\u96A7\u9053\u3001IM \u673A\u5668\u4EBA\u5BC6\u94A5\u4E0E\u5B89\u5168\u8BBE\u7F6E\uFF09\uFF0C\u9632\u6B62\u4ED6\u4EBA\u968F\u610F\u7BE1\u6539\u914D\u7F6E",
+          titleSize: 14,
+          withStatus: false,
+          open: isCardOpen("auth3"),
+          onToggle: () => toggleCard("auth3"),
+          hint: `\u7BA1\u7406\u6743\u9650\u7B56\u7565: ${adminLabel}`
+        },
         // 管理员密码设置
         React.createElement(
           "div",
@@ -1300,8 +1709,8 @@ var AccessAuthCard = React.memo(function AccessAuthCard2({ auth, rpcCall, onUpda
                 fontSize: 12,
                 whiteSpace: "nowrap",
                 flexShrink: 0,
-                background: saveAdminSuccess ? "#059669" : "var(--dsw-alias-brand-primary, #4f6ef7)",
-                color: "#ffffff",
+                background: saveAdminSuccess ? "var(--dsw-alias-state-success-primary,#059669)" : "var(--dsw-alias-brand-primary, #4f6ef7)",
+                color: "var(--dsw-alias-label-primary-foreground,#fff)",
                 cursor: savingAdmin ? "wait" : "pointer"
               },
               onClick: handleSaveAdminPassword,
@@ -1310,7 +1719,7 @@ var AccessAuthCard = React.memo(function AccessAuthCard2({ auth, rpcCall, onUpda
           ),
           React.createElement(
             "div",
-            { style: { ...s.muted, fontSize: 11, marginTop: 4, color: "var(--dsw-alias-brand-primary,#4f6ef7)" } },
+            { style: { ...s.muted, fontSize: 11, marginTop: 4, color: "var(--dsw-alias-state-business-primary,#4176e6)" } },
             "\u{1F511} \u6838\u5FC3\u4F5C\u7528\uFF1A\u7528\u4E8E\u8FDC\u7A0B\u8BBE\u5907\u8FDB\u5165\u8BBE\u7F6E\u540E\u53F0\u65F6\u7684\u89E3\u9501\u9A8C\u8BC1\u3002\u8BBE\u7F6E\u540E\uFF0C\u5373\u4FBF\u628A\u8BBF\u95EE\u5BC6\u7801\u544A\u77E5\u4ED6\u4EBA\uFF0C\u4ED6\u4EBA\u4E5F\u65E0\u6CD5\u8FDB\u5165\u8BBE\u7F6E\u540E\u53F0\u6539\u914D\u7F6E\u3002"
           ),
           msgAdmin && React.createElement("div", {
@@ -1319,7 +1728,7 @@ var AccessAuthCard = React.memo(function AccessAuthCard2({ auth, rpcCall, onUpda
               padding: "6px 12px",
               borderRadius: 6,
               fontSize: 12,
-              background: msgAdmin.ok ? "var(--dsw-alias-state-success-bg,#ecfdf5)" : "var(--dsw-alias-state-error-bg,#fef2f2)",
+              background: msgAdmin.ok ? "var(--dsw-alias-state-success-tertiary,#ecfdf5)" : "var(--dsw-alias-interactive-bg-hover-danger,#fef2f2)",
               color: msgAdmin.ok ? "var(--dsw-alias-state-success-primary,#059669)" : "var(--dsw-alias-state-error-primary,#dc2626)"
             }
           }, msgAdmin.text)
@@ -1347,13 +1756,13 @@ var AccessAuthCard = React.memo(function AccessAuthCard2({ auth, rpcCall, onUpda
                     flex: "1 1 180px",
                     padding: "10px 12px",
                     borderRadius: 8,
-                    border: `1px solid ${isSel ? "var(--dsw-alias-brand-primary,#4f6ef7)" : "var(--dsw-alias-border-l2,#e5e7eb)"}`,
-                    background: isSel ? "var(--dsw-alias-state-info-bg,#eff6ff)" : "var(--dsw-alias-bg-layer-2,#f9fafb)",
+                    border: `1px solid ${isSel ? "var(--dsw-alias-state-business-primary,#4176e6)" : "var(--dsw-alias-border-l2,#e5e7eb)"}`,
+                    background: isSel ? "var(--dsw-alias-bg-layer-2,#eff6ff)" : "var(--dsw-alias-bg-layer-2,#f9fafb)",
                     cursor: "pointer",
                     transition: "all 0.15s ease"
                   }
                 },
-                React.createElement("div", { style: { fontSize: 13, fontWeight: isSel ? 600 : 500, color: isSel ? "var(--dsw-alias-brand-primary,#4f6ef7)" : "var(--dsw-alias-label-primary,currentColor)" } }, opt.title),
+                React.createElement("div", { style: { fontSize: 13, fontWeight: isSel ? 600 : 500, color: isSel ? "var(--dsw-alias-state-business-primary,#4176e6)" : "var(--dsw-alias-label-primary,currentColor)" } }, opt.title),
                 React.createElement("div", { style: { ...s.muted, fontSize: 11, marginTop: 4 } }, opt.desc)
               );
             })
@@ -2184,7 +2593,7 @@ function NetworkDiagnosticWidget({ rpcCall }) {
               padding: "8px 10px",
               borderRadius: 6,
               background: "var(--dsw-alias-bg-layer-1, rgba(255,255,255,0.7))",
-              border: `1px solid ${isPass ? "var(--dsw-alias-state-success-border, #a7f3d0)" : isWarn ? "var(--dsw-alias-state-warn-border, #fde68a)" : "var(--dsw-alias-state-error-border, #fecaca)"}`,
+              border: `1px solid ${isPass ? "var(--dsw-alias-border-l2, #a7f3d0)" : isWarn ? "var(--dsw-alias-border-l2, #fde68a)" : "var(--dsw-alias-border-l2, #fecaca)"}`,
               boxSizing: "border-box"
             }
           },
@@ -2313,7 +2722,7 @@ function BackupRestoreWidget({ rpcCall, onUpdate }) {
         padding: "6px 12px",
         borderRadius: 6,
         fontSize: 12,
-        background: msg.ok ? "var(--dsw-alias-state-success-bg,#ecfdf5)" : "var(--dsw-alias-state-error-bg,#fef2f2)",
+        background: msg.ok ? "var(--dsw-alias-state-success-tertiary,#ecfdf5)" : "var(--dsw-alias-interactive-bg-hover-danger,#fef2f2)",
         color: msg.ok ? "var(--dsw-alias-state-success-primary,#059669)" : "var(--dsw-alias-state-error-primary,#dc2626)"
       }
     }, msg.text)
@@ -2384,7 +2793,7 @@ function RestartDshCard({ rpcCall }) {
           alignItems: "center",
           gap: 8,
           fontSize: 12,
-          color: status?.phase === "success" ? "var(--dsw-alias-state-success-primary, #059669)" : status?.phase === "timeout" ? "var(--dsw-alias-state-error-primary, #dc2626)" : "var(--dsw-alias-state-info-primary, #2563eb)",
+          color: status?.phase === "success" ? "var(--dsw-alias-state-success-primary, #059669)" : status?.phase === "timeout" ? "var(--dsw-alias-state-error-primary, #dc2626)" : "var(--dsw-alias-label-secondary, #2563eb)",
           fontWeight: 500
         }
       },
@@ -2517,8 +2926,8 @@ function VersionBanner({ rpcCall }) {
           {
             style: {
               ...s.tag,
-              background: hasUpdate ? "var(--dsw-alias-state-info-bg,#eff6ff)" : isLatest ? "var(--dsw-alias-state-success-bg,#ecfdf5)" : "var(--dsw-alias-bg-layer-2,#f3f4f6)",
-              color: hasUpdate ? "var(--dsw-alias-state-info-primary,#2563eb)" : isLatest ? "var(--dsw-alias-state-success-primary,#059669)" : "var(--dsw-alias-label-secondary,#6b7280)",
+              background: hasUpdate ? "var(--dsw-alias-bg-layer-2,#eff6ff)" : isLatest ? "var(--dsw-alias-state-success-tertiary,#ecfdf5)" : "var(--dsw-alias-bg-layer-2,#f3f4f6)",
+              color: hasUpdate ? "var(--dsw-alias-label-secondary,#2563eb)" : isLatest ? "var(--dsw-alias-state-success-primary,#059669)" : "var(--dsw-alias-label-secondary,#6b7280)",
               padding: "3px 10px",
               fontSize: 12,
               fontWeight: 500,
@@ -2563,8 +2972,8 @@ function VersionBanner({ rpcCall }) {
       {
         style: {
           ...s.card,
-          background: "var(--dsw-alias-state-info-bg,#eff6ff)",
-          border: "1px solid var(--dsw-alias-state-info-border,#bfdbfe)",
+          background: "var(--dsw-alias-bg-layer-2,#eff6ff)",
+          border: "1px solid var(--dsw-alias-border-l2,#bfdbfe)",
           padding: "14px 16px",
           marginTop: 10,
           marginBottom: 0
@@ -2584,7 +2993,7 @@ function VersionBanner({ rpcCall }) {
               style: {
                 fontSize: 13,
                 fontWeight: 600,
-                color: "var(--dsw-alias-state-info-primary,#1e40af)"
+                color: "var(--dsw-alias-label-secondary,#1e40af)"
               }
             }, `\u53D1\u73B0\u65B0\u7248\u672C v${info.latest}\uFF08\u5F53\u524D v${info.current}\uFF09`),
             React.createElement(
@@ -2595,7 +3004,7 @@ function VersionBanner({ rpcCall }) {
                   height: 28,
                   fontSize: 12,
                   padding: "0 14px",
-                  background: upgradeResult?.ok ? "var(--dsw-alias-state-success-primary,#059669)" : "var(--dsw-alias-brand-primary,#4f6ef7)",
+                  background: upgradeResult?.ok ? "var(--dsw-alias-state-success-primary,#059669)" : "var(--dsw-alias-state-business-primary,#4176e6)",
                   opacity: upgrading || restarting ? 0.6 : 1
                 },
                 onClick: handleUpgrade,
@@ -2617,7 +3026,7 @@ function VersionBanner({ rpcCall }) {
                 fontSize: 12,
                 color: "var(--dsw-alias-label-primary, #374151)",
                 background: "var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.85))",
-                border: "1px solid var(--dsw-alias-state-info-border, rgba(191, 219, 254, 0.8))",
+                border: "1px solid var(--dsw-alias-border-l2, rgba(191, 219, 254, 0.8))",
                 borderRadius: 8,
                 padding: "8px 12px",
                 marginBottom: 10,
@@ -2625,7 +3034,7 @@ function VersionBanner({ rpcCall }) {
                 whiteSpace: "pre-line"
               }
             },
-            React.createElement("div", { style: { fontWeight: 600, color: "var(--dsw-alias-state-info-primary, #2563eb)", marginBottom: 2 } }, "\u2728 \u66F4\u65B0\u4EAE\u70B9\uFF1A"),
+            React.createElement("div", { style: { fontWeight: 600, color: "var(--dsw-alias-label-secondary, #2563eb)", marginBottom: 2 } }, "\u2728 \u66F4\u65B0\u4EAE\u70B9\uFF1A"),
             info.releaseNotes
           ),
           // 升级成功后：引导重启 DSH 操作卡片
@@ -2634,7 +3043,7 @@ function VersionBanner({ rpcCall }) {
             {
               style: {
                 background: "var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.95))",
-                border: "1px solid var(--dsw-alias-state-success-border, #a7f3d0)",
+                border: "1px solid var(--dsw-alias-border-l2, #a7f3d0)",
                 borderRadius: 8,
                 padding: "12px 14px",
                 marginBottom: 10
@@ -2681,7 +3090,7 @@ function VersionBanner({ rpcCall }) {
                   alignItems: "center",
                   gap: 8,
                   fontSize: 12,
-                  color: restartStatus?.phase === "success" ? "var(--dsw-alias-state-success-primary, #059669)" : restartStatus?.phase === "timeout" ? "var(--dsw-alias-state-error-primary, #dc2626)" : "var(--dsw-alias-state-info-primary, #2563eb)",
+                  color: restartStatus?.phase === "success" ? "var(--dsw-alias-state-success-primary, #059669)" : restartStatus?.phase === "timeout" ? "var(--dsw-alias-state-error-primary, #dc2626)" : "var(--dsw-alias-label-secondary, #2563eb)",
                   fontWeight: 500
                 }
               },
@@ -2694,8 +3103,8 @@ function VersionBanner({ rpcCall }) {
           // 失败提示
           upgradeResult && !upgradeResult.ok && React.createElement("div", {
             style: {
-              background: "var(--dsw-alias-state-error-bg,#fef2f2)",
-              border: "1px solid var(--dsw-alias-state-error-border,#fecaca)",
+              background: "var(--dsw-alias-interactive-bg-hover-danger,#fef2f2)",
+              border: "1px solid var(--dsw-alias-border-l2,#fecaca)",
               color: "var(--dsw-alias-state-error-primary,#991b1b)",
               padding: "8px 12px",
               borderRadius: 6,
@@ -2727,8 +3136,8 @@ function VersionBanner({ rpcCall }) {
   );
 }
 var TABS = [
-  { id: "lan", label: "\u5C40\u57DF\u7F51", icon: Icons.lan },
-  { id: "tunnel", label: "\u516C\u7F51\u8BBF\u95EE", icon: Icons.tunnel },
+  { id: "access", label: "\u8BBF\u95EE\u914D\u7F6E", icon: Icons.tunnel },
+  { id: "visitor", label: "\u8BBF\u5BA2\u7BA1\u7406", icon: Icons.visitor },
   { id: "im", label: "IM \u673A\u5668\u4EBA", icon: Icons.bot },
   { id: "security", label: "\u5B89\u5168\u8BA4\u8BC1", icon: Icons.security },
   { id: "ops", label: "\u8FD0\u7EF4\u76D1\u63A7", icon: Icons.ops }
@@ -2767,7 +3176,7 @@ function TabBar({ active, onChange, dots }) {
             padding: "8px 14px",
             fontSize: 13,
             fontWeight: isActive ? 600 : 400,
-            color: isActive ? "var(--dsw-alias-brand-primary,#4f6ef7)" : "var(--dsw-alias-label-secondary,#6b7280)",
+            color: isActive ? "var(--dsw-alias-state-business-primary,#4176e6)" : "var(--dsw-alias-label-secondary,#6b7280)",
             borderBottom: isActive ? "2px solid var(--dsw-alias-brand-primary,#4f6ef7)" : "2px solid transparent",
             marginBottom: -1,
             display: "inline-flex",
@@ -2780,7 +3189,7 @@ function TabBar({ active, onChange, dots }) {
         },
         TabIcon && React.createElement(TabIcon, {
           style: {
-            color: isActive ? "var(--dsw-alias-brand-primary,#4f6ef7)" : "var(--dsw-alias-label-tertiary,#9ca3af)",
+            color: isActive ? "var(--dsw-alias-state-business-primary,#4176e6)" : "var(--dsw-alias-label-tertiary,#9ca3af)",
             width: 16,
             height: 16,
             flexShrink: 0
@@ -2803,7 +3212,20 @@ function TabBar({ active, onChange, dots }) {
 function BridgePanel({ rpcCall }) {
   const [status, setStatus] = React.useState(null);
   const [err, setErr] = React.useState(null);
-  const [activeTab, setActiveTab] = React.useState("lan");
+  const [activeTab, setActiveTab] = React.useState("access");
+  const [openCards, setOpenCards] = React.useState({
+    gateway: true,
+    cloudflare: false,
+    tailscale: false,
+    custom: false,
+    lan: false,
+    auth1: true,
+    auth2: false,
+    auth3: false
+  });
+  const toggleCard = React.useCallback((id) => {
+    setOpenCards((prev) => ({ ...prev, [id]: !prev[id] }));
+  }, []);
   const [platforms, setPlatforms] = React.useState(null);
   const [selectedPlatform, setSelectedPlatform] = React.useState("wechat");
   const isLocalhost = typeof window === "undefined" || (!window.location.hostname || window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost" || window.location.hostname === "::1" || window.location.hostname === "" || window.location.protocol === "file:" || window.location.protocol === "vscode-webview:" || window.location.protocol === "app:" || window.location.hostname.endsWith(".local"));
@@ -3017,42 +3439,28 @@ function BridgePanel({ rpcCall }) {
     (p) => p.status === "connected" || p.status === "starting" || p.status === "reconnecting"
   );
   const dots = {
-    lan: !!status?.proxy?.running,
-    tunnel: !!(status?.cloudflared?.running || ct?.running || status?.gateway?.running),
+    access: !!(status?.proxy?.running || status?.cloudflared?.running || ct?.running || status?.gateway?.running || status?.tailscale?.running),
     im: !!imConnected,
     security: !!status?.auth?.enabled
   };
   let tabContent;
-  if (activeTab === "lan") {
-    tabContent = React.createElement(
-      TunnelCard,
-      {
-        title: "\u5C40\u57DF\u7F51\u8BBF\u95EE",
-        desc: "\u540C\u4E00 Wi-Fi \u4E0B\u7684\u8BBE\u5907\u53EF\u76F4\u63A5\u626B\u7801\u8BBF\u95EE",
-        data: { running: status?.proxy?.running, url: status?.lan?.url, qr: status?.lan?.qr },
-        auth: status?.auth,
-        onNavigateSecurity: navSecurity
-      },
-      React.createElement(LanNetworkSelector, {
-        lan: status?.lan,
-        onSelectIp: onSelectLanIp
-      })
-    );
-  } else if (activeTab === "tunnel") {
+  if (activeTab === "access") {
     tabContent = React.createElement(
       React.Fragment,
       null,
       React.createElement(
         "div",
         { style: { ...s.label, fontSize: 13, margin: "4px 0 10px" } },
-        "\u516C\u7F51\u8BBF\u95EE\u65B9\u5F0F\uFF08\u96A7\u9053 / \u76F4\u8FDE\u7F51\u5173\uFF0C\u6309\u9700\u9009\u7528\uFF09"
+        "\u8BBF\u95EE\u65B9\u5F0F\uFF08\u76F4\u8FDE\u7F51\u5173 / \u96A7\u9053 / \u5C40\u57DF\u7F51\uFF0C\u6309\u9700\u9009\u7528\uFF09"
       ),
       React.createElement(GatewayCard, {
         gw: status?.gateway,
         onStart: onStartGateway,
         onStop: onStopGateway,
         onSaveConfig: saveGatewayConfig,
-        onToggleAutoStart: onToggleGatewayAutoStart
+        onToggleAutoStart: onToggleGatewayAutoStart,
+        open: openCards.gateway,
+        onToggle: () => toggleCard("gateway")
       }),
       React.createElement(
         TunnelCard,
@@ -3071,7 +3479,9 @@ function BridgePanel({ rpcCall }) {
           onNavigateSecurity: navSecurity,
           onStart: onStartCloudflared,
           onStop: onStopCloudflared,
-          onReset: status?.cloudflared?.running ? onResetCloudflared : null
+          onReset: status?.cloudflared?.running ? onResetCloudflared : null,
+          open: openCards.cloudflare,
+          onToggle: () => toggleCard("cloudflare")
         },
         React.createElement(CloudflareConfigForm, {
           token: status?.cloudflared?.token ?? "",
@@ -3079,6 +3489,15 @@ function BridgePanel({ rpcCall }) {
           onSave: saveCloudflaredConfig
         })
       ),
+      React.createElement(TailscaleCard, {
+        data: status?.tailscale,
+        rpcCall: authRpcCall,
+        auth: status?.auth,
+        onNavigateSecurity: navSecurity,
+        onRefresh: () => load(true),
+        open: openCards.tailscale,
+        onToggle: () => toggleCard("tailscale")
+      }),
       React.createElement(
         TunnelCard,
         {
@@ -3096,7 +3515,9 @@ function BridgePanel({ rpcCall }) {
           auth: status?.auth,
           onNavigateSecurity: navSecurity,
           onStart: onStartCustom,
-          onStop: onStopCustom
+          onStop: onStopCustom,
+          open: openCards.custom,
+          onToggle: () => toggleCard("custom")
         },
         React.createElement(CustomTunnelGuide),
         React.createElement(CustomTunnelConfigForm, {
@@ -3104,13 +3525,34 @@ function BridgePanel({ rpcCall }) {
           accessToken: ct?.accessToken ?? "",
           onSave: saveConfig
         })
+      ),
+      // 局域网访问：同为“访问方式”之一，排在最后并默认折叠
+      React.createElement(
+        TunnelCard,
+        {
+          title: "\u5C40\u57DF\u7F51\u8BBF\u95EE",
+          desc: "\u540C\u4E00 Wi-Fi \u4E0B\u7684\u8BBE\u5907\u53EF\u76F4\u63A5\u626B\u7801\u8BBF\u95EE",
+          data: { running: status?.proxy?.running, url: status?.lan?.url, qr: status?.lan?.qr },
+          auth: status?.auth,
+          onNavigateSecurity: navSecurity,
+          open: openCards.lan,
+          onToggle: () => toggleCard("lan")
+        },
+        React.createElement(LanNetworkSelector, {
+          lan: status?.lan,
+          onSelectIp: onSelectLanIp
+        })
       )
     );
+  } else if (activeTab === "visitor") {
+    tabContent = React.createElement(RemoteConnectionsCard, { rpcCall: authRpcCall });
   } else if (activeTab === "security") {
     tabContent = React.createElement(AccessAuthCard, {
       auth: status?.auth,
       rpcCall: authRpcCall,
-      onUpdate: () => load(true)
+      onUpdate: () => load(true),
+      openCards,
+      onToggleCard: toggleCard
     });
   } else if (activeTab === "ops") {
     tabContent = React.createElement(
@@ -3150,12 +3592,12 @@ function BridgePanel({ rpcCall }) {
               key: id,
               style: {
                 flex: "1 1 135px",
-                border: `1px solid ${selectedPlatform === id ? "var(--dsw-alias-brand-primary,#4f6ef7)" : active ? "var(--dsw-alias-state-success-primary,#10b981)" : "var(--dsw-alias-border-l2,#e5e7eb)"}`,
+                border: `1px solid ${selectedPlatform === id ? "var(--dsw-alias-state-business-primary,#4176e6)" : active ? "var(--dsw-alias-state-success-primary,#10b981)" : "var(--dsw-alias-border-l2,#e5e7eb)"}`,
                 borderRadius: 10,
                 padding: "12px 14px",
                 opacity: available ? 1 : 0.5,
                 cursor: available ? "pointer" : "not-allowed",
-                background: selectedPlatform === id ? "var(--dsw-alias-state-info-bg,#eff6ff)" : active ? "var(--dsw-alias-state-success-bg,#ecfdf5)" : "var(--dsw-alias-bg-layer-2,#f9fafb)",
+                background: selectedPlatform === id ? "var(--dsw-alias-bg-layer-2,#eff6ff)" : active ? "var(--dsw-alias-state-success-tertiary,#ecfdf5)" : "var(--dsw-alias-bg-layer-2,#f9fafb)",
                 boxShadow: selectedPlatform === id ? "0 0 0 1px var(--dsw-alias-brand-primary,#4f6ef7)" : "none",
                 transition: "all 0.15s ease"
               },
@@ -3281,7 +3723,7 @@ function BridgePanel({ rpcCall }) {
           }, unlockErr),
           React.createElement("button", {
             type: "submit",
-            style: { ...s.btnPri, width: "100%", justifyContent: "center", height: 36, background: "#4f6ef7", color: "#ffffff" },
+            style: { ...s.btnPri, width: "100%", justifyContent: "center", height: 36 },
             disabled: unlocking
           }, unlocking ? "\u9A8C\u8BC1\u4E2D\u2026" : "\u89E3\u9501\u7BA1\u7406\u6743\u9650")
         ),
@@ -3326,7 +3768,7 @@ function BridgePanel({ rpcCall }) {
       {
         style: {
           ...s.card,
-          background: "var(--dsw-alias-state-error-bg,#fef2f2)",
+          background: "var(--dsw-alias-interactive-bg-hover-danger,#fef2f2)",
           color: "var(--dsw-alias-state-error-primary,#dc2626)",
           fontSize: 13,
           marginBottom: 16,
@@ -3345,7 +3787,7 @@ function BridgePanel({ rpcCall }) {
       }, "\u{1F504} \u91CD\u8BD5"),
       isInterceptionErr && React.createElement("button", {
         type: "button",
-        style: { ...s.btnPri, background: "#dc2626", color: "#ffffff", height: 26, fontSize: 12, padding: "0 10px", flexShrink: 0 },
+        style: { ...s.btnPri, background: "var(--dsw-alias-interactive-bg-hover-danger,#dc2626)", color: "var(--dsw-alias-state-error-primary,#dc2626)", height: 26, fontSize: 12, padding: "0 10px", flexShrink: 0, border: "1px solid var(--dsw-alias-state-error-primary,#dc2626)" },
         onClick: () => {
           setUnlockErr(err);
           setShowUnlockModal(true);
@@ -3361,12 +3803,12 @@ function BridgePanel({ rpcCall }) {
           alignItems: "center",
           justifyContent: "space-between",
           padding: "8px 14px",
-          background: "var(--dsw-alias-state-info-bg,#eff6ff)",
-          border: "1px solid var(--dsw-alias-brand-primary,#4f6ef7)",
+          background: "var(--dsw-alias-bg-layer-2,#eff6ff)",
+          border: "1px solid var(--dsw-alias-state-business-primary,#4176e6)",
           borderRadius: 8,
           marginBottom: 14,
           fontSize: 12,
-          color: "var(--dsw-alias-brand-primary,#4f6ef7)"
+          color: "var(--dsw-alias-state-business-primary,#4176e6)"
         }
       },
       React.createElement("span", null, "\u{1F513} \u7BA1\u7406\u5458\u6743\u9650\u5DF2\u89E3\u9501\uFF08\u5F53\u524D\u4E34\u65F6\u4F1A\u8BDD\u6709\u6548\uFF09"),
@@ -3384,8 +3826,8 @@ function BridgePanel({ rpcCall }) {
           alignItems: "center",
           justifyContent: "space-between",
           padding: "8px 14px",
-          background: "var(--dsw-alias-state-warn-bg,#fffbeb)",
-          border: "1px solid var(--dsw-alias-state-warn-border,#fde68a)",
+          background: "var(--dsw-alias-state-warn-tertiary,#fffbeb)",
+          border: "1px solid var(--dsw-alias-border-l2,#fde68a)",
           borderRadius: 8,
           marginBottom: 14,
           fontSize: 12,
@@ -3395,7 +3837,7 @@ function BridgePanel({ rpcCall }) {
       React.createElement("span", null, "\u{1F512} \u540E\u53F0\u7BA1\u7406\u6743\u9650\u672A\u89E3\u9501\uFF08\u4FEE\u6539\u654F\u611F\u914D\u7F6E\u9700\u5148\u89E3\u9501\uFF09"),
       React.createElement("button", {
         type: "button",
-        style: { ...s.btnPri, height: 24, fontSize: 11, padding: "0 10px", background: "#d97706" },
+        style: { ...s.btnPri, height: 24, fontSize: 11, padding: "0 10px", background: "var(--dsw-alias-state-warn-primary,#d97706)" },
         onClick: () => setShowUnlockModal(true)
       }, "\u{1F511} \u89E3\u9501\u7BA1\u7406\u6743\u9650")
     ),
@@ -3479,7 +3921,7 @@ function BridgePanel({ rpcCall }) {
             }, "\u53D6\u6D88"),
             React.createElement("button", {
               type: "submit",
-              style: { ...s.btnPri, background: "#4f6ef7", color: "#fff" },
+              style: { ...s.btnPri },
               disabled: unlocking || !unlockPassword
             }, unlocking ? "\u9A8C\u8BC1\u4E2D\u2026" : "\u7ACB\u5373\u89E3\u9501")
           )
@@ -4615,9 +5057,134 @@ function injectMobileStyles() {
   `;
   document.head.appendChild(style);
 }
+var UPSTREAM_ARIA = {
+  sidebarOpen: ["\u6253\u5F00\u4FA7\u8FB9\u680F", "\u5C55\u5F00\u4FA7\u8FB9\u680F", "Open sidebar", "Show sidebar"],
+  sidebarClose: ["\u6536\u8D77\u4FA7\u8FB9\u680F", "\u6298\u53E0\u4FA7\u8FB9\u680F", "Close sidebar", "Hide sidebar"],
+  collapse: ["\u6536\u8D77", "\u6298\u53E0", "Collapse", "Hide"],
+  newSession: ["\u65B0\u5EFA\u4F1A\u8BDD", "\u65B0\u7684\u5BF9\u8BDD", "\u65B0\u4F1A\u8BDD", "New session", "New chat", "New conversation"],
+  actions: ["\u64CD\u4F5C", "\u66F4\u591A", "Actions", "More", "Options"],
+  view: ["\u89C6\u56FE", "View"],
+  add: ["\u6DFB\u52A0", "\u65B0\u589E", "Add"],
+  search: ["\u641C\u7D22", "Search"],
+  settings: ["\u8BBE\u7F6E", "Settings"],
+  workbench: ["\u9762\u677F", "\u5DE5\u4F5C\u533A", "\u7EC8\u7AEF", "Panel", "Workspace", "Terminal"]
+};
+var UPSTREAM_SEL = {
+  sidebarCol: 'div[class*="_sidebarCol"]',
+  panelOpen: 'div[class*="nArs4W_panel"]:not([class*="panelHidden"]), div[class*="workbench_panel"]:not([class*="panelHidden"])',
+  panelOpenGeneric: 'div[class*="_panel"]:not([class*="Hidden" i])',
+  panelHiddenClass: "nArs4W_panelHidden",
+  panelTabBar: 'div[class*="tabBar"], div[class*="nArs4W_tabBar"]',
+  titleRow: 'div[class*="wSkVaW_titleRow"]',
+  titleCluster: 'div[class*="wSkVaW_titleCluster"]',
+  headerUtilities: 'div[class*="wSkVaW_headerUtilities"]',
+  collapsedToggle: 'div[class*="hHd-Xa_collapsed"] button[class*="hHd-Xa_toggle"]',
+  newSessionBtn: 'button[class*="newSession"]',
+  collapseBtn: 'button[class*="toggleButton"]',
+  reasoningBtn: 'div[class*="uV2eYG_trailing"] span > button:not([class])',
+  popoverGuard: 'div[class*="portal"], div[class*="_portal"], div[role="menu"], div[role="dialog"], div[class*="popup"], div[class*="dropdown"], div[class*="overlay"]',
+  sessionRow: 'a, div[class*="sessionRow"], div[role="treeitem"]',
+  formControl: 'input, select, textarea, div[class*="searchInput"]',
+  actionBtnFallback: 'button[class*="toggle"], button[class*="trigger"], button[class*="iconButton"], button[class*="searchButton"]'
+};
+function upstreamLayout(ctx) {
+  try {
+    return ctx?.layout && typeof ctx.layout.toggleSidebar === "function" ? ctx.layout : null;
+  } catch {
+    return null;
+  }
+}
+function upstreamAriaFind(names) {
+  for (const label of names) {
+    const el = document.querySelector(`button[aria-label="${label}"], button[title="${label}"]`);
+    if (el) return el;
+  }
+  return null;
+}
+function upstreamLabelOf(el) {
+  return [
+    el?.getAttribute?.("aria-label") ?? "",
+    el?.getAttribute?.("title") ?? "",
+    typeof el?.innerText === "string" ? el.innerText : ""
+  ].join("\n");
+}
+function upstreamLabelMatches(el, names) {
+  const hay = upstreamLabelOf(el).toLowerCase();
+  return names.some((n) => hay.includes(String(n).toLowerCase()));
+}
+function createUpstreamBridge(ctx) {
+  const layout = () => upstreamLayout(ctx);
+  return {
+    SEL: UPSTREAM_SEL,
+    ARIA: UPSTREAM_ARIA,
+    ariaFind: upstreamAriaFind,
+    labelMatches: upstreamLabelMatches,
+    hasLayout: () => upstreamLayout(ctx) !== null,
+    sidebar: () => document.querySelector(UPSTREAM_SEL.sidebarCol),
+    /** 当前打开的面板（0.1.5 精确锚点优先，generic 兜底） */
+    openPanels() {
+      const found = document.querySelectorAll(UPSTREAM_SEL.panelOpen);
+      return found.length ? found : document.querySelectorAll(UPSTREAM_SEL.panelOpenGeneric);
+    },
+    /** 回到对话视图：优先官方 layout API（0.1.5/0.1.6 行为一致），失败回落隐藏面板 */
+    backToConversation() {
+      const l = layout();
+      if (l) {
+        try {
+          l.selectPanel(null);
+          return;
+        } catch {
+        }
+      }
+      this.openPanels().forEach((p) => p.classList.add(UPSTREAM_SEL.panelHiddenClass));
+    },
+    /** 展开抽屉侧边栏 */
+    openSidebar() {
+      const l = layout();
+      if (l) {
+        try {
+          l.toggleSidebar();
+          return;
+        } catch {
+        }
+      }
+      (upstreamAriaFind(UPSTREAM_ARIA.sidebarOpen) || upstreamAriaFind(UPSTREAM_ARIA.sidebarClose))?.click();
+    },
+    /** 新建会话（多语言 + 类名回退） */
+    clickNewSession() {
+      (upstreamAriaFind(UPSTREAM_ARIA.newSession) || document.querySelector(UPSTREAM_SEL.newSessionBtn))?.click();
+    },
+    isNewSessionControl(btn) {
+      return upstreamLabelMatches(btn, UPSTREAM_ARIA.newSession) || !!btn?.matches?.(UPSTREAM_SEL.newSessionBtn);
+    },
+    isDrawerRetainedControl(btn) {
+      return upstreamLabelMatches(btn, [
+        ...UPSTREAM_ARIA.actions,
+        ...UPSTREAM_ARIA.view,
+        ...UPSTREAM_ARIA.add,
+        ...UPSTREAM_ARIA.search,
+        ...UPSTREAM_ARIA.settings
+      ]) || !!btn?.matches?.(UPSTREAM_SEL.actionBtnFallback);
+    },
+    /** 面板顶栏收起按钮（多语言） */
+    clickCollapse() {
+      (upstreamAriaFind(UPSTREAM_ARIA.collapse) || document.querySelector(UPSTREAM_SEL.collapseBtn))?.click();
+    },
+    /** 折叠态侧边栏的展开开关（左右滑手势用） */
+    expandFromCollapsed() {
+      document.querySelector(UPSTREAM_SEL.collapsedToggle)?.click();
+    },
+    /** 会话行内的操作按钮：优先带文案/图标的，最后回退行内第一个按钮 */
+    sessionActionBtn(row) {
+      const btns = [...row.querySelectorAll("button")];
+      return btns.find((b) => upstreamLabelMatches(b, UPSTREAM_ARIA.actions)) || row.querySelector('button[class*="iconButton"]') || btns[0] || null;
+    }
+  };
+}
 function setupMobileExperience(rpcCall, ctx) {
   if (typeof document === "undefined" || typeof window === "undefined") return;
   injectMobileStyles();
+  const U = createUpstreamBridge(ctx);
   let header = document.querySelector(".dsh-mobile-app-header");
   let titleEl = document.querySelector(".dsh-mobile-header-title");
   if (!header) {
@@ -4635,17 +5202,13 @@ function setupMobileExperience(rpcCall, ctx) {
     leftBtn.onclick = (e) => {
       e.stopPropagation();
       const isOpen = document.body.classList.toggle("dsh-drawer-open");
-      if (isOpen) {
-        const expand = document.querySelector('button[aria-label*="\u6253\u5F00\u4FA7\u8FB9\u680F"], button[title*="\u6253\u5F00\u4FA7\u8FB9\u680F"]');
-        if (expand) expand.click();
-      }
+      if (isOpen) U.openSidebar();
     };
     titleEl = document.createElement("div");
     titleEl.className = "dsh-mobile-header-title";
     titleEl.innerText = "\u65B0\u4F1A\u8BDD";
     titleEl.onclick = () => {
-      const openPanels = document.querySelectorAll('div[class*="nArs4W_panel"]:not([class*="panelHidden"]), div[class*="workbench_panel"]:not([class*="panelHidden"])');
-      openPanels.forEach((p) => p.classList.add("nArs4W_panelHidden"));
+      U.backToConversation();
     };
     const rightBtn = document.createElement("button");
     rightBtn.className = "dsh-header-new-btn";
@@ -4658,10 +5221,8 @@ function setupMobileExperience(rpcCall, ctx) {
       </svg>
     `;
     rightBtn.onclick = () => {
-      const openPanels = document.querySelectorAll('div[class*="nArs4W_panel"]:not([class*="panelHidden"]), div[class*="workbench_panel"]:not([class*="panelHidden"])');
-      openPanels.forEach((p) => p.classList.add("nArs4W_panelHidden"));
-      const dshNewBtn = document.querySelector('button[aria-label="\u65B0\u5EFA\u4F1A\u8BDD"]');
-      if (dshNewBtn) dshNewBtn.click();
+      U.backToConversation();
+      U.clickNewSession();
     };
     header.appendChild(leftBtn);
     header.appendChild(titleEl);
@@ -4691,8 +5252,7 @@ function setupMobileExperience(rpcCall, ctx) {
       }
       if (typeof window !== "undefined" && window.innerWidth <= 768) {
         document.body.classList.remove("dsh-workbench-open");
-        const openPanels = document.querySelectorAll('div[class*="nArs4W_panel"]:not([class*="panelHidden"]), div[class*="workbench_panel"]:not([class*="panelHidden"])');
-        openPanels.forEach((p) => p.classList.add("nArs4W_panelHidden"));
+        U.backToConversation();
       }
     });
   }
@@ -4702,9 +5262,9 @@ function setupMobileExperience(rpcCall, ctx) {
       document.querySelectorAll(".dsh-mobile-panel-close-btn").forEach((btn) => btn.remove());
       return;
     }
-    const panels = document.querySelectorAll('div[class*="nArs4W_panel"]:not([class*="panelHidden"]), div[class*="workbench_panel"]:not([class*="panelHidden"])');
+    const panels = U.openPanels();
     panels.forEach((p) => {
-      const bar = p.querySelector('div[class*="tabBar"], div[class*="nArs4W_tabBar"]');
+      const bar = p.querySelector(U.SEL.panelTabBar);
       if (bar && !bar.querySelector(".dsh-mobile-panel-close-btn")) {
         const btn = document.createElement("button");
         btn.className = "dsh-mobile-panel-close-btn";
@@ -4712,9 +5272,8 @@ function setupMobileExperience(rpcCall, ctx) {
         btn.onclick = (e) => {
           e.stopPropagation();
           document.body.classList.remove("dsh-workbench-open");
-          p.classList.add("nArs4W_panelHidden");
-          const collapseBtn = document.querySelector('button[class*="toggleButton"][aria-label*="\u6536\u8D77"]');
-          if (collapseBtn) collapseBtn.click();
+          p.classList.add(U.SEL.panelHiddenClass);
+          U.clickCollapse();
         };
         bar.appendChild(btn);
       }
@@ -4780,8 +5339,8 @@ function setupMobileExperience(rpcCall, ctx) {
   };
   const ensureTabButton = () => {
     if (typeof window === "undefined" || window.innerWidth > 768) return;
-    const titleRow = document.querySelector('div[class*="wSkVaW_titleRow"]');
-    const cluster = titleRow ? titleRow.querySelector('div[class*="wSkVaW_titleCluster"]') : null;
+    const titleRow = document.querySelector(U.SEL.titleRow);
+    const cluster = titleRow ? titleRow.querySelector(U.SEL.titleCluster) : null;
     if (!titleRow || !cluster) {
       closeTabDropdown();
       if (mobileTabState.btn) {
@@ -4797,8 +5356,8 @@ function setupMobileExperience(rpcCall, ctx) {
     document.querySelectorAll(".dsh-mobile-tab-btn").forEach((el) => el.remove());
     const tabBtn = document.createElement("button");
     tabBtn.type = "button";
-    const pillBtn = titleRow.querySelector('div[class*="wSkVaW_titleCluster"] button');
-    const utilBtn = titleRow.querySelector('div[class*="wSkVaW_headerUtilities"] button');
+    const pillBtn = titleRow.querySelector(`${U.SEL.titleCluster} button`);
+    const utilBtn = titleRow.querySelector(`${U.SEL.headerUtilities} button`);
     const mimic = pillBtn && pillBtn.className || utilBtn && utilBtn.className || "";
     tabBtn.className = (mimic ? mimic + " " : "") + "dsh-mobile-tab-btn";
     tabBtn.innerHTML = `<span class="dsh-mobile-tab-btn-label">\u5BF9\u8BDD</span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
@@ -4813,7 +5372,7 @@ function setupMobileExperience(rpcCall, ctx) {
   };
   const cleanReasoningButtons = () => {
     if (typeof window === "undefined" || window.innerWidth > 768) return;
-    document.querySelectorAll('div[class*="uV2eYG_trailing"] span > button:not([class])').forEach((btn) => {
+    document.querySelectorAll(U.SEL.reasoningBtn).forEach((btn) => {
       if (btn.dataset.dshTextCleaned === "1") return;
       [...btn.childNodes].forEach((node) => {
         if (node.nodeType === Node.ELEMENT_NODE) {
@@ -4844,15 +5403,15 @@ function setupMobileExperience(rpcCall, ctx) {
   cleanReasoningButtons();
   document.addEventListener("click", (e) => {
     if (typeof window === "undefined" || window.innerWidth > 768) return;
-    const trigger = e.target.closest('button[aria-label*="\u9762\u677F"], button[aria-label*="\u5DE5\u4F5C\u533A"], div[class*="toggleCluster"] button, button[class*="subagent"], div[class*="headerActions"] button, div[class*="titleRow"] button');
+    const trigger = e.target.closest(`button[aria-label*="${U.ARIA.workbench[0]}"], button[aria-label*="${U.ARIA.workbench[1]}"], div[class*="toggleCluster"] button, button[class*="subagent"], div[class*="headerActions"] button, div[class*="titleRow"] button`);
     if (trigger && !trigger.classList.contains("dsh-mobile-panel-close-btn") && !trigger.classList.contains("dsh-header-menu-btn") && !trigger.classList.contains("dsh-header-new-btn")) {
       document.body.classList.add("dsh-workbench-open");
     }
   }, true);
   document.addEventListener("click", (e) => {
     if (typeof window === "undefined" || window.innerWidth > 768) return;
-    const toggle = e.target.closest('button[aria-label*="\u6536\u8D77\u4FA7\u8FB9\u680F"], button[title*="\u6536\u8D77\u4FA7\u8FB9\u680F"]');
-    if (toggle) {
+    const toggle = e.target.closest("button");
+    if (toggle && U.labelMatches(toggle, U.ARIA.sidebarClose)) {
       document.body.classList.remove("dsh-drawer-open");
     }
   }, true);
@@ -4873,26 +5432,25 @@ function setupMobileExperience(rpcCall, ctx) {
       e.preventDefault();
       return;
     }
-    if (e.target.closest('div[class*="portal"], div[class*="_portal"], div[role="menu"], div[role="dialog"], div[class*="popup"], div[class*="dropdown"], div[class*="overlay"]')) {
+    if (e.target.closest(U.SEL.popoverGuard)) {
       return;
     }
-    const sidebar = document.querySelector('div[class*="_sidebarCol"]');
+    const sidebar = U.sidebar();
     if (sidebar && sidebar.contains(e.target)) {
-      if (e.target.closest('input, select, textarea, div[class*="searchInput"]')) {
+      if (e.target.closest(U.SEL.formControl)) {
         return;
       }
       const btn = e.target.closest('button, [role="button"]');
       if (btn) {
-        const label = btn.getAttribute("aria-label") || btn.innerText || "";
-        if (label.includes("\u64CD\u4F5C") || label.includes("\u89C6\u56FE") || label.includes("\u6DFB\u52A0") || label.includes("\u641C\u7D22") || label.includes("\u8BBE\u7F6E") || btn.matches('button[class*="toggle"], button[class*="trigger"], button[class*="iconButton"], button[class*="searchButton"]')) {
+        if (U.isDrawerRetainedControl(btn)) {
           return;
         }
-        if (label.includes("\u65B0\u4F1A\u8BDD") || btn.matches('button[class*="newSession"]')) {
+        if (U.isNewSessionControl(btn)) {
           document.body.classList.remove("dsh-drawer-open");
           return;
         }
       }
-      const sessionRow = e.target.closest('a, div[class*="sessionRow"], div[role="treeitem"]');
+      const sessionRow = e.target.closest(U.SEL.sessionRow);
       if (sessionRow) {
         if (sessionRow.hasAttribute("aria-expanded")) {
           return;
@@ -4908,7 +5466,7 @@ function setupMobileExperience(rpcCall, ctx) {
     }
   }, true);
   const syncSidebarInert = () => {
-    const sidebar = document.querySelector('div[class*="_sidebarCol"]');
+    const sidebar = U.sidebar();
     if (!sidebar) return;
     const open = document.body.classList.contains("dsh-drawer-open");
     const wantInert = window.innerWidth <= 768 && !open;
@@ -4928,7 +5486,7 @@ function setupMobileExperience(rpcCall, ctx) {
   let inertRetry = 0;
   const inertTimer = setInterval(() => {
     syncSidebarInert();
-    const sb = document.querySelector('div[class*="_sidebarCol"]');
+    const sb = U.sidebar();
     if (sb && sb.hasAttribute("inert") || ++inertRetry > 40) clearInterval(inertTimer);
   }, 250);
   syncSidebarInert();
@@ -4941,7 +5499,7 @@ function setupMobileExperience(rpcCall, ctx) {
       touchStartY = e.touches[0].clientY;
     }
     if (!document.body.classList.contains("dsh-drawer-open")) return;
-    const sidebar = document.querySelector('div[class*="_sidebarCol"]');
+    const sidebar = U.sidebar();
     if (!sidebar || !sidebar.contains(e.target)) return;
     const sessionRow = e.target.closest('div[class*="sessionRow"], div[role="treeitem"]');
     if (!sessionRow) return;
@@ -4951,7 +5509,7 @@ function setupMobileExperience(rpcCall, ctx) {
         if (navigator.vibrate) navigator.vibrate(40);
       } catch (_) {
       }
-      const actionBtn = sessionRow.querySelector('button[aria-label*="\u64CD\u4F5C"], button[class*="iconButton"], button');
+      const actionBtn = U.sessionActionBtn(sessionRow);
       if (actionBtn) {
         actionBtn.click();
       }
@@ -4978,8 +5536,7 @@ function setupMobileExperience(rpcCall, ctx) {
     if (Math.abs(deltaX) > 60 && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
       if (deltaX > 0 && touchStartX <= 35) {
         document.body.classList.add("dsh-drawer-open");
-        const collapsedToggle = document.querySelector('div[class*="hHd-Xa_collapsed"] button[class*="hHd-Xa_toggle"]');
-        if (collapsedToggle) collapsedToggle.click();
+        U.expandFromCollapsed();
       } else if (deltaX < 0 && document.body.classList.contains("dsh-drawer-open")) {
         document.body.classList.remove("dsh-drawer-open");
       }

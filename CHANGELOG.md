@@ -2,7 +2,75 @@
 
 本项目 `dsh-bridge-gateway` 是基于 [dsh-bridge](https://github.com/wenbin-wb/dsh-bridge) 的移植增强分支，在保留原版能力之外，重点新增「公网直连网关」。
 
-## [未发布]
+## [0.2.0] - 2026-09-19
+
+### 破坏性变更（移除 dsh-mobile 协议舱；访问配置 Tab 重构；新增 Tailscale 隧道）
+
+**移除 dsh-mobile 相关功能**
+
+- **移动协议舱整体删除**：`lib/mobile/`（`/ws/mobile` WebSocket + 设备配对 + 会话跟随）、
+  `lib/shared/kernel-link.mjs`（行间通信内核）、`client/mobile-panel.js`（移动设备卡）、
+  面板「移动设备」Tab 及其全部 RPC 端点（`mobileStatus` / `mobilePair` / `mobileSetMode` /
+  `mobileRevoke` / `mobileSaveEndpoints` / `mobileDetectTailnet`）。
+- **`cordis.patch.yml` 从两个 cordis row 恢复为单个**：`dsh-bridge-gateway/mobile` row 一并
+  移除；随之移除为移动舱 `search` 通道打开 `session-query-sqlite` 全文索引的那层 patch
+  （恢复 dsh-web-app 默认的 `openAt: never`）。Kernel 的 `pathPolicy` 接缝删除后，
+  代理的 WebSocket upgrade 鉴权恢复为单路 `authManager.verifyRequest()` 判断。
+- **Linux 一键公网部署 CLI 整体删除**：`bin/setup-ip.mjs` 与
+  `helper/dsh_mobile_gateway_helper.py`（`package.json` 的 `bin` 字段一并移除）。
+  该链路只服务 `/ws/mobile` 的 443 发布（Nginx + certbot IP 证书 + root helper），
+  协议舱移除后已无服务对象。**`npx dsh-bridge-gateway init / setup / status / remove`
+  命令不再存在**，公网访问请改用 Tailscale Serve 或 Cloudflare 隧道。
+- 依赖 `@deepseek-ai/schemastery` 移除（仅协议舱使用）。
+
+> 注意：手机浏览器的**网页版移动端适配**（抽屉侧边栏、44px 热区、输入框贴底、
+  `injectMobileStyles` / `setupMobileExperience` 等）与协议舱无关，**全部保留**。
+
+**新增 Tailscale 隧道卡片（访问配置 Tab）**
+
+- 网关**自动探测**本机 Tailscale Serve 地址（`tailscale status --json` 取
+  `Self.DNSName`，`tailscale serve status --json` 反查 `Handlers["/"].Proxy` 指向本机
+  反代端口的 host），点「🔍 自动探测并填入」填入、可手动编辑、保存后生成扫码二维码。
+- **探测为只读**：只查询状态，绝不代用户执行 `tailscale serve` 修改 tailscale 配置。
+  未 serve 时给出可复制的 `tailscale serve --bg <端口>` 命令引导用户自行执行一次。
+- 探测结果 **30s TTL 缓存**，后台定时刷新；`getStatus()` 只读快照，
+  不会因面板 3s 轮询而起子进程。用户显式点击「自动探测」时绕过缓存。
+- 二维码 URL 复用既有 `appendToken` 逻辑：开启安全认证时自动附加 `?auth=<token>` 免密扫码。
+- 新增配置项 `tailscale.url`（保存的用户地址）与 RPC 端点 `tailscaleDetect` /
+  `tailscaleSaveUrl`（均需管理员门禁）。
+
+**访客管理：查看开放，写操作仍归管理员**
+
+- 「远程连接监控」的连接列表、来源 IP 与黑名单内容改为**对所有已通过访问门禁的
+  访客可见**——「谁正连着本机」是只读事实，不是管理凭据。
+  `getConnections` 不再要求 adminToken，改为用新增的 `canManage` 字段回报管理员身份。
+- **写操作保持管理员门禁**：`connectionKick`（断开 / 断开并拉黑）与 `blacklistSet`
+  （黑名单增删）仍走 `checkAdminAuth`。UI 侧用 `canManage` 决定是否渲染这些按钮，
+  非管理员只看到列表与一行「断开与拉黑需要管理员权限」的说明，没有输入框与按钮。
+
+**面板结构重构**
+
+- **「局域网」+「公网访问」合并为「访问配置」Tab**，卡片顺序为
+  直连网关 → Cloudflare 隧道 → Tailscale 隧道 → 自建隧道 → 局域网访问
+  （局域网卡片移至最末）。
+- **新增「访客管理」Tab**：远程连接监控（来源 IP 可见 / 断开 / 断开并拉黑）与
+  持久黑名单从公网 Tab 独立出来。服务端 `getConnections` / `kickIp` / `setBlacklist`
+  与 auth 模块的黑名单持久化逻辑保持原样，仅 UI 位置变更。
+- Tab 数从 6 降为 5：访问配置 / 访客管理 / IM 机器人 / 安全认证 / 运维监控。
+- **修复「运维监控」Tab 在桌面端不可见**：面板根容器 `maxWidth: 620`，6 个
+  `flexWrap: nowrap` 的 Tab 合计约 626px 溢出，而 `injectMobileStyles()` 全局隐藏了
+  滚动条（无 `@media` 包裹，桌面端同样生效），最后一个 Tab 被挤出可视区且无提示。
+  Tab 合并后宽度恢复余量，无需改动容器尺寸。
+
+**卡片折叠（新增交互）**
+
+- 访问配置 Tab 的 5 张卡片、安全认证 Tab 的 3 张卡片全部支持折叠，
+  点击标题行切换，右侧状态标签与开关按钮不触发折叠（`stopPropagation`）。
+- 默认只展开每组的第一张：访问配置 → 直连网关；安全认证 → 全局访问安全防护体系。
+- 折叠时保留一行关键信息（当前地址 / 异常阶段 / 未配置提示），
+  避免折叠后完全看不到状态。折叠状态由 `BridgePanel` 持有，切换 Tab 不丢失。
+- 抽出共用外壳 `CardShell`，`TunnelCard` / `GatewayCard` / `TailscaleCard` /
+  安全认证三卡共用同一份标题行与折叠实现。
 
 ### 变更（命名统一：插件叫 dsh-bridge-gateway，数据目录也跟着改名）
 

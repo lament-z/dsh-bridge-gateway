@@ -1,4 +1,15 @@
 # dsh-bridge-gateway bundle patch
+# ---------------------------------------------------------------------
+# 单 cordis row（单个 fiber）：
+#
+#   dsh-bridge-gateway —— WebUI 反代 / 局域网 / 隧道 / 直连网关 / IM Bot
+#
+# 此前另有独立的移动协议舱 row（`dsh-bridge-gateway/mobile`，为 dsh-mobile
+# 原生 App 提供 /ws/mobile 设备配对通道），已于本版本移除；随之移除的还有
+# 为移动舱 `search` 通道打开 session-query-sqlite 全文索引的那层 patch
+# （恢复 dsh-web-app 的默认 openAt: never）。公网访问现由 Cloudflare 隧道 /
+# Tailscale Serve / 自建隧道 / 直连网关承担。
+# ---------------------------------------------------------------------
 - insert:
     - id: dsh-bridge-gateway
       name: 'dsh-bridge-gateway'
