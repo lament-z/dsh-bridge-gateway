@@ -2,6 +2,22 @@
 
 本项目 `dsh-bridge-gateway` 是基于 [dsh-bridge](https://github.com/wenbin-wb/dsh-bridge) 的移植增强分支，在保留原版能力之外，重点新增「公网直连网关」。
 
+## [未发布]
+
+### 修复：HTML 响应强制 no-store（远程端"改了页面不变"）
+
+DSH 的 index HTML **不带 cache-control**，浏览器按启发式缓存它；而该 HTML 里钉着各客户端模块的
+`rev`，模块 bundle 又是 `immutable` 长缓存 —— 于是 host 重启/重建后换了新 rev，旧标签页与
+**普通刷新**仍然指向旧 rev 的旧代码，表现为"改动永远不生效"（远程直连场景尤其明显：
+页面只重连、不重新取 index）。
+
+透明反向代理分支对 `content-type: text/html` 的响应统一加
+`Cache-Control: no-store, must-revalidate`，并删除 `etag` / `last-modified`；
+非 HTML（含带 rev 的模块 bundle）保持原样，缓存策略不变。
+
+注意：这条只对**新取到的响应**生效；浏览器里已经存下的旧 index 需要一次硬刷新
+（Cmd+Shift+R）或带新查询串的地址来替换。
+
 ## [0.2.0] - 2026-09-19
 
 ### 破坏性变更（移除 dsh-mobile 协议舱；访问配置 Tab 重构；新增 Tailscale 隧道）
