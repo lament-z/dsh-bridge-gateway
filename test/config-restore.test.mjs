@@ -22,13 +22,13 @@ test('PLATFORM_TIMING_FIELDS covers the three persisted pacing params', () => {
 test('restores session-level string fields (the regression: these used to be dropped)', () => {
   const nodeConfig = {}
   applyRestoredPlatformConfig(nodeConfig, {
-    cwd: '/Users/imac/Desktop/StoreLinkMS',
+    cwd: '/home/user/projects/StoreLinkMS',
     agentPreset: 'standard',
     agentProvider: 'workbuddy',
     agentModel: 'deepseek-v4.1-flash',
   }, { stringFields: RESTORED_STRING_FIELDS })
 
-  assert.equal(nodeConfig.cwd, '/Users/imac/Desktop/StoreLinkMS')
+  assert.equal(nodeConfig.cwd, '/home/user/projects/StoreLinkMS')
   assert.equal(nodeConfig.agentPreset, 'standard')
   assert.equal(nodeConfig.agentProvider, 'workbuddy')
   assert.equal(nodeConfig.agentModel, 'deepseek-v4.1-flash')

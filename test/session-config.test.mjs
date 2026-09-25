@@ -28,13 +28,13 @@ test('readSessionConfig normalises missing / non-string values to empty string',
 test('applySessionConfig writes string fields and reports what changed', () => {
   const config = {}
   const changed = applySessionConfig(config, {
-    cwd: '/Users/imac/Desktop/StoreLinkMS',
+    cwd: '/home/user/projects/StoreLinkMS',
     agentPreset: 'standard',
     agentProvider: 'workbuddy',
     agentModel: 'deepseek-v4.1-flash',
   })
   assert.deepEqual(changed, ['agentPreset', 'cwd', 'agentProvider', 'agentModel'])
-  assert.equal(config.cwd, '/Users/imac/Desktop/StoreLinkMS')
+  assert.equal(config.cwd, '/home/user/projects/StoreLinkMS')
   assert.equal(config.agentPreset, 'standard')
 })
 
@@ -67,8 +67,8 @@ test('empty string is an explicit clear (falls back to DSH defaults at session c
 
 test('values are trimmed on write', () => {
   const config = {}
-  applySessionConfig(config, { cwd: '  /Users/imac/Desktop/x  ', agentPreset: ' standard ' })
-  assert.equal(config.cwd, '/Users/imac/Desktop/x')
+  applySessionConfig(config, { cwd: '  /home/user/x  ', agentPreset: ' standard ' })
+  assert.equal(config.cwd, '/home/user/x')
   assert.equal(config.agentPreset, 'standard')
 })
 
@@ -91,7 +91,7 @@ test('write → persist → restore round-trips the session config', async () =>
 
   const live = {}
   applySessionConfig(live, {
-    cwd: '/Users/imac/Desktop/DSHworkspace',
+    cwd: '/home/user/workspace',
     agentPreset: 'liangshen',
     agentProvider: 'workbuddy',
     agentModel: 'deepseek-v4.1-flash',
@@ -101,7 +101,7 @@ test('write → persist → restore round-trips the session config', async () =>
   const restored = {}                                  // 重启后的新 node.config
   applyRestoredPlatformConfig(restored, persisted, { stringFields: RESTORED_STRING_FIELDS })
 
-  assert.equal(restored.cwd, '/Users/imac/Desktop/DSHworkspace')
+  assert.equal(restored.cwd, '/home/user/workspace')
   assert.equal(restored.agentPreset, 'liangshen')
   assert.equal(restored.agentProvider, 'workbuddy')
   assert.equal(restored.agentModel, 'deepseek-v4.1-flash')
