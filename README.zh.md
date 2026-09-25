@@ -68,6 +68,9 @@ DeepSeek Harness（DSH）远程访问插件。以 [wenbin-wb/dsh-bridge](https:/
 上游迭代很快，本仓库持续跟进。已移植的修复见 [CHANGELOG](./CHANGELOG.md)，主要包括：
 
 - DSH 0.1.5 适配：agent preset 真实挂载、会话已存在误判、平台配置重启即丢、`/rename` 持久化；
+- DSH 0.1.7 兼容性核查：无需改动（宿主注入的 `connection` / `webServer` / `sessions` / `agents` /
+  `approval` / `workspaceRegistry` / `sessionPersistence` / `loader` 服务、`settings.section` 槽位、
+  `dsh-llm` 的 `createUserMessage` 均仍存在）；
 - 隧道保活：WebSocket Ping/Pong 帧层应答、cloudflared 崩溃自愈与禁用 autoupdate；
 - 可靠性：Telegram 代理在 Node ≥ 24 下失效、登录 Session 持久化。
 
@@ -123,7 +126,8 @@ DeepSeek Harness（DSH）远程访问插件。以 [wenbin-wb/dsh-bridge](https:/
 ## 要求
 
 - Node `^22.19.0 || >=24.0.0`。
-- DSH web profile（构建与测试基于 `0.1.5-rc.2`，已适配 0.1.5 的 RPC/webServer 入口）。
+- DSH web profile（构建与测试基于 `0.1.7-rc.2`，同时兼容 `0.1.5` 线：宿主服务、客户端槽位与
+  设置接口在两个版本上都存在，无需额外适配）。
 
 ## 安装
 

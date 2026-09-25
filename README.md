@@ -55,6 +55,7 @@ Upstream's tunnels either go through Cloudflare or require your own server. This
 Upstream iterates quickly and this repository keeps up. Ported fixes are listed in [CHANGELOG](./CHANGELOG.md), notably:
 
 - DSH 0.1.5 adaptation: real agent-preset mounting, already-persisted session misdetection, platform config lost on restart, `/rename` durability;
+- DSH 0.1.7 compatibility check: no change needed (the injected host services `connection` / `webServer` / `sessions` / `agents` / `approval` / `workspaceRegistry` / `sessionPersistence` / `loader`, the `settings.section` slot, and `createUserMessage` from `dsh-llm` all still exist);
 - Tunnel keepalive: WebSocket Ping/Pong answered at the frame layer, cloudflared crash self-healing and autoupdate disabled;
 - Reliability: Telegram proxy broken on Node >= 24, login session persistence.
 
@@ -99,7 +100,7 @@ The panel has 5 tabs: **Access** / **Visitors** / **IM Bots** / **Security** / *
 ## Requirements
 
 - Node `^22.19.0 || >=24.0.0`.
-- DSH with a web profile (built and tested against `0.1.5-rc.2`; adapted for the 0.1.5 RPC/webServer entry points).
+- DSH with a web profile (built and tested against `0.1.7-rc.2`, and still compatible with the `0.1.5` line: the host services, client slots and settings entry points it uses exist in both, so no extra adaptation is needed).
 
 ## Install
 

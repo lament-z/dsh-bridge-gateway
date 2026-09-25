@@ -2,7 +2,15 @@
 
 本项目 `dsh-bridge-gateway` 是基于 [dsh-bridge](https://github.com/wenbin-wb/dsh-bridge) 的移植增强分支，在保留原版能力之外，重点新增「公网直连网关」。
 
-## [未发布]
+## [0.2.1] - 2026-09-25
+
+### 兼容性核查：DSH 0.1.7 无需改动
+
+对 `0.1.7-rc.2` 逐项复核后确认本插件不需要适配：宿主侧注入的 `connection`、`webServer`、
+`sessions`、`agents`、`approval`、`workspaceRegistry`、`sessionPersistence`、`loader`
+八个服务全部仍在；客户端注入的 `slots` / `connection` / `workspaces` / `sessions` 与注册的
+`settings.section` 槽位也仍在；`dsh-llm` 的 `createUserMessage`、`@deepseek-ai/cordis` 的
+`Service` 导出未变。`0.1.5` 线继续兼容（peer 范围 `^4.0.1` / `>=0.1.0-rc.6` 两条线都满足）。
 
 ### 修复：HTML 响应强制 no-store（远程端"改了页面不变"）
 

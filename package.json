@@ -1,8 +1,8 @@
 {
   "name": "dsh-bridge-gateway",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "以 dsh-bridge 为根基的 DSH 远程访问网关：局域网 / Cloudflare 隧道 / Tailscale 隧道 / 自建隧道 / 公网直连网关 / IM Bot，全部在 Web 面板中配置。",
-  "releaseNotes": "【dsh-bridge-gateway 0.2.0】\n• 🆕 Tailscale 隧道卡片：网关自动探测 `tailscale serve` 地址（只读，不代改配置），支持一键填入、手动编辑与二维码扫码直连\n• 🗂️ 访问配置 Tab：原「局域网」「公网访问」两块合并，直连网关 / Cloudflare / Tailscale / 自建隧道 / 局域网五张卡片，默认只展开直连网关\n• 👥 访客管理 Tab：远程连接监控与持久黑名单从公网 Tab 独立出来\n• 📱 移除 dsh-mobile 协议舱（/ws/mobile 设备配对）及其 Linux 一键部署 CLI（init / setup / status / remove）\n• 🎨 卡片支持折叠，折叠时保留状态标签与一行关键信息\n• 🐛 修复 Tab 数量超出容器宽度导致「运维监控」在桌面端不可见（Tab 合并后恢复）",
+  "releaseNotes": "【dsh-bridge-gateway 0.2.1】\n• 🐛 修复远程端「改了页面不变」：透明反向代理对 `text/html` 响应强制 `Cache-Control: no-store, must-revalidate` 并去掉 etag/last-modified，普通刷新即可拿到新 index（模块 bundle 的长缓存策略不变）\n• ✅ DSH 0.1.7 兼容性核查：无需改动（宿主 8 个注入服务、客户端槽位、dsh-llm 导出全部仍在），0.1.5 线继续兼容",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
