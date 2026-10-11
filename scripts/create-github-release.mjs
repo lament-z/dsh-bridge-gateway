@@ -1,4 +1,5 @@
 import { execSync } from 'node:child_process';
+import { pathToFileURL } from 'node:url';
 import fs from 'node:fs';
 
 function getGitHubToken() {
@@ -16,16 +17,26 @@ function getGitHubToken() {
   return null;
 }
 
-function extractChangelogForVersion(version) {
+/**
+ * 从 CHANGELOG.md 取出某个版本的正文（供 Release 正文兜底）。
+ *
+ * 本仓 CHANGELOG 的版本标题写作 `## [0.2.2] - 2026-10-11`（**无** v 前缀），而 tag 是
+ * `v0.2.2`。旧实现只认 `## [v<version>]`，于是永远匹配不到、静默返回空串 —— 这条分支
+ * 事实上是死代码。这里两种写法都接受，避免改一次标题风格就悄悄退化成 `Release vX.Y.Z`。
+ *
+ * @param {string} version package.json 的 version，如 `0.2.2`
+ * @param {string} [changelogText] 便于测试注入的 CHANGELOG 文本；省略时读 ./CHANGELOG.md
+ */
+export function extractChangelogForVersion(version, changelogText) {
   try {
-    const changelog = fs.readFileSync('CHANGELOG.md', 'utf8');
-    const header = `## [v${version}]`;
-    const startIdx = changelog.indexOf(header);
-    if (startIdx === -1) return '';
-    const afterHeader = changelog.slice(startIdx);
-    const endIdx = afterHeader.indexOf('\n## [v', header.length);
+    const changelog = changelogText ?? fs.readFileSync('CHANGELOG.md', 'utf8');
+    const escaped = version.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const header = new RegExp(`^## \\[v?${escaped}\\][^\\n]*$`, 'm').exec(changelog);
+    if (!header) return '';
+    const afterHeader = changelog.slice(header.index + header[0].length);
+    const endIdx = afterHeader.search(/^## \[/m);
     const content = endIdx === -1 ? afterHeader : afterHeader.slice(0, endIdx);
-    return content.replace(/^##\s+\[v[^\]]+\][^\n]*\n+/i, '').trim();
+    return content.trim();
   } catch {
     return '';
   }
@@ -42,7 +53,9 @@ async function createRelease() {
     process.exit(1);
   }
 
-  const notes = extractChangelogForVersion(version) || pkg.releaseNotes || `Release ${tag}`;
+  // releaseNotes 优先：本仓每次发版都手工维护它（【包名 版本】+ 要点），格式比整段
+  // CHANGELOG 更适合当 Release 正文；CHANGELOG 只在漏写 releaseNotes 时兜底。
+  const notes = pkg.releaseNotes || extractChangelogForVersion(version) || `Release ${tag}`;
   console.log(`🚀 准备为 ${tag} 创建 GitHub Release...`);
 
   const payload = {
@@ -75,4 +88,8 @@ async function createRelease() {
   }
 }
 
-createRelease().catch(console.error);
+// 只有被直接执行时才真的发 Release。被 import（例如单元测试取
+// extractChangelogForVersion）时绝不能触发：否则跑一次测试就会去打 GitHub API。
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  createRelease().catch(console.error);
+}
