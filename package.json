@@ -4,6 +4,7 @@
   "description": "以 dsh-bridge 为根基的 DSH 远程访问网关：局域网 / Cloudflare 隧道 / Tailscale 隧道 / 自建隧道 / 公网直连网关 / IM Bot，全部在 Web 面板中配置。",
   "releaseNotes": "【dsh-bridge-gateway 0.2.2】\n• 🐛 修复旧内核浏览器（统信 UOS / 360 浏览器等 Chromium 108）打开后工作区永远加载不了：经官方 `webserver/index-inject` 注入 `Promise.withResolvers` / `AbortSignal.any` / `Array.prototype.toSorted` 三个 polyfill，全部带 `typeof` 守卫且幂等，现代浏览器上原样跳过、不覆盖原生实现\n• ✅ 新增 10 条兼容性断言（含「不得覆盖原生实现」「幂等」两条反向断言），全套 216 项测试通过",
   "type": "module",
+  "packageManager": "pnpm@11.24.0",
   "main": "lib/index.js",
   "exports": {
     ".": {

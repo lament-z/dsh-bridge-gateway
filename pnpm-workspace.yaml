@@ -1,3 +1,16 @@
+# 构建脚本白名单（pnpm 10+ 默认不跑依赖的 install 脚本，未表态的包会让 install 退出 1）
+#
+# esbuild: false
+#   esbuild 的平台二进制由 optionalDependencies（@esbuild/<platform>）提供，
+#   其 postinstall 只是做一次校验/兜底下载，关掉不影响 `node scripts/bundle-lark.mjs`
+#   使用 esbuild（已在本仓 CI 与干净检出中实测构建通过）。
+#
+# protobufjs: false
+#   protobufjs 的 postinstall（scripts/postinstall.js）只在检测到依赖方使用了不匹配的
+#   版本方案时打印一条 WARN，对消费方无任何功能作用，关掉安全。
+#
+# 注意：这里必须是真正的布尔值。写成别的字符串（例如占位文案）会被 pnpm 判为
+# 「未表态」，`pnpm install --frozen-lockfile` 会以 ERR_PNPM_IGNORED_BUILDS 退出 1。
 allowBuilds:
   esbuild: false
-  protobufjs: set this to true or false
+  protobufjs: false
