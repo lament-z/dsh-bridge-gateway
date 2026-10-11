@@ -61,6 +61,12 @@ Upstream iterates quickly and this repository keeps up. Ported fixes are listed 
 
 > Both sides evolve, so **feature coverage may lead on either side**. When in doubt, check upstream's README to see which side owns a given capability.
 
+**5. Fixed: old-kernel browsers could not load the workspace (still present upstream)**
+
+DSH's browser client calls `Promise.withResolvers` (Chrome/Edge ≥ 119) and `AbortSignal.any` (Chrome/Edge ≥ 116) directly. On an older kernel — UOS and 360 Browser, both Chromium 108 — the boot gate never resolves and the remote-stream layer throws, so the shell renders but the workspace stays stuck on "pick a workspace" while the console loops on `connection lost`.
+
+This repository injects a small shim through the official `webserver/index-inject` mechanism (the same place as the existing `crypto.randomUUID` polyfill), covering `Promise.withResolvers`, `AbortSignal.any` and `Array.prototype.toSorted`. Every shim is `typeof`-guarded and idempotent, so a modern browser skips it untouched and never loses its native implementation.
+
 ### Naming
 
 The plugin was renamed from `dsh-bridge` to **`dsh-bridge-gateway`** (reflecting the added gateway capability). Existing users need no manual work — the data directory, configuration, passwords, certificates, and login state all migrate automatically:
@@ -78,6 +84,7 @@ The plugin was renamed from `dsh-bridge` to **`dsh-bridge-gateway`** (reflecting
 - **LAN access.** Scan a QR code from the remote-access panel on the same Wi-Fi and you are in.
 - **Public tunnels.** Cloudflare (temporary or fixed hostname) or a self-built tunnel, selectable per need alongside the direct gateway and Tailscale.
 - **Remote workspace.** Browse the host's directory tree and pick workspace conversations from the phone (via DSH's official browse picker).
+- **Legacy browser support.** The gateway injects `Promise.withResolvers` / `AbortSignal.any` / `Array.prototype.toSorted` polyfills into the page, so Chromium 108-class kernels (UOS, 360 Browser) load the workspace too. Modern browsers skip them untouched.
 - **Security.** Password gate + QR-based password-free token + admin unlock/lock for sensitive config + rate limiting against brute force, plus persisted login state (no re-login after a host restart). Client-claimed `isLocalhost` is never trusted.
 - **Visitor management.** See live who is currently connected (LAN / direct gateway / tunnel, with the real source IP behind a tunnel) plus an IP blacklist. **Viewing is open to every visitor**; disconnecting and blacklisting require admin rights.
 - **IM bots.** WeChat / QQ / Feishu / Telegram bots connect through their own gateway links — no public IP needed. Per-platform workspace / agent preset / model selection is configurable. Guides live in [docs/](./docs).
@@ -101,6 +108,7 @@ The panel has 5 tabs: **Access** / **Visitors** / **IM Bots** / **Security** / *
 
 - Node `^22.19.0 || >=24.0.0`.
 - DSH with a web profile (built and tested against `0.1.7-rc.2`, and still compatible with the `0.1.5` line: the host services, client slots and settings entry points it uses exist in both, so no extra adaptation is needed).
+- A modern browser for the web UI: Chrome/Edge ≥ 119, Safari ≥ 17.4 or Firefox ≥ 121. Older kernels are kept working by the injected polyfills described above (Chromium 108-class UOS / 360 Browser included).
 
 ## Install
 

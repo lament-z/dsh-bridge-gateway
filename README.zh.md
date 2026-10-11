@@ -77,6 +77,18 @@ DeepSeek Harness（DSH）远程访问插件。以 [wenbin-wb/dsh-bridge](https:/
 > 由于两边都在演进，**功能上可能各有先后**。遇到问题时建议对照上游 README 确认某项能力
 > 归属哪一侧。
 
+**五、修正：旧内核浏览器打开后工作区永远加载不了（上游至今保留）**
+
+DSH 的浏览器端直接调用了 `Promise.withResolvers`（Chrome/Edge ≥ 119）与 `AbortSignal.any`
+（Chrome/Edge ≥ 116）。旧内核上（统信 UOS、360 浏览器，内核均为 Chromium 108）启动门永不
+resolve、远程流层直接抛错 —— 于是外壳渲染得出来，工作区却一直停在「选择一个工作区」，
+控制台刷 `connection lost` 重连。
+
+本仓库经官方 `webserver/index-inject` 机制（与既有的 `crypto.randomUUID` polyfill 同一处）
+注入一段兜底脚本，覆盖 `Promise.withResolvers`、`AbortSignal.any` 与
+`Array.prototype.toSorted`。每段都带 `typeof` 守卫且幂等，现代浏览器上原样跳过，
+**绝不覆盖原生实现**。
+
 ### 命名说明
 
 插件名由 `dsh-bridge` 改为 **`dsh-bridge-gateway`**（体现「网关」这一新增能力）。
@@ -99,6 +111,9 @@ DeepSeek Harness（DSH）远程访问插件。以 [wenbin-wb/dsh-bridge](https:/
 - **局域网访问。** 同一 Wi-Fi 下用手机扫远程访问面板里的二维码即可进入。
 - **公网隧道。** Cloudflare（临时/固定域名）或自建隧道，与直连网关、Tailscale 按需选用。
 - **远程工作区。** 手机端网页目录树直接浏览并选择工作区对话（走 DSH 官方 browse 选择器）。
+- **旧内核浏览器支持。** 网关向页面注入 `Promise.withResolvers` / `AbortSignal.any` /
+  `Array.prototype.toSorted` 三段 polyfill，Chromium 108 档内核（统信 UOS、360 浏览器）
+  也能正常加载工作区；现代浏览器上原样跳过。
 - **安全认证。** 密码门禁 + 扫码免密 Token + 敏感配置的管理员解锁/锁定 + 防暴力破解限频、
   登录态持久化（宿主重启不必重新登录）；永不信任客户端自称的 `isLocalhost`。
 - **访客管理。** 实时查看「谁正连着本机」（局域网 / 直连 / 隧道，隧道场景显示真实来源 IP），
@@ -128,6 +143,8 @@ DeepSeek Harness（DSH）远程访问插件。以 [wenbin-wb/dsh-bridge](https:/
 - Node `^22.19.0 || >=24.0.0`。
 - DSH web profile（构建与测试基于 `0.1.7-rc.2`，同时兼容 `0.1.5` 线：宿主服务、客户端槽位与
   设置接口在两个版本上都存在，无需额外适配）。
+- 网页端建议使用现代浏览器：Chrome/Edge ≥ 119、Safari ≥ 17.4 或 Firefox ≥ 121。
+  旧内核由上文注入的 polyfill 兜底（含 Chromium 108 档的统信 UOS / 360 浏览器）。
 
 ## 安装
 
