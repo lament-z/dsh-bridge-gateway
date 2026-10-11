@@ -9,6 +9,7 @@
 //      —— 迁移后应免于重新下载 39MB 二进制。
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
+import vm from 'node:vm'
 import { mkdtempSync, mkdirSync, writeFileSync, existsSync, rmSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -16,6 +17,7 @@ import {
   BRIDGE_RPC_CHANNEL, BRIDGE_RPC_CHANNEL_LEGACY, BRIDGE_RPC_CHANNELS,
   BRIDGE_ENDPOINTS,
 } from '../lib/bridge-rpc-constants.js'
+import { LEGACY_BROWSER_POLYFILL } from '../lib/index.js'
 
 const silent = { info() {}, warn() {}, error() {}, debug() {} }
 
@@ -109,4 +111,127 @@ test('an explicit home still wins (backward-compatible constructor contract)', a
   const { CloudflaredManager } = await import('../lib/cloudflared-manager.mjs')
   const m = new CloudflaredManager({ port: 3080, home: '/custom/home', logger: silent })
   assert.equal(m.home, '/custom/home')
+})
+
+// ---------------------------------------------------------------------------
+// 3. 旧内核浏览器兜底 polyfill（注入 index.html <head> 的那段脚本）
+// ---------------------------------------------------------------------------
+// 背景：Chrome 108（统信 UOS / 360 浏览器）缺三个较新的 Web API，页面表现为
+// 「外壳出得来、工作区永远加载不了」。注入脚本必须在剥离了这三个 API 的沙箱里
+// 把它们补齐，且在原生齐全的沙箱里一个字节都不改。
+//
+// 沙箱约定：AbortSignal 在"旧内核"场景下用一个普通对象替身 —— polyfill 只在
+// 这个对象上安装 any()，而信号实例仍来自真正的 AbortController，于是既构造出了
+// 「没有 AbortSignal.any」的现场，又完全不必改动宿主进程的全局对象。
+// 注意跨 realm：沙箱里造出来的对象/数组原型与宿主不同，deepEqual(strict) 会因
+// 原型不同而失败，所以断言前一律先 spread 成宿主对象。
+
+const makeSandbox = (legacy) => {
+  const sandbox = { AbortController, AbortSignal: legacy ? {} : AbortSignal }
+  vm.createContext(sandbox)
+  if (legacy) {
+    vm.runInContext('delete Promise.withResolvers; delete Array.prototype.toSorted;', sandbox)
+  }
+  return sandbox
+}
+
+const grab = (sandbox, expr) => ({ ...vm.runInContext(expr, sandbox) })
+
+const TYPEOFS = '({ pwr: typeof Promise.withResolvers, any: typeof AbortSignal.any, ts: typeof Array.prototype.toSorted })'
+const IDENTITY = '({ pwr: Promise.withResolvers, any: AbortSignal.any, ts: Array.prototype.toSorted })'
+
+test('polyfill fills exactly the three APIs a Chrome 108 kernel lacks', () => {
+  const sandbox = makeSandbox(true)
+  assert.deepEqual(grab(sandbox, TYPEOFS), { pwr: 'undefined', any: 'undefined', ts: 'undefined' })
+  vm.runInContext(LEGACY_BROWSER_POLYFILL, sandbox)
+  assert.deepEqual(grab(sandbox, TYPEOFS), { pwr: 'function', any: 'function', ts: 'function' })
+})
+
+test('polyfill never overrides native implementations', () => {
+  const sandbox = makeSandbox(false)
+  const before = grab(sandbox, IDENTITY)
+  assert.deepEqual(grab(sandbox, TYPEOFS), { pwr: 'function', any: 'function', ts: 'function' })
+  vm.runInContext(LEGACY_BROWSER_POLYFILL, sandbox)
+  const after = grab(sandbox, IDENTITY)
+  assert.equal(after.pwr, before.pwr, 'Promise.withResolvers must stay native')
+  assert.equal(after.any, before.any, 'AbortSignal.any must stay native')
+  assert.equal(after.ts, before.ts, 'Array.prototype.toSorted must stay native')
+})
+
+test('polyfill is idempotent (a second run is a no-op)', () => {
+  const sandbox = makeSandbox(true)
+  vm.runInContext(LEGACY_BROWSER_POLYFILL, sandbox)
+  const first = grab(sandbox, IDENTITY)
+  vm.runInContext(LEGACY_BROWSER_POLYFILL, sandbox)
+  const second = grab(sandbox, IDENTITY)
+  assert.equal(second.pwr, first.pwr)
+  assert.equal(second.any, first.any)
+  assert.equal(second.ts, first.ts)
+})
+
+test('polyfilled Promise.withResolvers wires resolve and reject', async () => {
+  const sandbox = makeSandbox(true)
+  vm.runInContext(LEGACY_BROWSER_POLYFILL, sandbox)
+
+  const ok = await vm.runInContext(
+    '(function () { var d = Promise.withResolvers(); d.resolve(7); return d.promise })()',
+    sandbox
+  )
+  assert.equal(ok, 7)
+
+  await assert.rejects(
+    vm.runInContext(
+      '(function () { var d = Promise.withResolvers(); d.reject(new Error("boom")); return d.promise })()',
+      sandbox
+    ),
+    /boom/
+  )
+})
+
+test('polyfilled AbortSignal.any: empty list is never aborted', () => {
+  const sandbox = makeSandbox(true)
+  vm.runInContext(LEGACY_BROWSER_POLYFILL, sandbox)
+  assert.equal(vm.runInContext('AbortSignal.any([]).aborted', sandbox), false)
+})
+
+test('polyfilled AbortSignal.any: an already-aborted member wins immediately', () => {
+  const sandbox = makeSandbox(true)
+  vm.runInContext(LEGACY_BROWSER_POLYFILL, sandbox)
+  const r = grab(
+    sandbox,
+    '(function () { var c = new AbortController(); c.abort("why"); var s = AbortSignal.any([c.signal]); return { aborted: s.aborted, reason: s.reason } })()'
+  )
+  assert.equal(r.aborted, true)
+  assert.equal(r.reason, 'why')
+})
+
+test('polyfilled AbortSignal.any: aborting any member aborts the composite with its reason', () => {
+  const sandbox = makeSandbox(true)
+  vm.runInContext(LEGACY_BROWSER_POLYFILL, sandbox)
+  const r = grab(
+    sandbox,
+    '(function () { var a = new AbortController(), b = new AbortController(); var s = AbortSignal.any([a.signal, b.signal]); b.abort("second"); return { aborted: s.aborted, reason: s.reason, untouched: a.signal.aborted } })()'
+  )
+  assert.equal(r.aborted, true)
+  assert.equal(r.reason, 'second')
+  assert.equal(r.untouched, false, 'the other member must not be aborted by composition')
+})
+
+test('polyfilled AbortSignal.any rejects non-signal members', () => {
+  const sandbox = makeSandbox(true)
+  vm.runInContext(LEGACY_BROWSER_POLYFILL, sandbox)
+  // 跨 realm 的 TypeError 与宿主 TypeError 不同源，故按消息断言
+  assert.throws(() => vm.runInContext('AbortSignal.any([{}])', sandbox), /not an AbortSignal/)
+})
+
+test('polyfilled Array.prototype.toSorted copies instead of mutating', () => {
+  const sandbox = makeSandbox(true)
+  vm.runInContext(LEGACY_BROWSER_POLYFILL, sandbox)
+  const r = grab(
+    sandbox,
+    '(function () { var a = [3, 1, 2]; var s = a.toSorted(); var d = a.toSorted(function (x, y) { return y - x }); return { s: s, d: d, a: a } })()'
+  )
+  assert.deepEqual([...r.s], [1, 2, 3])
+  assert.deepEqual([...r.d], [3, 2, 1], 'comparator must be honoured')
+  assert.deepEqual([...r.a], [3, 1, 2], 'the receiver must be left untouched')
 })

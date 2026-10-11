@@ -2,6 +2,38 @@
 
 本项目 `dsh-bridge-gateway` 是基于 [dsh-bridge](https://github.com/wenbin-wb/dsh-bridge) 的移植增强分支，在保留原版能力之外，重点新增「公网直连网关」。
 
+## [0.2.2] - 2026-10-11
+
+### 修复：旧内核浏览器打开后工作区永远加载不了
+
+远程浏览器（统信 UOS、360 浏览器，内核均为 Chromium 108）访问时外壳能渲染出来，但工作区
+一直停在「选择一个工作区开始」；DevTools 报 `Promise.withResolvers is not a function` 与
+`AbortSignal.any is not a function`，并伴随 `connection lost, retry #N` 无限重连。
+
+根因是 DSH `0.2.0-rc.2` 的浏览器端直接使用了三个较新的 Web API，旧内核上没有：
+
+| API | 要求版本 | 调用点 |
+|---|---|---|
+| `Promise.withResolvers` | Chrome/Edge ≥ 119、Firefox ≥ 121、Safari ≥ 17.4 | index.html 末尾的启动门 `(globalThis.__DSH_BOOT_READY__ ??= Promise.withResolvers())`；`dsh-api-workspace-files` 客户端的工作区文件流 |
+| `AbortSignal.any` | Chrome/Edge ≥ 116、Firefox ≥ 124、Safari ≥ 17.4 | `dsh-api-gateway` 的 `RemoteStream.read`、`dsh-api-session-controller`、`dsh-client-ui-workspace`、`dsh-client-ui-sidebar-files` 等 |
+| `Array.prototype.toSorted` | Chrome/Edge ≥ 110 | `dsh-client-ui-model-selection` / `-schedule` / `-settings-models` |
+
+缺前两个的后果是启动门永不 resolve、远程流层直接抛错 —— 于是插件全部注册成功，工作区却
+永远加载不出来。
+
+修复走官方 `webserver/index-inject` 机制（与既有的 `crypto.randomUUID` polyfill 同一处），
+向 index.html 的 `<head>` 注入一段兜底脚本；该位置早于 `<body>` 末尾的启动门，所以一定先执行。
+三个 polyfill 全部带 `typeof` 守卫且幂等，现代浏览器上原样跳过、**绝不覆盖原生实现**；
+`AbortSignal.any` 对齐原生语义：空数组不 abort、已 abort 的成员立即短路并沿用其 reason、
+组合信号 abort 后摘掉监听器（避免在 `lifetime` / `generation` 这类长命 signal 上堆积）。
+
+新增 `test/legacy-compat.test.mjs` 第 3 节共 10 条断言，在 `node:vm` 沙箱里剥离这三个 API 后
+验证注入脚本本身，其中两条是反向断言：原生齐全时三个函数引用必须原封不动、重复执行必须是 no-op。
+
+> 附带说明：同一现场出现的 `404` / `net::ERR_HTTP_RESPONSE_CODE_FAILURE` 与本次故障无关 ——
+> 那是 DevTools 打开时去取不存在的 source map（`/assets/index-*.js.map`）以及
+> `/api/changes.summary`（deliverables 的 RPC）返回 404；工作区在零 4xx 的情况下照样加载失败。
+
 ## [0.2.1] - 2026-09-25
 
 ### 兼容性核查：DSH 0.1.7 无需改动
