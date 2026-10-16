@@ -1,8 +1,8 @@
 {
   "name": "dsh-bridge-gateway",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "以 dsh-bridge 为根基的 DSH 远程访问网关：局域网 / Cloudflare 隧道 / Tailscale 隧道 / 自建隧道 / 公网直连网关 / IM Bot，全部在 Web 面板中配置。",
-  "releaseNotes": "【dsh-bridge-gateway 0.2.2】\n• 🐛 修复旧内核浏览器（统信 UOS / 360 浏览器等 Chromium 108）打开后工作区永远加载不了：经官方 `webserver/index-inject` 注入 `Promise.withResolvers` / `AbortSignal.any` / `Array.prototype.toSorted` 三个 polyfill，全部带 `typeof` 守卫且幂等，现代浏览器上原样跳过、不覆盖原生实现\n• ✅ 新增 10 条兼容性断言（含「不得覆盖原生实现」「幂等」两条反向断言），全套 216 项测试通过",
+  "releaseNotes": "【dsh-bridge-gateway 0.3.0】\n• 📱 修复「滚不到最新会话」：插件给主框架注入的 height:100dvh + overflow:hidden 组合使 DSH 的布局测量算错，会话只渲染约 4 条消息（scrollHeight 996 vs 正常 11295）。去掉这两个属性组后恢复\n• 📱 移动端共修 8 项：主屏图标空白、渠道中心面板标题被顶栏盖住、会话名恒为「新会话」、轨迹视图内容被裁、顶部两层头过高、视图下拉被裁\n• 🖼️ PWA 主屏图标改为真 PNG（192/512 的 any 与 maskable + iOS 180）并用 DSH 业务蓝 #4176e6 —— 华为 HarmonyOS 与多数 Android 启动器不支持 SVG 图标，此前「添加到桌面」得到的是空白图标\n• 🎨 远程登录页改版为门厅式设计，与 DSH 本体同源同一枚鲸鱼\n• 🔍 新增真机诊断能力：?dsh-diag=1 只读指标叠加层 + ?dsh-mobile=off/no-new/no-<分组> 二分开关\n• 🔧 品牌名统一为 dsh-bridge-gateway，旧数据目录与 cloudflared 缓存目录两级链自动迁移\n• ⚠️ 已知问题：输入框仍会压住少量内容（两次修复尝试都破坏 DSH 滚动锚定，已回退），须由 DSH 侧解决\n• ✅ 269 项测试通过，新增 12 条护栏（逐条用注入 bug 验证过会变红）",
   "type": "module",
   "packageManager": "pnpm@11.24.0",
   "main": "lib/index.js",

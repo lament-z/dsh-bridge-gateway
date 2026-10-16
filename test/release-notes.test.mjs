@@ -59,7 +59,35 @@ test('the real CHANGELOG yields a body for the current package version', () => {
   const changelog = readFileSync(new URL('../CHANGELOG.md', import.meta.url), 'utf8')
   const body = extractChangelogForVersion(pkg.version, changelog)
   assert.notEqual(body, '', `CHANGELOG.md must carry an entry for v${pkg.version}`)
-  assert.match(body, /旧内核/, 'the v0.2.2 entry must describe the legacy-kernel fix')
+  // 断言必须**与版本解耦**：这里只校验"取到的是这个版本的真实正文"，
+  // 不校验具体内容 —— 曾经写成 `assert.match(body, /旧内核/)`（写测试时当前版本是
+  // 0.2.2），于是每次升版本都会红，属于把版本和内容硬绑在一起的定时炸弹。
+  assert.match(body, /^### /m, 'entry body should contain at least one ### section')
+  assert.ok(body.length > 100, 'entry body looks too short to be real')
+  assert.ok(
+    !/^## \[/m.test(body),
+    'entry body must not swallow the next version heading',
+  )
+})
+
+test('a pinned historical entry still yields its own content', () => {
+  // 内容校验钉在**历史版本**上：它不会随版本升级而失效，同时仍能守住提取逻辑
+  // （一旦取错段落、或把下一节吞进来，这条就会红）。
+  const changelog = readFileSync(new URL('../CHANGELOG.md', import.meta.url), 'utf8')
+  const body = extractChangelogForVersion('0.2.2', changelog)
+  assert.match(body, /旧内核/, 'the 0.2.2 entry must describe the legacy-kernel fix')
+  assert.ok(!/^## \[/m.test(body), 'must stop at the next version heading')
+})
+
+test('releaseNotes must be updated together with the version', () => {
+  // releaseNotes **优先于** CHANGELOG 正文用于 GitHub Release（见 create-github-release.mjs）。
+  // 升版本时若忘了改它，Release 会静默显示上一版的说明 —— 不报错，只是内容错了。
+  const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
+  assert.match(
+    pkg.releaseNotes,
+    new RegExp(`【dsh-bridge-gateway ${pkg.version.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}】`),
+    `releaseNotes 必须以【dsh-bridge-gateway ${pkg.version}】开头（升版本时同步更新）`,
+  )
 })
 
 test('releaseNotes wins over the CHANGELOG body (curated text is preferred)', () => {

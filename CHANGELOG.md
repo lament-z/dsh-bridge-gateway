@@ -2,6 +2,80 @@
 
 本项目 `dsh-bridge-gateway` 是基于 [dsh-bridge](https://github.com/wenbin-wb/dsh-bridge) 的移植增强分支，在保留原版能力之外，重点新增「公网直连网关」。
 
+## [0.3.0] - 2026-10-17
+
+### 新增：PWA 主屏图标（真 PNG + DSH 业务蓝）
+
+此前 manifest 只声明了 `image/svg+xml` 图标，且 `/apple-touch-icon.png` 也返回 SVG。
+**华为 HarmonyOS 与多数 Android 启动器不支持 SVG 图标**，于是「添加到桌面」后得到的是一块
+空白图标。底色也由近黑 `#151517` 改为 DSH 业务蓝 `#4176e6` —— 近黑底在深色桌面上会糊成
+一块「光板」，这也是「图标是空白的」观感来源之一。
+
+- 新增 `scripts/generate-icons.mjs`：用无头 Chrome 渲染 192/512 的 `any` 与 `maskable` 两版，
+  外加 iOS 的 180；产物入库 `assets/`
+- manifest 声明 4 个 PNG；`/apple-touch-icon.png` 改为返回真 PNG
+- `maskable` 版满幅不留圆角 —— 启动器会按自己的形状裁切，自带圆角会被裁掉一半
+
+### 新增：远程登录页改版（DSH 元素）
+
+登录页重做为门厅式设计，与 DSH 本体同源同一枚鲸鱼。
+
+- `lib/auth/brand-assets.js`：品牌资产单一来源，附 sha256 前缀校验
+- `lib/auth/theme-tokens.js`：18 个 `--dsw-*` token 的静态十六进制回落 —— 登录页在 DSH
+  之前渲染、加载不到 token，**每个 token 都必须有回落**
+- 响应头：`no-store` + CSP。其中 `connect-src 'self'` 是登录 `fetch` 的必需项，漏掉会登录失败
+
+### 修复：移动端 8 项问题
+
+| # | 症状 | 根因 |
+|---|---|---|
+| 1 | 主屏图标空白 | 见上：HarmonyOS 不支持 SVG 图标 |
+| 2 | 打开渠道中心时面板标题被顶栏盖住 | 插件顶栏 `position:fixed` + `z-index:9998` 不感知面板状态（面板 `z-index:80`，其标题落在 y19，正被顶栏的 y0-40 覆盖） |
+| 3 | 会话名恒为「新会话」 | DSH 0.1.7 起 sessions list 快照不再提供 `current` 字段，旧实现读它 → 恒 `undefined` → **静默回落**默认文案（不报错，很难发现）。改读 `retainedBy.mainView > 0` 的那一个（与 `dsh-client-ui-session` 的判据一致） |
+| 4 | 轨迹视图内容被裁 | `table` 元素的 `overflow` 在 CSS 里**是被忽略的**，只写 `overflow-x:auto` 无效，必须配 `display:block`。另：工具调用参数列内容宽 3049px 而可见仅 180px（17×），横滑读不了，改为换行 |
+| 5 | 输入框压住内容 | 见下「已知问题」（两次尝试均已回退） |
+| 6 | 顶部两层头过高、挤压对话区 | **DSH 自带 `min-height:76px`**，只改 padding 压不下去；显式清零后内容区 +51px |
+| 7 | 「对话」视图下拉被内容盖住 | 祖先链 `titleRow` 与 `wSkVaW_root` 都是 `overflow:hidden`，下拉落在头部下方被**整块裁掉**（z-index 再高也没用，裁剪发生在层叠之前）。改为 body 级 portal |
+| 8 | **滚不到最新会话**（只渲染约 4 条消息） | 插件给 `_frame` 注入的 `height:100dvh` + `overflow:hidden` 组合使 DSH 的布局测量算错，驻留窗口塌缩成 4 条。去掉这两个属性组后 `scrollHeight` 由 996 恢复到 11295 |
+
+### 已知问题：#5 输入框压住内容（未修）
+
+`composerSeat` 是 `position:sticky` 且为 `scrollBody` 的直接 flex 子项，吸住时会盖在滚动内容
+之上。**两次尝试修复（改 `fixed` + 补 padding；再用 `visualViewport` 算键盘高度）都破坏了 DSH
+的滚动锚定，均已回退。**
+
+DSH 另有「覆盖层模式」（`:has([data-conversation-composer-overlay])`：`composerSeat` 转
+`absolute`、`viewArea` 自己滚），但那是 `dsh-client-ui-trajectory`（轨迹视图）在用的，对话
+视图没有开。**要根治得走 DSH 侧，插件 CSS 补不了。**
+
+### 新增：真机诊断能力（长期保留）
+
+真机上稳定复现、桌面视口复现不出的问题，可以不改代码直接二分：
+
+| 参数 | 作用 |
+|---|---|
+| `?dsh-diag=1` | 只读指标叠加层（滚动容器几何、`scrollHeight` / `clientHeight`、输入框位置、视口三件套）。与 `dsh-mobile` 独立，因此可对比「移动层开/关」两态 |
+| `?dsh-mobile=off` | 完全禁用移动端增强层（CSS + JS） |
+| `?dsh-mobile=no-new` | 保留承重布局，只关掉最近新增的那批规则 |
+| `?dsh-mobile=no-<分组>` | 关掉某一组规则（`no-frameLayout` / `no-centercol` / `no-pad` / `no-observer`），逗号分隔可叠加 |
+| `?dsh-mobile=on` | 恢复正常 |
+
+选择记进 `localStorage`，因此在没有地址栏的 PWA 里同样生效。
+
+### 变更：品牌名统一为 dsh-bridge-gateway
+
+插件自身标识、日志前缀、数据目录、cloudflared 缓存目录全部改名，并对旧名做**两级链自动迁移**
+（`~/.dsh-bridge/` → `~/.dsh-bridge-cloudflared/` → `~/.dsh-bridge-gateway-cloudflared/`），
+用户无需重下 cloudflared。
+
+上游仓库名 `wenbin-wb/dsh-bridge` 与兼容性标识（`LEGACY_DATA_DIR_NAME`、
+`BRIDGE_RPC_CHANNEL_LEGACY`、CHANGELOG 历史）按约定保留。
+
+### 测试
+
+269 项全绿；新增 12 条护栏，逐条用注入 bug 验证过会变红。每条护栏都写了「为什么」（踩过的坑）。
+中英 README 同步（章节数 / 标题层级 / 逐章节条目数 / 表格行数零差异）。
+
 ## [0.2.2] - 2026-10-11
 
 ### 修复：旧内核浏览器打开后工作区永远加载不了
