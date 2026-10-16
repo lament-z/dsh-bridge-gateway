@@ -76,3 +76,7 @@ docs/wechat-bot-plan.md
 
 # Note: CODE_STANDARDS.md, CODE_REVIEW.md, and other docs are kept in repo
 # They are part of the project documentation
+
+# 构建产物：由 scripts/bundle-lark.mjs 生成（6MB，随依赖版本漂移，不入库）
+# 生成时机：prepare（全新 clone / GitHub 直装）、prepack（npm pack / publish）
+lib/feishu/lark-bundled.mjs

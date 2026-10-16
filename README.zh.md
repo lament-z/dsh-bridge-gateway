@@ -278,6 +278,10 @@ dsh plugin --profile web add .
 测试会通过 `test/isolate-home.mjs` 把 `DSH_HOME` 指向一次性临时目录，不会污染你本机的
 真实环境。
 
+`lib/feishu/lark-bundled.mjs` 是构建产物（约 6MB 的 Lark SDK esbuild 打包结果），**不入库** ——
+它的内容会随依赖版本与 `node_modules` 布局漂移。全新 clone 或从 GitHub 直装时由 `prepare`
+脚本生成，`npm pack` / `npm publish` 时由 `prepack` 生成。
+
 ### 排查只在手机上出现的问题
 
 桌面视口复现不出、真机稳定复现的问题，可以不改代码直接二分。在远程地址后加查询参数即可；

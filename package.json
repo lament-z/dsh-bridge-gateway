@@ -31,7 +31,8 @@
     "verify:mobile-header": "node scripts/verify-mobile-header.mjs",
     "prepack": "npm run build:lark && npm run build:client",
     "release:github": "node scripts/create-github-release.mjs",
-    "test": "node --import ./test/isolate-home.mjs --test test/*.test.mjs"
+    "test": "node --import ./test/isolate-home.mjs --test test/*.test.mjs",
+    "prepare": "npm run build:lark"
   },
   "dependencies": {
     "qrcode": "^1.5.3",

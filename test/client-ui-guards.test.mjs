@@ -389,3 +389,23 @@ test('#8 _frame 不得设固定高度或裁剪（会让 DSH 只渲染约 4 条�
     '_frame 必须保留 padding-top（这是这条规则存在的目的）',
   )
 })
+
+test('lark bundle 是构建产物：不得入库，且必须有脚本生成它', () => {
+  // lib/feishu/lark-bundled.mjs 是 esbuild 打出来的 6MB 产物，内容随依赖版本与
+  // node_modules 布局漂移（本地 pnpm 是 node_modules/.pnpm/...，与入库那份不同）。
+  // 它已改为构建时生成，因此：
+  //   (a) 必须在 .gitignore 里（防止再次被 git add 进来）；
+  //   (b) 必须有 prepare 脚本 —— git 依赖安装与全新 clone 走的是 prepare 而**不是**
+  //       prepack，只加 .gitignore 会让「从 GitHub 直装」这条推荐路径缺文件。
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..')
+  const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
+  const ignore = readFileSync(join(root, '.gitignore'), 'utf8')
+
+  assert.ok(
+    ignore.split('\n').some((l) => l.trim() === 'lib/feishu/lark-bundled.mjs'),
+    '.gitignore 必须包含 lib/feishu/lark-bundled.mjs',
+  )
+  assert.ok(pkg.scripts.prepare, '必须有 prepare 脚本（GitHub 直装依赖它生成产物）')
+  assert.match(pkg.scripts.prepare, /build:lark/, 'prepare 必须调用 build:lark')
+  assert.match(pkg.scripts.prepack, /build:lark/, 'prepack 也要保留 build:lark（npm pack 不跑 prepare）')
+})
