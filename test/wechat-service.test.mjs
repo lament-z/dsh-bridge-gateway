@@ -1,4 +1,4 @@
-// dsh-bridge WechatService construction smoke test
+// dsh-bridge-gateway WechatService construction smoke test
 // Verifies the gateway (Service subclass) + conversation node construct and
 // register 'wechat' on a mock Cordis context without throwing.
 import { test } from 'node:test'

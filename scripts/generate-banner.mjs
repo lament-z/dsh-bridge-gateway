@@ -290,7 +290,7 @@ async function main() {
       <span class="badge-dot"></span>
       DEEPSEEK HARNESS • REMOTE BRIDGE
     </div>
-    <h1>dsh-bridge</h1>
+    <h1>dsh-bridge-gateway</h1>
     <p class="desc">
       <strong>人不在电脑前，也能在手机与 IM 里接着干。</strong><br/>
       局域网 / 公网扫码免密直入 · 全域安全防篡改门禁 · 微信 / QQ / 飞书 / Telegram 全矩阵。

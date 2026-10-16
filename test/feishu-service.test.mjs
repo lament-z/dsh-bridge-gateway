@@ -1,4 +1,4 @@
-// dsh-bridge FeishuService & FeishuGateway tests
+// dsh-bridge-gateway FeishuService & FeishuGateway tests
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { FeishuService } from '../lib/feishu/index.js'

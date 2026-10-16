@@ -1,6 +1,6 @@
 # 微信 Bot 使用说明
 
-> dsh-bridge 的微信 Bot（ClawBot / iLink）让你**直接在微信里**与你的 DeepSeek Harness agent 对话、控制和审批——无需公网、无需隧道，走腾讯官方 iLink Bot API。
+> dsh-bridge-gateway 的微信 Bot（ClawBot / iLink）让你**直接在微信里**与你的 DeepSeek Harness agent 对话、控制和审批——无需公网、无需隧道，走腾讯官方 iLink Bot API。
 
 扫码登录微信个人号后，发消息就能驱动 agent；`/` 开头的命令管理会话、切换工作区、审批权限。会话与工作区信息跨重启持久化，不会丢。
 

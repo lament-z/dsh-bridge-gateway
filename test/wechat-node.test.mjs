@@ -1,4 +1,4 @@
-// dsh-bridge WeChat node unit tests (no live account / no DSH host needed)
+// dsh-bridge-gateway WeChat node unit tests (no live account / no DSH host needed)
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {

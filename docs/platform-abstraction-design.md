@@ -2,7 +2,7 @@
 
 ## 目标
 
-将 `dsh-bridge` 从单一微信集成重构为支持多 IM 平台的架构：
+将 `dsh-bridge-gateway` 从单一微信集成重构为支持多 IM 平台的架构：
 - 抽象出平台无关的核心逻辑（会话管理、消息路由、审批流程）
 - 定义统一的平台接口（Platform Interface）
 - 每个 IM 平台实现自己的适配器（WeChat / QQ / Feishu / Telegram）

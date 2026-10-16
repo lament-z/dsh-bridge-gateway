@@ -30,11 +30,11 @@ QQ Bot 使用 WebSocket 接收事件，需要配置 Intents（事件订阅）：
 - **GROUP_AT_MESSAGE_CREATE**（群聊 @提及）：`1 << 25`（与私聊同属 `GROUP_AND_C2C_EVENT`）
 - **INTERACTION_CREATE**（互动事件）：`1 << 26`
 
-> dsh-bridge 默认已开启以上三个 intents，支持私聊、群聊和按钮交互，无需额外配置。
+> dsh-bridge-gateway 默认已开启以上三个 intents，支持私聊、群聊和按钮交互，无需额外配置。
 
 ## 快速开始
 
-### 1. 启动 dsh-bridge
+### 1. 启动 dsh-bridge-gateway
 
 ```bash
 # 安装最新版本
@@ -54,7 +54,7 @@ dsh web
 - **ClientSecret**：应用的 ClientSecret（密钥不会回传浏览器，留空表示沿用已保存密钥）
 
 点击"保存并连接"，系统会自动：
-1. 保存凭证到 `$DSH_HOME/dsh-bridge/config.json`
+1. 保存凭证到 `$DSH_HOME/dsh-bridge-gateway/config.json`
 2. 获取 Access Token（自动刷新，TTL 7200s）
 3. 连接 WebSocket Gateway
 4. 开始接收消息事件
@@ -117,7 +117,7 @@ AI 生成过程中，QQ 会显示机器人的"正在输入"状态：
 
 ### 6. 指令面板与自定义菜单（v2.2.0）
 
-连接成功后，dsh-bridge 会自动为你的机器人配置：
+连接成功后，dsh-bridge-gateway 会自动为你的机器人配置：
 
 > **⚠️ 重要提示**（2026-08-20 确认）：
 > - **自定义菜单、指令面板、消息按钮是 2026-08-12 刚上线的新功能**（[官方变更记录](https://bot.qq.com/wiki/develop/api-v2/changelog.html)）
@@ -239,7 +239,7 @@ await gateway.sendMarkdown(
 
 按钮类型（`action.type`）：
 - `0` — 跳转按钮（`action.data` 为 URL）
-- `1` — 回调按钮（触发 `INTERACTION_CREATE` 事件）✅ dsh-bridge 快捷按钮使用此类型
+- `1` — 回调按钮（触发 `INTERACTION_CREATE` 事件）✅ dsh-bridge-gateway 快捷按钮使用此类型
 - `2` — 指令按钮（用户点击后自动发送 `action.data` 作为消息）
 
 按钮样式（`render_data.style`）：
@@ -290,7 +290,7 @@ await gateway.sendMedia(
 
 ### Token 自动刷新
 
-Access Token 有效期为 7200 秒（2 小时），dsh-bridge 会在过期前 5 分钟自动刷新，无需手动处理。
+Access Token 有效期为 7200 秒（2 小时），dsh-bridge-gateway 会在过期前 5 分钟自动刷新，无需手动处理。
 
 ### 消息去重
 

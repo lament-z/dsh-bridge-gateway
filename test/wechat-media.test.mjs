@@ -1,4 +1,4 @@
-// dsh-bridge WeChat media.js unit tests (AES encryption/decryption)
+// dsh-bridge-gateway WeChat media.js unit tests (AES encryption/decryption)
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {

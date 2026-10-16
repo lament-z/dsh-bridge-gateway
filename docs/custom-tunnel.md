@@ -1,6 +1,6 @@
 # 自建隧道服务器搭建教程
 
-dsh-bridge 的「自建隧道」功能需要一台有公网 IP 的服务器来中转流量。本教程提供一键部署脚本，执行完成后直接复制输出的配置信息填入 dsh-bridge 即可。
+dsh-bridge-gateway 的「自建隧道」功能需要一台有公网 IP 的服务器来中转流量。本教程提供一键部署脚本，执行完成后直接复制输出的配置信息填入 dsh-bridge-gateway 即可。
 
 ## 前置条件
 
@@ -41,7 +41,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/lament-z/dsh-bridge-gateway/
   │  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx                            │
   └──────────────────────────────────────────────────────────────┘
 
-  连接成功后，dsh-bridge 会显示以下公网访问地址：
+  连接成功后，dsh-bridge-gateway 会显示以下公网访问地址：
   http://YOUR_IP:3000/a7f2k9m3x1b4c8d2
 
   安全说明：该地址含随机路径（/a7f2k9m3x1b4c8d2），不知道路径无法访问。
@@ -56,7 +56,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/lament-z/dsh-bridge-gateway/
 
 | 层 | 机制 | 说明 |
 |----|------|------|
-| WebSocket 连接层 | 连接令牌（TOKEN） | dsh-bridge 连接服务端时验证，防止他人建立隧道连接 |
+| WebSocket 连接层 | 连接令牌（TOKEN） | dsh-bridge-gateway 连接服务端时验证，防止他人建立隧道连接 |
 | HTTP 访问层 | 随机路径前缀 | 所有不含该路径的请求返回 404，端口扫描看不出服务存在 |
 
 最终对外的公网地址形如 `http://IP:PORT/a7f2k9m3x1b4c8d2`，路径本身即是密钥——不知道完整地址就无法访问你的 DSH。
@@ -157,7 +157,7 @@ nginx -t && systemctl restart nginx
 PUBLIC_URL=https://tunnel.example.com
 ```
 
-重启服务并更新 dsh-bridge 中的地址为 `wss://tunnel.example.com/connect`：
+重启服务并更新 dsh-bridge-gateway 中的地址为 `wss://tunnel.example.com/connect`：
 
 ```bash
 systemctl restart dsh-tunnel
@@ -174,7 +174,7 @@ systemctl restart dsh-tunnel
 隧道服务端（你的公网服务器）
     │  WebSocket 实时转发
     ▼
-dsh-bridge（你的本地电脑，主动发起连接）
+dsh-bridge-gateway（你的本地电脑，主动发起连接）
     │  HTTP 本地转发
     ▼
 DSH（127.0.0.1:3080）

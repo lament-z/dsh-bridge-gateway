@@ -1,4 +1,4 @@
-// dsh-bridge QqService construction smoke test
+// dsh-bridge-gateway QqService construction smoke test
 // Verifies the gateway (Service subclass) + conversation node construct and
 // register 'qq' on a mock Cordis context without throwing.
 import { test } from 'node:test'

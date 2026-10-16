@@ -1,4 +1,4 @@
-// dsh-bridge 平台抽象层单元测试
+// dsh-bridge-gateway 平台抽象层单元测试
 //
 // 验证 Platform 基类 / ConversationBridge / PlatformManager 可独立于微信工作，
 // 并保持与 WechatConversationNode 相同的行为。

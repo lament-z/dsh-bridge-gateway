@@ -72,7 +72,7 @@ async function createRelease() {
       Accept: 'application/vnd.github+json',
       Authorization: `Bearer ${token}`,
       'X-GitHub-Api-Version': '2022-11-28',
-      'User-Agent': 'dsh-bridge-release-bot',
+      'User-Agent': 'dsh-bridge-gateway-release-bot',
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(payload),
