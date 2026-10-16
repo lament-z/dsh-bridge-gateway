@@ -5,13 +5,14 @@
 //      —— 通道名会被内联进浏览器 bundle，升级后**已缓存的旧 bundle** 仍打旧路径。
 //         服务端必须同时注册新旧两条路径，否则这些客户端全部 404
 //         （表现为「升级后设置页所有按钮点了没反应」）。
-//   2. cloudflared 缓存目录（~/.dsh-bridge → ~/.dsh-bridge-cloudflared）
-//      —— 迁移后应免于重新下载 39MB 二进制。
+//   2. cloudflared 缓存目录（两级迁移链）
+//      ~/.dsh-bridge/ → ~/.dsh-bridge-cloudflared/ → ~/.dsh-bridge-gateway-cloudflared/
+//      —— 迁移后应免于重新下载 39MB 二进制；两个历史名都要能被追到。
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import vm from 'node:vm'
 import { mkdtempSync, mkdirSync, writeFileSync, existsSync, rmSync, readFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
+import { tmpdir, homedir } from 'node:os'
 import { join } from 'node:path'
 import {
   BRIDGE_RPC_CHANNEL, BRIDGE_RPC_CHANNEL_LEGACY, BRIDGE_RPC_CHANNELS,
@@ -77,26 +78,68 @@ test('installBridgeRpc registers BOTH channels so old bundles keep working', asy
 // 2. cloudflared 缓存目录迁移
 // ---------------------------------------------------------------------------
 
-test('cloudflared migration is idempotent and never throws in the real environment', async () => {
-  const { migrateLegacyCloudflaredDir, cloudflaredDir, legacyCloudflaredDir } =
+test('cloudflared migration is idempotent and never throws', async () => {
+  const { migrateLegacyCloudflaredDir, cloudflaredDir, legacyCloudflaredDirs } =
     await import('../lib/paths.js')
 
-  // 该函数基于真实 HOME（无注入点），因此这里只断言"幂等 + 绝不抛出"这两条
-  // 与用户环境无关的性质；文件级迁移语义由 paths-migration.test.mjs 用临时目录覆盖。
-  const r1 = migrateLegacyCloudflaredDir({ logger: silent })
-  const r2 = migrateLegacyCloudflaredDir({ logger: silent })
-  assert.equal(r2.migrated, false, 'second run must be a no-op')
-  assert.equal(typeof r1.reason, 'string')
-  assert.doesNotThrow(() => migrateLegacyCloudflaredDir({ logger: silent }))
+  // 必须在**隔离的 HOME** 里跑。cloudflared 目录基于 os.homedir()，若用真实 HOME，
+  // 这个用例会真的去重命名用户家目录下的缓存目录 —— 测试不该动用户文件。
+  // （Node 在 POSIX 上让 os.homedir() 读 $HOME，所以注入 HOME 是有效的。）
+  const fakeHome = mkdtempSync(join(tmpdir(), 'dsh-cf-idem-'))
+  const prevHome = process.env.HOME
+  process.env.HOME = fakeHome
+  try {
+    // 先造一个中间名历史目录，让首次调用真的发生迁移
+    mkdirSync(join(fakeHome, '.dsh-bridge-cloudflared', 'bin'), { recursive: true })
+    writeFileSync(join(fakeHome, '.dsh-bridge-cloudflared', 'bin', 'cloudflared'), 'x')
 
-  assert.ok(cloudflaredDir().includes('.dsh-bridge-cloudflared'))
-  assert.ok(legacyCloudflaredDir().includes('.dsh-bridge'))
-  assert.notEqual(cloudflaredDir(), legacyCloudflaredDir())
+    const r1 = migrateLegacyCloudflaredDir({ logger: silent })
+    assert.equal(r1.migrated, true)
+    const r2 = migrateLegacyCloudflaredDir({ logger: silent })
+    assert.equal(r2.migrated, false, 'second run must be a no-op')
+    assert.equal(r2.reason, 'already-migrated')
+    assert.equal(typeof r1.reason, 'string')
+    assert.doesNotThrow(() => migrateLegacyCloudflaredDir({ logger: silent }))
+  } finally {
+    if (prevHome === undefined) delete process.env.HOME
+    else process.env.HOME = prevHome
+    rmSync(fakeHome, { recursive: true, force: true })
+  }
+
+  // 路径形状与 HOME 无关，可以在真实环境下断言
+  assert.ok(cloudflaredDir().includes('.dsh-bridge-gateway-cloudflared'))
+  const legacy = legacyCloudflaredDirs()
+  assert.equal(legacy.length, 2)
+  assert.ok(legacy[0].includes('.dsh-bridge-cloudflared'))
+  assert.ok(legacy[1].endsWith('/.dsh-bridge'))
+  assert.ok(!legacy.includes(cloudflaredDir()))
+})
+
+test('cloudflared 迁移链按"从新到旧"排列（改错顺序会让老用户白等一次重下载）', async () => {
+  const { CLOUDFLARED_DIR_NAME, LEGACY_CLOUDFLARED_DIR_NAMES, cloudflaredDir, legacyCloudflaredDirs } =
+    await import('../lib/paths.js')
+
+  assert.equal(CLOUDFLARED_DIR_NAME, '.dsh-bridge-gateway-cloudflared')
+  // 顺序即迁移优先级：先找最近一次改名前的名字，再往上追到上游沿用名
+  assert.deepEqual([...LEGACY_CLOUDFLARED_DIR_NAMES], ['.dsh-bridge-cloudflared', '.dsh-bridge'])
+  assert.deepEqual(
+    legacyCloudflaredDirs(),
+    LEGACY_CLOUDFLARED_DIR_NAMES.map((n) => join(homedir(), n)),
+  )
+  // 当前名不得混进历史列表，否则迁移会自己撞自己
+  assert.ok(!LEGACY_CLOUDFLARED_DIR_NAMES.includes(CLOUDFLARED_DIR_NAME))
+  assert.ok(!legacyCloudflaredDirs().includes(cloudflaredDir()))
 })
 
 test('cloudflared bin dir is derived from the new cache dir', async () => {
-  const { cloudflaredBinDir, cloudflaredDir } = await import('../lib/paths.js')
+  const { cloudflaredBinDir, cloudflaredDir, cloudflaredBinDirs, legacyCloudflaredDirs } =
+    await import('../lib/paths.js')
   assert.equal(cloudflaredBinDir(), join(cloudflaredDir(), 'bin'))
+  // 清理（重置隧道）要覆盖当前 + 全部历史目录，否则迁移失败的残留删不掉
+  assert.deepEqual(
+    cloudflaredBinDirs(),
+    [cloudflaredDir(), ...legacyCloudflaredDirs()].map((d) => join(d, 'bin')),
+  )
 })
 
 test('CloudflaredManager defaults its home to the new cache dir', async () => {
@@ -104,7 +147,8 @@ test('CloudflaredManager defaults its home to the new cache dir', async () => {
   const { cloudflaredDir } = await import('../lib/paths.js')
   const m = new CloudflaredManager({ port: 3080, logger: silent })
   assert.equal(m.home, cloudflaredDir())
-  assert.ok(!m.home.endsWith('/.dsh-bridge'), 'must not fall back to the legacy dir')
+  assert.ok(!m.home.endsWith('/.dsh-bridge'), 'must not fall back to the upstream dir')
+  assert.ok(!m.home.endsWith('/.dsh-bridge-cloudflared'), 'must not fall back to the intermediate dir')
 })
 
 test('an explicit home still wins (backward-compatible constructor contract)', async () => {

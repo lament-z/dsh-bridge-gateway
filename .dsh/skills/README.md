@@ -1,10 +1,10 @@
-# DSH Bridge Skills
+# DSH Bridge Gateway Skills
 
-这个目录包含 DSH Bridge 项目的可复用技能文档。
+这个目录包含 DSH Bridge Gateway 项目的可复用技能文档。
 
 ## 可用技能
 
-### dsh-bridge-coding-standards
+### dsh-bridge-gateway-coding-standards
 
 **用途**: 确保 DSH 插件代码符合规范、专业、可维护
 

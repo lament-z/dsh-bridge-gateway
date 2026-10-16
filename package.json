@@ -21,12 +21,14 @@
     "README.zh.md",
     "CHANGELOG.md",
     "LICENSE",
-    "docs"
+    "docs",
+    "assets"
   ],
   "scripts": {
     "build:client": "node client/build.mjs",
     "build:lark": "node scripts/bundle-lark.mjs",
     "build:banner": "node scripts/generate-banner.mjs",
+    "verify:mobile-header": "node scripts/verify-mobile-header.mjs",
     "prepack": "npm run build:lark && npm run build:client",
     "release:github": "node scripts/create-github-release.mjs",
     "test": "node --import ./test/isolate-home.mjs --test test/*.test.mjs"

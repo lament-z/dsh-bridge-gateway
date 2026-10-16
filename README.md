@@ -14,7 +14,7 @@ This project's **upstream is [wenbin-wb/dsh-bridge](https://github.com/wenbin-wb
 
 ### Who upstream is
 
-| | |
+| Field | Value |
 |---|---|
 | Repository | [wenbin-wb/dsh-bridge](https://github.com/wenbin-wb/dsh-bridge) |
 | Role | Multi-channel remote access and security plugin for DSH |
@@ -74,7 +74,7 @@ The plugin was renamed from `dsh-bridge` to **`dsh-bridge-gateway`** (reflecting
 | Path | Change |
 |---|---|
 | `<DSH_HOME>/dsh-bridge/` | → `<DSH_HOME>/dsh-bridge-gateway/` (migrated automatically at startup) |
-| `~/.dsh-bridge/` | → `~/.dsh-bridge-cloudflared/` (cloudflared cache; migrated automatically, no re-download) |
+| `~/.dsh-bridge/` | → `~/.dsh-bridge-gateway-cloudflared/` (cloudflared cache; **two-hop auto-migration**, no 39MB re-download) |
 | RPC channel `/dsh-bridge` | → `/dsh-bridge-gateway`, with **both channels served**, so stale cached pages keep working |
 
 ## Features
@@ -89,7 +89,7 @@ The plugin was renamed from `dsh-bridge` to **`dsh-bridge-gateway`** (reflecting
 - **Visitor management.** See live who is currently connected (LAN / direct gateway / tunnel, with the real source IP behind a tunnel) plus an IP blacklist. **Viewing is open to every visitor**; disconnecting and blacklisting require admin rights.
 - **IM bots.** WeChat / QQ / Feishu / Telegram bots connect through their own gateway links — no public IP needed. Per-platform workspace / agent preset / model selection is configurable. Guides live in [docs/](./docs).
 - **Collapsible cards.** Cards in the Access and Security tabs collapse; only the first in each group is expanded by default, and a collapsed card keeps its status tag plus one line of key information.
-- **Mobile-friendly web.** The remote web UI is deeply adapted for phone screens (drawer sidebar, ~44px touch targets, bottom-stuck composer, and more).
+- **Mobile-friendly web.** The remote web UI is deeply adapted for phone screens (drawer sidebar, ~44px touch targets, bottom-stuck composer, and more). The gateway also serves real **PNG** home-screen icons (DSH business blue + white whale, in both `any` and `maskable` variants) together with a Web App Manifest, so "Add to Home Screen" yields a proper icon rather than a blank tile.
 - **All configuration in the UI.** Every feature above is configured from DSH Web's remote-access panel; nothing is edited by hand.
 
 ## Interface
@@ -215,6 +215,20 @@ dsh plugin --profile web add .
 ```
 
 Tests point `DSH_HOME` at a throwaway temporary directory via `test/isolate-home.mjs`, so they never touch your real environment.
+
+### Diagnosing phone-only layout problems
+
+Bugs that reproduce on a phone but never in a desktop viewport can be bisected without touching code. Append a query parameter to the remote URL; the choice is remembered in `localStorage`, so it also works inside an installed PWA (which has no address bar).
+
+| Parameter | Effect |
+|---|---|
+| `?dsh-diag=1` | Overlays a read-only metrics panel (scroll-container geometry, `scrollHeight` / `clientHeight`, composer position, viewport triple). It is independent of `dsh-mobile`, so the layer can be compared on against off. |
+| `?dsh-mobile=off` | Disables the whole mobile enhancement layer (CSS and JS). |
+| `?dsh-mobile=no-new` | Keeps the load-bearing layout and drops only the most recently added rules. |
+| `?dsh-mobile=no-<group>` | Drops one rule group: `no-frameLayout`, `no-centercol`, `no-pad`, `no-observer`. Comma-separate to combine. |
+| `?dsh-mobile=on` | Restores normal behaviour. |
+
+Start by capturing `?dsh-diag=1` twice — once as-is and once with `?dsh-mobile=off` — because the delta between those two states is usually enough to name the culprit.
 
 This project is forked from [wenbin-wb/dsh-bridge](https://github.com/wenbin-wb/dsh-bridge). Report general issues upstream and direct-gateway issues to this repository.
 

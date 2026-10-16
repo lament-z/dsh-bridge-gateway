@@ -2639,7 +2639,7 @@ function BackupRestoreWidget({ rpcCall, onUpdate }) {
         const now = /* @__PURE__ */ new Date();
         const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
         a.href = url;
-        a.download = `dsh-bridge-backup-${dateStr}.json`;
+        a.download = `dsh-bridge-gateway-backup-${dateStr}.json`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -3935,11 +3935,165 @@ function BridgePanel({ rpcCall }) {
     )
   );
 }
+function setupMobileDiag() {
+  if (document.getElementById("dsh-mobile-diag")) return;
+  const box = document.createElement("div");
+  box.id = "dsh-mobile-diag";
+  box.style.cssText = [
+    "position:fixed",
+    "left:0",
+    "right:0",
+    "top:0",
+    "z-index:2147483647",
+    "background:rgba(0,0,0,.86)",
+    "color:#0f0",
+    "pointer-events:none",
+    "font:11px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace",
+    "padding:5px 7px",
+    "white-space:pre-wrap",
+    "word-break:break-all"
+  ].join(";");
+  document.body.appendChild(box);
+  const tick = () => {
+    const sb = document.querySelector('[class*="wSkVaW_scrollBody"]');
+    const seat = document.querySelector('[class*="wSkVaW_composerSeat"]');
+    const vv = window.visualViewport;
+    const L = [];
+    if (sb) {
+      const r = sb.getBoundingClientRect();
+      const max = sb.scrollHeight - sb.clientHeight;
+      L.push("scrollBody top=" + Math.round(r.top) + " h=" + Math.round(r.height) + " pad=" + getComputedStyle(sb).paddingBottom);
+      L.push("  scrollTop=" + Math.round(sb.scrollTop) + " max=" + max + " atBottom=" + (sb.scrollTop >= max - 2));
+      L.push("  scrollH=" + sb.scrollHeight + " clientH=" + sb.clientHeight + " children=" + sb.children.length);
+      const idx = sb.querySelectorAll("[data-index]");
+      L.push("  virtItems=" + idx.length);
+    } else {
+      L.push("scrollBody: NOT FOUND");
+    }
+    if (seat) {
+      const r = seat.getBoundingClientRect();
+      L.push("composer pos=" + getComputedStyle(seat).position + " top=" + Math.round(r.top) + " h=" + Math.round(r.height));
+    }
+    L.push("inner=" + window.innerHeight + " vv=" + (vv ? Math.round(vv.height) : "-") + " vvTop=" + (vv ? Math.round(vv.offsetTop) : "-") + " dpr=" + window.devicePixelRatio + " w=" + window.innerWidth);
+    L.push("body=" + Array.from(document.body.classList).join("."));
+    box.textContent = L.join("\n");
+  };
+  tick();
+  window.setInterval(tick, 500);
+  window.addEventListener("scroll", tick, true);
+  window.addEventListener("resize", tick);
+}
+var SUSPECT_CSS = {
+  // _frame 规则 —— 真机二分结论（2026-10-17）：
+  //   ?dsh-mobile=no-frameSize    （去掉 width:100vw + height:100dvh）→ scrollH 恢复正常
+  //   ?dsh-mobile=no-frameOverflow（去掉 overflow:hidden）            → scrollH 恢复正常
+  //   两个属性各自都能触发，说明是「固定高度 + 裁剪」这个组合在作怪：
+  //   height:100dvh 把主框架钉成固定高、overflow:hidden 又让它成为裁剪容器，
+  //   DSH 的布局测量因此算错，导致只渲染约 4 条消息（scrollH≈795，正常应 10 万+）。
+  //   故**这两个属性组已删除**，不再注入。只保留 padding-top（本规则的目的：
+  //   为固定顶栏腾出空间）与 display/flex-direction/position（抽屉化的前提）。
+  //   注意 grid-template-columns:1fr 也已去掉 —— 它是 grid 属性，在 flex 容器里无效。
+  //   padding-top / box-sizing 是这条规则的**目的**（为固定顶栏腾空间），任何分组都保留
+  frameBase: `
+    div[class*="_frame"] {
+      padding-top: var(--dsh-mobile-header-h) !important;
+      margin: 0 !important;
+      box-sizing: border-box !important;
+    }`,
+  frameLayout: `
+    div[class*="_frame"] {
+      display: flex !important;
+      flex-direction: column !important;
+      position: relative !important;
+    }`,
+  centercol: `      div[class*="_centerCol"] {
+        flex: 1 1 100% !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        display: flex !important;
+        height: 100% !important;
+      }`,
+  pad: `      div[class*="wSkVaW_scrollBody"] {
+        padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
+      }
+      div[class*="wSkVaW_scrollBody"] {
+        padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px)) !important;
+      }`
+};
+function injectSuspectStyles(disabled) {
+  const parts = Object.entries(SUSPECT_CSS).filter(([k]) => !disabled.has(k)).map(([, v]) => v);
+  if (parts.length === 0) return;
+  if (document.getElementById("dsh-bridge-gateway-mobile-styles-suspect")) return;
+  const style = document.createElement("style");
+  style.id = "dsh-bridge-gateway-mobile-styles-suspect";
+  style.textContent = "@media (max-width: 768px) {\n" + parts.join("\n") + "\n}";
+  document.head.appendChild(style);
+}
+var NEW_MOBILE_CSS = `
+      /* #2 \u9762\u677F\u6253\u5F00\u65F6\u9876\u680F\u8BA9\u4F4D\uFF08body.dsh-panel-open \u7531 setupPanelAwareness \u6253\u4E0A\uFF09\u3002
+         \u5B9E\u6D4B\uFF1A\u6E20\u9053\u4E2D\u5FC3\u9762\u677F\u6807\u9898\u5728 y19\uFF0C\u800C\u9876\u680F\u5360 y0-40 \u2192 \u4E0D\u6539\u5C31\u662F\u6807\u9898\u88AB\u76D6\u4F4F\u3002
+         \u4E0D\u7528 :has() \u662F\u56E0\u4E3A\u6784\u5EFA\u76EE\u6807\u662F chrome100\uFF08:has() \u8981 105+\uFF09\u3002 */
+      body.dsh-panel-open .dsh-mobile-app-header {
+        display: none !important;
+      }
+
+      /* #6 \u53CC\u5C42\u5934\u538B\u7F29\uFF1ADSH \u81EA\u5E26 min-height:76px\uFF0C\u53EA\u6539 padding \u538B\u4E0D\u4E0B\u53BB \u2014\u2014 \u5B9E\u6D4B
+         76px \u4E00\u76F4\u751F\u6548\u3001titleRow \u88AB\u62C9\u4F38\u586B\u6EE1\uFF0869px\uFF09\uFF0C\u4E24\u5C42\u5934\u5408\u8BA1\u5403\u6389 128px\uFF08\u5C4F\u5E55 15%\uFF09\u3002
+         \u663E\u5F0F\u6E05\u96F6 + \u628A padding \u6536\u5230 2px\uFF0C\u5B9E\u6D4B\u5185\u5BB9\u533A +51px\u3002 */
+      div[class*="_centerCol"] header,
+      header[class*="wSkVaW_header"] {
+        min-height: 0 !important;
+        padding: 2px 16px !important;
+      }
+      div[class*="wSkVaW_titleRow"] {
+        min-height: 0 !important;
+        height: 32px !important;
+      }
+
+      /* #4-C \u8868\u683C\u6A2A\u5411\u6EDA\u52A8\uFF1Atable \u5143\u7D20\u7684 overflow \u5728 CSS \u91CC\u662F**\u88AB\u5FFD\u7565**\u7684\uFF0C\u5FC5\u987B\u914D
+         display:block \u624D\u4F1A\u53D8\u6210\u53EF\u6EDA\u5757\u76D2\uFF08\u63D2\u4EF6\u539F\u6765\u53EA\u5199\u4E86 overflow-x:auto\uFF0C\u6240\u4EE5\u65E0\u6548\uFF09\u3002 */
+      div[class*="wSkVaW_scrollBody"] table {
+        display: block !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+      }
+
+      /* #4-E \u8F68\u8FF9\u91CC\u7684\u5DE5\u5177\u8C03\u7528\u53C2\u6570\u6362\u884C\uFF1A\u8BE5\u5217\u5185\u5BB9\u5BBD 3049px \u5374\u53EA\u6709 180px \u53EF\u89C1\uFF0817\xD7\uFF09\uFF0C
+         \u6A2A\u6ED1\u8981\u5212 17 \u5C4F\u3001\u5B9E\u9645\u8BFB\u4E0D\u4E86\u3002overflow-wrap:anywhere \u662F\u5FC5\u987B\u7684 \u2014\u2014 bash \u547D\u4EE4\u91CC
+         \u5E38\u6709\u8D85\u957F\u65E0\u7A7A\u683C token\u3002 */
+      div[class*="wSkVaW_scrollBody"] [class*="resultRequest"] {
+        white-space: normal !important;
+        overflow-wrap: anywhere !important;
+        word-break: break-word !important;
+        text-overflow: clip !important;
+        overflow: visible !important;
+      }
+
+      /* #7 \u4E0B\u62C9\u6539 body \u7EA7 portal\uFF08position:fixed\uFF09\u3002\u4E3A\u4EC0\u4E48\u4E0D\u80FD absolute \u6302\u5728\u6309\u94AE\u91CC\uFF1A
+         \u7956\u5148\u94FE titleRow \u4E0E wSkVaW_root \u90FD\u662F overflow:hidden\uFF08titleRow \u90A3\u6761\u8FD8\u662F\u63D2\u4EF6
+         \u81EA\u5DF1\u4E3A\u4E86\u7701\u7565\u53F7\u8BBE\u7684\uFF09\u2192 \u4E0B\u62C9\u843D\u5728\u5934\u90E8\u4E0B\u65B9 y78 \u4F1A\u88AB**\u6574\u5757\u88C1\u6389**\uFF0C\u5B9E\u6D4B\u4E2D\u5FC3\u70B9\u547D\u4E2D
+         \u7684\u662F\u6D88\u606F\u6587\u672C\u3002z-index \u518D\u9AD8\u4E5F\u6CA1\u7528\uFF0C\u88C1\u526A\u53D1\u751F\u5728\u5C42\u53E0\u4E4B\u524D\u3002
+         \u6CE8\u610F\uFF1A**\u4E0D\u80FD**\u5199 top/left \u7684 !important \u2014\u2014 \u90A3\u4F1A\u538B\u8FC7 positionTabDropdown()
+         \u5199\u7684\u5185\u8054\u5750\u6807\uFF0C\u628A\u4E0B\u62C9\u9489\u5728\u5DE6\u4E0A\u89D2\u3002 */
+      .dsh-mobile-tab-dropdown {
+        position: fixed !important;
+      }
+`;
+function injectNewMobileStyles() {
+  if (document.getElementById("dsh-bridge-gateway-mobile-styles-new")) return;
+  const style = document.createElement("style");
+  style.id = "dsh-bridge-gateway-mobile-styles-new";
+  style.textContent = "@media (max-width: 768px) {\n" + NEW_MOBILE_CSS + "\n}";
+  document.head.appendChild(style);
+}
 function injectMobileStyles() {
   if (typeof document === "undefined") return;
-  if (document.getElementById("dsh-bridge-mobile-styles")) return;
+  if (document.getElementById("dsh-bridge-gateway-mobile-styles")) return;
   const style = document.createElement("style");
-  style.id = "dsh-bridge-mobile-styles";
+  style.id = "dsh-bridge-gateway-mobile-styles";
   style.textContent = `
     /* DSH Bridge \u9690\u85CF Tab \u680F\u539F\u751F\u6EDA\u52A8\u6761\u5E76\u4FDD\u6301\u5E73\u6ED1\u6ED1\u52A8 */
     .dsh-tabbar-container {
@@ -3954,25 +4108,16 @@ function injectMobileStyles() {
 
     /* DSH Bridge \u79FB\u52A8\u7AEF\u81EA\u9002\u5E94\u4E0E\u89E6\u63A7\u4EA4\u4E92\u589E\u5F3A\u6837\u5F0F */
     :root {
-      --dsh-mobile-header-h: 52px;
+      /* \u9876\u680F\u9AD8\u5EA6 52 -> 40\uFF082026-10-16 \u771F\u673A\u53CD\u9988\uFF1A"\u4E0A\u9762\u9AD8\u5EA6\u592A\u9AD8\u4E86\uFF0C\u628A\u5BF9\u8BDD\u6846\u7684\u7A7A\u95F4\u538B\u7F29\u4E86"\uFF09\u3002
+         40px \u4ECD\u80FD\u5BB9\u7EB3 32px \u7684 \u2630/\u2295 \u6309\u94AE\u4E0E\u4E00\u884C\u4F1A\u8BDD\u540D\u3002 */
+      --dsh-mobile-header-h: 40px;
       --dsh-mobile-safe-top: env(safe-area-inset-top, 0px);
       --dsh-mobile-safe-bottom: env(safe-area-inset-bottom, 0px);
     }
 
     @media (max-width: 768px) {
       /* 1. \u4E3B\u6846\u67B6\u4E3A Header \u817E\u51FA\u9876\u90E8\u7A7A\u95F4 */
-      div[class*="_frame"] {
-        display: flex !important;
-        flex-direction: column !important;
-        width: 100vw !important;
-        height: 100dvh !important;
-        margin: 0 !important;
-        padding-top: var(--dsh-mobile-header-h) !important;
-        position: relative !important;
-        grid-template-columns: 1fr !important;
-        overflow: hidden !important;
-        box-sizing: border-box !important;
-      }
+
 
       /* 2. \u9876\u90E8\u539F\u751F\u5BFC\u822A\u6761\uFF1A100% \u8FD8\u539F DeepSeek App (\u5DE6\u4FA7\u53CC\u6A2A\u7EBF\uFF0C\u53F3\u4FA7(+)\uFF0C\u4E2D\u95F4\u7559\u767D\uFF0C\u65E0\u591A\u4F59\u8BBE\u7F6E\u6309\u94AE) */
       .dsh-mobile-app-header {
@@ -4052,14 +4197,7 @@ function injectMobileStyles() {
       }
 
       /* 3. \u4E2D\u95F4\u4E3B\u5185\u5BB9\u533A\u4E0E\u8F93\u5165\u6846 */
-      div[class*="_centerCol"] {
-        flex: 1 1 100% !important;
-        width: 100% !important;
-        min-width: 0 !important;
-        max-width: 100% !important;
-        display: flex !important;
-        height: 100% !important;
-      }
+
 
       div[class*="_detailsCol"],
       div[class*="toggleCluster"],
@@ -4450,9 +4588,7 @@ function injectMobileStyles() {
       }
 
       /* \u8F93\u5165\u6846\u5E95\u5EA7\uFF1ADeepSeek App \u5C45\u4E2D\u53CA\u5E95\u90E8\u56FA\u5B9A */
-      div[class*="wSkVaW_scrollBody"] {
-        padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
-      }
+
 
       /* \u8F93\u5165\u5361\u7247\uFF1ADeepSeek App \u5706\u89D2\u5927\u80F6\u56CA\u9020\u578B */
       div[class*="uV2eYG_card"] {
@@ -4646,11 +4782,20 @@ function injectMobileStyles() {
       }
 
       /* \u8F93\u5165\u6846\u8D34\u5E95\uFF1AscrollBody \u7684 16px \u5E95\u90E8\u886C\u8DDD\u662F\u7A7A\u9699\u6765\u6E90\uFF0C\u6536\u6389\u53EA\u7559\u5B89\u5168\u533A\uFF1B
-         \u518D\u57AB 6px \u8BA9\u7EDF\u8BA1\u836F\u4E38\u5B8C\u6574\u53EF\u89C1 */
-      div[class*="wSkVaW_scrollBody"] {
-        padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px)) !important;
-      }
-      div[class*="wSkVaW_composerStack"] {
+         \u518D\u57AB 6px \u8BA9\u7EDF\u8BA1\u836F\u4E38\u5B8C\u6574\u53EF\u89C1\u3002
+
+         \u26A0\uFE0F **\u4E0D\u8981**\u518D\u8BD5\u56FE\u5728\u8FD9\u91CC\u52A0 --dsh-composer-height\u3001\u4E5F\u4E0D\u8981\u7ED9 composerSeat \u52A0
+         position:fixed\uFF082026-10-16 \u4E24\u6B21\u5C1D\u8BD5\uFF0C\u5747\u5DF2\u56DE\u9000\uFF09\u3002\u539F\u56E0\uFF1ADSH \u7684\u6EDA\u52A8\u951A\u5B9A
+         \uFF08dsh-client-ui-conversation\uFF09\u662F**\u6309 DOM \u6D41\u5185\u4F4D\u7F6E**\u904D\u5386\u7956\u5148\u7B97\u504F\u79FB\u6765\u4FEE\u6B63
+         scrollTop \u7684\uFF1B\u628A composer \u6458\u51FA\u6587\u6863\u6D41\u3001\u6216\u7ED9\u6EDA\u52A8\u5185\u5BB9\u52A0 padding\uFF0C\u951A\u5B9A\u5C31\u7B97\u9519\uFF0C
+         \u771F\u673A\u75C7\u72B6\u662F\u300C\u8FDB\u53BB\u505C\u5728\u5F88\u4E45\u4EE5\u524D\u7684\u67D0\u6761\uFF0C\u70B9\u300E\u52A0\u8F7D\u66F4\u65E9\u300F\u540E\u518D\u4E5F\u56DE\u4E0D\u5230\u6700\u65B0\u300D\u3002
+         \u8FD9\u4E2A\u906E\u6321\u662F DSH \u5BF9\u8BDD\u89C6\u56FE sticky \u5438\u5E95\u8BBE\u8BA1\u7684\u56FA\u6709\u4EE3\u4EF7\uFF1BDSH \u53E6\u6709"\u8986\u76D6\u5C42\u6A21\u5F0F"
+         \uFF08:has([data-conversation-composer-overlay])\uFF1AcomposerSeat \u8F6C absolute\u3001
+         viewArea \u81EA\u5DF1\u6EDA\uFF09\uFF0C\u4F46\u90A3\u662F **dsh-client-ui-trajectory\uFF08\u8F68\u8FF9\u89C6\u56FE\uFF09** \u5728\u7528\u7684\uFF0C
+         \u5BF9\u8BDD\u89C6\u56FE\u6CA1\u6709\u5F00\u3002\u8981\u6839\u6CBB\u5F97\u8D70 DSH \u4FA7\uFF0C\u4E0D\u662F\u63D2\u4EF6 CSS \u80FD\u8865\u7684\u3002 */
+
+
+            div[class*="wSkVaW_composerStack"] {
         padding-bottom: env(safe-area-inset-bottom, 0px) !important;
       }
 
@@ -4957,15 +5102,15 @@ function injectMobileStyles() {
         box-sizing: border-box !important;
       }
 
-      /* 7. \u4EE3\u7801\u5757\u3001\u8868\u683C\u4E0E\u5FBD\u6807\u81EA\u9002\u5E94 */
-      pre, code, pre > code, table {
+      /* 7. \u4EE3\u7801\u5757\u4E0E\u5FBD\u6807\u81EA\u9002\u5E94 */
+      pre, code, pre > code {
         max-width: 100% !important;
         overflow-x: auto !important;
         -webkit-overflow-scrolling: touch !important;
         font-size: 12.5px !important;
       }
 
-      /* \u72B6\u6001\u5FBD\u6807\u4E0E\u836F\u4E38\u6309\u94AE\u6C38\u4E0D\u6298\u5B57 */
+                  /* \u72B6\u6001\u5FBD\u6807\u4E0E\u836F\u4E38\u6309\u94AE\u6C38\u4E0D\u6298\u5B57 */
       span[style*="border-radius: 999"],
       span[style*="border-radius:999"] {
         white-space: nowrap !important;
@@ -5181,10 +5326,82 @@ function createUpstreamBridge(ctx) {
     }
   };
 }
+function setupPanelAwareness(ctx) {
+  if (typeof document === "undefined") return () => {
+  };
+  const PANEL_SELECTORS = [
+    ".dshc-center-backdrop",
+    // dsh-chanhub 渠道中心
+    "[data-dsh-panel-host]",
+    // dsh-better-sidebar（注意：常驻 DOM，需判可见）
+    "[data-dsh-better-sidebar]"
+  ];
+  const isPanelOpen = () => PANEL_SELECTORS.some((sel) => {
+    const el = document.querySelector(sel);
+    if (!el) return false;
+    const cs = getComputedStyle(el);
+    if (cs.display === "none" || cs.visibility === "hidden") return false;
+    const r = el.getBoundingClientRect();
+    return r.width > 0 && r.height > 0;
+  });
+  const sync = () => {
+    const open = isPanelOpen();
+    if (document.body.classList.contains("dsh-panel-open") !== open) {
+      document.body.classList.toggle("dsh-panel-open", open);
+    }
+  };
+  sync();
+  const observer = new MutationObserver(sync);
+  observer.observe(document.body, { childList: true });
+  const timer = setInterval(sync, 1e3);
+  const dispose = () => {
+    observer.disconnect();
+    clearInterval(timer);
+  };
+  ctx?.effect?.(() => dispose);
+  return dispose;
+}
 function setupMobileExperience(rpcCall, ctx) {
   if (typeof document === "undefined" || typeof window === "undefined") return;
-  injectMobileStyles();
+  const MOBILE_FLAG_KEY = "dsh-bridge-gateway:mobile";
+  const flag = new URLSearchParams(window.location.search).get("dsh-mobile");
+  if (flag !== null) {
+    try {
+      window.localStorage.setItem(MOBILE_FLAG_KEY, flag);
+    } catch {
+    }
+  }
+  let mobileFlag = "on";
+  try {
+    mobileFlag = window.localStorage.getItem(MOBILE_FLAG_KEY) || "on";
+  } catch {
+  }
+  document.documentElement.dataset.dshMobile = mobileFlag;
+  const diagOn = new URLSearchParams(window.location.search).get("dsh-diag") === "1";
+  if (diagOn) window.setTimeout(setupMobileDiag, 1500);
+  const flagSet = new Set(String(mobileFlag).split(",").map((x) => x.trim()).filter(Boolean));
+  const disabledSuspects = new Set(
+    [...flagSet].filter((f) => f.startsWith("no-")).map((f) => f.slice(3))
+  );
+  if (disabledSuspects.has("frame")) {
+    for (const k of ["frameLayout", "frameSize", "frameOverflow"]) disabledSuspects.add(k);
+  }
+  const withCss = !flagSet.has("off") && !flagSet.has("no-css");
+  const withJs = !flagSet.has("off") && !flagSet.has("no-js");
+  const withNew = withCss && !flagSet.has("no-new");
+  const MOBILE_NO_OBSERVER = flagSet.has("no-observer");
+  if (!withCss && !withJs) {
+    if (diagOn) window.setTimeout(setupMobileDiag, 1500);
+    return;
+  }
+  if (withCss) {
+    injectMobileStyles();
+    injectSuspectStyles(disabledSuspects);
+  }
+  if (withNew) injectNewMobileStyles();
+  if (!withJs) return;
   const U = createUpstreamBridge(ctx);
+  setupPanelAwareness(ctx);
   let header = document.querySelector(".dsh-mobile-app-header");
   let titleEl = document.querySelector(".dsh-mobile-header-title");
   if (!header) {
@@ -5229,17 +5446,39 @@ function setupMobileExperience(rpcCall, ctx) {
     header.appendChild(rightBtn);
     document.body.appendChild(header);
   }
+  if (header && !header.dataset.dshVisibilityBound) {
+    header.dataset.dshVisibilityBound = "1";
+    header.style.display = "none";
+    try {
+      const mq = window.matchMedia("(max-width: 768px)");
+      const syncHeaderVisibility = () => {
+        header.style.display = mq.matches ? "" : "none";
+      };
+      syncHeaderVisibility();
+      if (typeof mq.addEventListener === "function") mq.addEventListener("change", syncHeaderVisibility);
+      else if (typeof mq.addListener === "function") mq.addListener(syncHeaderVisibility);
+    } catch {
+    }
+  }
+  const pickCurrentSession = (snap) => {
+    const list = snap?.byId ? Object.values(snap.byId) : [];
+    if (!list.length) return null;
+    const retained = list.find((x) => (x?.retainedBy?.mainView ?? 0) > 0);
+    if (retained) return retained;
+    return list.find((x) => !x?.blank) || null;
+  };
   const syncMobileTitle = () => {
     if (!titleEl) titleEl = document.querySelector(".dsh-mobile-header-title");
     if (!titleEl) return;
     const snap = ctx?.sessions?.list?.getSnapshot?.();
     if (!snap) return;
-    const cur = snap.current ? snap.byId?.[snap.current] : null;
+    const cur = pickCurrentSession(snap);
     if (!cur || cur.blank) {
       titleEl.innerText = "\u65B0\u4F1A\u8BDD";
     } else {
       titleEl.innerText = cur.displayTitle || cur.title || "\u4F1A\u8BDD";
     }
+    titleEl.title = titleEl.innerText;
   };
   syncMobileTitle();
   if (typeof ctx?.sessions?.list?.subscribe === "function") {
@@ -5279,9 +5518,21 @@ function setupMobileExperience(rpcCall, ctx) {
       }
     });
   };
-  const panelObserver = new MutationObserver(ensurePanelCloseButton);
-  panelObserver.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
-  window.addEventListener("resize", ensurePanelCloseButton);
+  let panelCloseRaf = 0;
+  const schedulePanelCloseButton = () => {
+    if (panelCloseRaf) return;
+    panelCloseRaf = window.requestAnimationFrame(() => {
+      panelCloseRaf = 0;
+      ensurePanelCloseButton();
+    });
+  };
+  if (MOBILE_NO_OBSERVER) {
+    document.documentElement.dataset.dshMobileObserver = "off";
+  } else {
+    const panelObserver = new MutationObserver(schedulePanelCloseButton);
+    panelObserver.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
+  }
+  window.addEventListener("resize", schedulePanelCloseButton);
   const mobileTabState = { btn: null, dropdown: null };
   const nativeTabs = () => [...document.querySelectorAll('[role="tablist"] [role="tab"]')];
   const closeTabDropdown = () => {
@@ -5289,6 +5540,14 @@ function setupMobileExperience(rpcCall, ctx) {
       mobileTabState.dropdown.remove();
       mobileTabState.dropdown = null;
     }
+  };
+  const positionTabDropdown = () => {
+    const dd = mobileTabState.dropdown;
+    const btn = mobileTabState.btn;
+    if (!dd || !btn || !btn.isConnected) return;
+    const r = btn.getBoundingClientRect();
+    dd.style.top = Math.round(r.bottom + 6) + "px";
+    dd.style.left = Math.round(r.left) + "px";
   };
   const renderTabDropdown = () => {
     closeTabDropdown();
@@ -5326,8 +5585,9 @@ function setupMobileExperience(rpcCall, ctx) {
       };
       dropdown.appendChild(option);
     });
-    mobileTabState.btn.appendChild(dropdown);
+    document.body.appendChild(dropdown);
     mobileTabState.dropdown = dropdown;
+    positionTabDropdown();
   };
   const syncTabButtonLabel = () => {
     if (!mobileTabState.btn || !mobileTabState.btn.isConnected) return;
@@ -5390,6 +5650,7 @@ function setupMobileExperience(rpcCall, ctx) {
   titleExtrasObserver.observe(document.body, { childList: true, subtree: true });
   window.addEventListener("resize", () => {
     if (window.innerWidth > 768) closeTabDropdown();
+    else positionTabDropdown();
   });
   document.addEventListener(
     "click",

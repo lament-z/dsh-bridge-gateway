@@ -1,6 +1,6 @@
-# dsh-bridge 开发规范
+# dsh-bridge-gateway 开发规范
 
-dsh-bridge 是一个 DeepSeek Harness (DSH) 插件，基于 Cordis 框架。
+dsh-bridge-gateway 是一个 DeepSeek Harness (DSH) 插件，基于 Cordis 框架。
 
 ## 插件结构
 
@@ -31,10 +31,10 @@ const inject = ['connection', 'webServer'];
 ### 四大具名导出
 
 ```js
-export const name = 'dsh-bridge';         // Host
+export const name = 'dsh-bridge-gateway';  // Host
 export const inject = { required: [...] };
 export function apply(ctx, config = {}) { ... }
-// Client: export const name = 'dsh-bridge:client'
+// Client: export const name = 'dsh-bridge-gateway:client'
 ```
 
 ### logger 正确用法
@@ -65,12 +65,12 @@ ctx.effect(() => async () => {
 
 ## RPC 规范
 
-- 频道名以 `/` 开头：`/dsh-bridge`
+- 频道名以 `/` 开头：`/dsh-bridge-gateway`（旧名 `/dsh-bridge` 仍作为回落通道注册）
 - 必须加 `{ authority: 'loopback' }`，只允许本机浏览器调用
 - 端点名定义在 `BRIDGE_ENDPOINTS` 常量里，客户端和服务端共用同一个文件
 
 ```js
-ctx.connection.rpc.handle('/dsh-bridge', handler, { authority: 'loopback' });
+ctx.connection.rpc.handle('/dsh-bridge-gateway', handler, { authority: 'loopback' });
 ```
 
 ## Client 插件规范
@@ -100,8 +100,8 @@ dsh plugin --profile web add .
 | 错误 | 原因 | 修复 |
 |------|------|------|
 | `cannot get property without inject` | inject 未声明该服务 | 加到 inject.required 或 inject.optional |
-| `invalid or reserved RPC channel` | 频道名没有 `/` 前缀 | 改为 `/dsh-bridge` |
-| `bundle loaded without registering` | loaderId 与 name 不一致 | client/build.mjs 里 `loaderId = 'dsh-bridge'` |
+| `invalid or reserved RPC channel` | 频道名没有 `/` 前缀 | 改为 `/dsh-bridge-gateway` |
+| `bundle loaded without registering` | loaderId 与 name 不一致 | client/build.mjs 里 `loaderId = 'dsh-bridge-gateway'` |
 | `require is not defined` | ES module 里用了 require | 改为顶部 import |
-| `spawn UNKNOWN` | 二进制不存在或文件损坏 | 删除 `~/.dsh-bridge/bin/` 重新下载 |
+| `spawn UNKNOWN` | 二进制不存在或文件损坏 | 删除 `~/.dsh-bridge-cloudflared/bin/`（旧版为 `~/.dsh-bridge/bin/`）重新下载 |
 | `schema is not a function` | settings.register 传了 plain object | 不要用 settings 服务，改用 JSON 文件持久化 |

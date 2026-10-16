@@ -1,4 +1,4 @@
-// dsh-bridge 客户端插件：设置页「远程访问」面板
+// dsh-bridge-gateway 客户端插件：设置页「远程访问」面板
 
 // 兼容非 HTTPS 环境（如手机局域网 HTTP 访问）：为非安全上下文补齐 crypto.randomUUID
 if (typeof window !== 'undefined') {
@@ -2295,7 +2295,7 @@ function BackupRestoreWidget({ rpcCall, onUpdate }) {
         const now = new Date();
         const dateStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
         a.href = url;
-        a.download = `dsh-bridge-backup-${dateStr}.json`;
+        a.download = `dsh-bridge-gateway-backup-${dateStr}.json`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -3496,12 +3496,216 @@ function BridgePanel({ rpcCall }) {
 
 // ---- 移动端自适应与触控交互增强 ----
 
+/**
+ * 真机诊断叠加层（`?dsh-mobile=diag`）。
+ *
+ * 为什么需要它：用户真机上稳定复现「滚不到最新会话」，而我在仿真视口里用同样大的
+ * 会话（28 轮 681 步）怎么都复现不出来。与其继续按猜测改代码、让用户一轮轮试，
+ * 不如把关键指标直接画在屏幕上让用户截图 —— 拿到的就是那台设备的真实数字。
+ *
+ * 只读：不改任何布局，pointer-events:none 不挡操作。
+ */
+function setupMobileDiag() {
+  if (document.getElementById('dsh-mobile-diag')) return;
+  const box = document.createElement('div');
+  box.id = 'dsh-mobile-diag';
+  box.style.cssText = [
+    'position:fixed', 'left:0', 'right:0', 'top:0', 'z-index:2147483647',
+    'background:rgba(0,0,0,.86)', 'color:#0f0', 'pointer-events:none',
+    'font:11px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace',
+    'padding:5px 7px', 'white-space:pre-wrap', 'word-break:break-all',
+  ].join(';');
+  document.body.appendChild(box);
+
+  const tick = () => {
+    const sb = document.querySelector('[class*="wSkVaW_scrollBody"]');
+    const seat = document.querySelector('[class*="wSkVaW_composerSeat"]');
+    const vv = window.visualViewport;
+    const L = [];
+    if (sb) {
+      const r = sb.getBoundingClientRect();
+      const max = sb.scrollHeight - sb.clientHeight;
+      L.push('scrollBody top=' + Math.round(r.top) + ' h=' + Math.round(r.height)
+        + ' pad=' + getComputedStyle(sb).paddingBottom);
+      L.push('  scrollTop=' + Math.round(sb.scrollTop) + ' max=' + max
+        + ' atBottom=' + (sb.scrollTop >= max - 2));
+      L.push('  scrollH=' + sb.scrollHeight + ' clientH=' + sb.clientHeight
+        + ' children=' + sb.children.length);
+      // 虚拟列表渲染出的条目数
+      const idx = sb.querySelectorAll('[data-index]');
+      L.push('  virtItems=' + idx.length);
+    } else {
+      L.push('scrollBody: NOT FOUND');
+    }
+    if (seat) {
+      const r = seat.getBoundingClientRect();
+      L.push('composer pos=' + getComputedStyle(seat).position
+        + ' top=' + Math.round(r.top) + ' h=' + Math.round(r.height));
+    }
+    L.push('inner=' + window.innerHeight
+      + ' vv=' + (vv ? Math.round(vv.height) : '-')
+      + ' vvTop=' + (vv ? Math.round(vv.offsetTop) : '-')
+      + ' dpr=' + window.devicePixelRatio + ' w=' + window.innerWidth);
+    L.push('body=' + Array.from(document.body.classList).join('.'));
+    box.textContent = L.join('\n');
+  };
+  tick();
+  window.setInterval(tick, 500);
+  window.addEventListener('scroll', tick, true);
+  window.addEventListener('resize', tick);
+}
+
+
+/**
+ * 真机二分用的「可疑规则」分组。
+ *
+ * 背景：真机上移动层开着时 DSH 只渲染约 4 条消息（scrollH=795），关掉则渲染完整历史
+ * （scrollH=15458）。`no-new`（关掉本轮新增规则）仍坏 → 元凶在主样式表里。
+ * 主表中能影响会话内容区结构的只有下面三组，各自一个开关：
+ *   ?dsh-mobile=no-frame      → 关掉主框架规则（height:100dvh / overflow:hidden 等）
+ *   ?dsh-mobile=no-centercol  → 关掉中间列规则（display:flex / height:100%）
+ *   ?dsh-mobile=no-pad        → 关掉滚动区的两条 padding-bottom
+ * 多个开关可叠加：?dsh-mobile=no-frame,no-pad
+ */
+const SUSPECT_CSS = {
+  // _frame 规则 —— 真机二分结论（2026-10-17）：
+  //   ?dsh-mobile=no-frameSize    （去掉 width:100vw + height:100dvh）→ scrollH 恢复正常
+  //   ?dsh-mobile=no-frameOverflow（去掉 overflow:hidden）            → scrollH 恢复正常
+  //   两个属性各自都能触发，说明是「固定高度 + 裁剪」这个组合在作怪：
+  //   height:100dvh 把主框架钉成固定高、overflow:hidden 又让它成为裁剪容器，
+  //   DSH 的布局测量因此算错，导致只渲染约 4 条消息（scrollH≈795，正常应 10 万+）。
+  //   故**这两个属性组已删除**，不再注入。只保留 padding-top（本规则的目的：
+  //   为固定顶栏腾出空间）与 display/flex-direction/position（抽屉化的前提）。
+  //   注意 grid-template-columns:1fr 也已去掉 —— 它是 grid 属性，在 flex 容器里无效。
+  //   padding-top / box-sizing 是这条规则的**目的**（为固定顶栏腾空间），任何分组都保留
+  frameBase: `
+    div[class*="_frame"] {
+      padding-top: var(--dsh-mobile-header-h) !important;
+      margin: 0 !important;
+      box-sizing: border-box !important;
+    }`,
+  frameLayout: `
+    div[class*="_frame"] {
+      display: flex !important;
+      flex-direction: column !important;
+      position: relative !important;
+    }`,
+  centercol: `      div[class*="_centerCol"] {
+        flex: 1 1 100% !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        display: flex !important;
+        height: 100% !important;
+      }`,
+  pad: `      div[class*="wSkVaW_scrollBody"] {
+        padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
+      }
+      div[class*="wSkVaW_scrollBody"] {
+        padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px)) !important;
+      }`,
+};
+
+/** 注入未被开关关掉的可疑规则组。 */
+function injectSuspectStyles(disabled) {
+  const parts = Object.entries(SUSPECT_CSS)
+    .filter(([k]) => !disabled.has(k))
+    .map(([, v]) => v);
+  if (parts.length === 0) return;
+  if (document.getElementById('dsh-bridge-gateway-mobile-styles-suspect')) return;
+  const style = document.createElement('style');
+  style.id = 'dsh-bridge-gateway-mobile-styles-suspect';
+  // **必须包回媒体查询**：这些规则原本都在 @media (max-width: 768px) 里，
+  // 剪出来时若丢掉媒体查询，它们会在所有宽度生效 —— 实测会把桌面布局压塌
+  // （整个会话内容被挤成底部一条）。这是拆表时踩的坑。
+  style.textContent = '@media (max-width: 768px) {\n' + parts.join('\n') + '\n}';
+  document.head.appendChild(style);
+}
+
+/**
+ * 本轮（2026-10-16）新增/改动的移动端规则，**独立成一个样式表**。
+ *
+ * 为什么要拆出来：真机上出现「滚不到最新会话」，`?dsh-mobile=off` 能消除，
+ * 说明问题在本插件的移动层里；但 `no-js` 会让会话选择 UI 失效、没法二分。
+ * 把本轮的规则单独成表后，可以用 `?dsh-mobile=no-new` 只关掉这一部分，
+ * 其余移动层（抽屉化、宽度约束等承重布局）完整保留 —— 界面仍可用，才能测滚动。
+ *
+ * 另一个好处：将来再二分时，把可疑规则挪到这里即可，不必再动主表。
+ */
+const NEW_MOBILE_CSS = `
+      /* #2 面板打开时顶栏让位（body.dsh-panel-open 由 setupPanelAwareness 打上）。
+         实测：渠道中心面板标题在 y19，而顶栏占 y0-40 → 不改就是标题被盖住。
+         不用 :has() 是因为构建目标是 chrome100（:has() 要 105+）。 */
+      body.dsh-panel-open .dsh-mobile-app-header {
+        display: none !important;
+      }
+
+      /* #6 双层头压缩：DSH 自带 min-height:76px，只改 padding 压不下去 —— 实测
+         76px 一直生效、titleRow 被拉伸填满（69px），两层头合计吃掉 128px（屏幕 15%）。
+         显式清零 + 把 padding 收到 2px，实测内容区 +51px。 */
+      div[class*="_centerCol"] header,
+      header[class*="wSkVaW_header"] {
+        min-height: 0 !important;
+        padding: 2px 16px !important;
+      }
+      div[class*="wSkVaW_titleRow"] {
+        min-height: 0 !important;
+        height: 32px !important;
+      }
+
+      /* #4-C 表格横向滚动：table 元素的 overflow 在 CSS 里是**被忽略**的，必须配
+         display:block 才会变成可滚块盒（插件原来只写了 overflow-x:auto，所以无效）。 */
+      div[class*="wSkVaW_scrollBody"] table {
+        display: block !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+      }
+
+      /* #4-E 轨迹里的工具调用参数换行：该列内容宽 3049px 却只有 180px 可见（17×），
+         横滑要划 17 屏、实际读不了。overflow-wrap:anywhere 是必须的 —— bash 命令里
+         常有超长无空格 token。 */
+      div[class*="wSkVaW_scrollBody"] [class*="resultRequest"] {
+        white-space: normal !important;
+        overflow-wrap: anywhere !important;
+        word-break: break-word !important;
+        text-overflow: clip !important;
+        overflow: visible !important;
+      }
+
+      /* #7 下拉改 body 级 portal（position:fixed）。为什么不能 absolute 挂在按钮里：
+         祖先链 titleRow 与 wSkVaW_root 都是 overflow:hidden（titleRow 那条还是插件
+         自己为了省略号设的）→ 下拉落在头部下方 y78 会被**整块裁掉**，实测中心点命中
+         的是消息文本。z-index 再高也没用，裁剪发生在层叠之前。
+         注意：**不能**写 top/left 的 !important —— 那会压过 positionTabDropdown()
+         写的内联坐标，把下拉钉在左上角。 */
+      .dsh-mobile-tab-dropdown {
+        position: fixed !important;
+      }
+`;
+
+/**
+ * 注入本轮新增的样式表。**必须晚于** injectMobileStyles()，靠"同优先级下后者胜"
+ * 覆盖主表里的原值。
+ * @returns {void}
+ */
+function injectNewMobileStyles() {
+  if (document.getElementById('dsh-bridge-gateway-mobile-styles-new')) return;
+  const style = document.createElement('style');
+  style.id = 'dsh-bridge-gateway-mobile-styles-new';
+  // 同上：本表规则原本都在 @media (max-width: 768px) 内，必须包回来，
+  // 否则宽屏会被这些移动端覆盖规则污染（例如原生头被强制 padding:2px 16px）。
+  style.textContent = '@media (max-width: 768px) {\n' + NEW_MOBILE_CSS + '\n}';
+  document.head.appendChild(style);
+}
+
 function injectMobileStyles() {
   if (typeof document === 'undefined') return;
-  if (document.getElementById('dsh-bridge-mobile-styles')) return;
+  if (document.getElementById('dsh-bridge-gateway-mobile-styles')) return;
 
   const style = document.createElement('style');
-  style.id = 'dsh-bridge-mobile-styles';
+  style.id = 'dsh-bridge-gateway-mobile-styles';
   style.textContent = `
     /* DSH Bridge 隐藏 Tab 栏原生滚动条并保持平滑滑动 */
     .dsh-tabbar-container {
@@ -3516,25 +3720,16 @@ function injectMobileStyles() {
 
     /* DSH Bridge 移动端自适应与触控交互增强样式 */
     :root {
-      --dsh-mobile-header-h: 52px;
+      /* 顶栏高度 52 -> 40（2026-10-16 真机反馈："上面高度太高了，把对话框的空间压缩了"）。
+         40px 仍能容纳 32px 的 ☰/⊕ 按钮与一行会话名。 */
+      --dsh-mobile-header-h: 40px;
       --dsh-mobile-safe-top: env(safe-area-inset-top, 0px);
       --dsh-mobile-safe-bottom: env(safe-area-inset-bottom, 0px);
     }
 
     @media (max-width: 768px) {
       /* 1. 主框架为 Header 腾出顶部空间 */
-      div[class*="_frame"] {
-        display: flex !important;
-        flex-direction: column !important;
-        width: 100vw !important;
-        height: 100dvh !important;
-        margin: 0 !important;
-        padding-top: var(--dsh-mobile-header-h) !important;
-        position: relative !important;
-        grid-template-columns: 1fr !important;
-        overflow: hidden !important;
-        box-sizing: border-box !important;
-      }
+
 
       /* 2. 顶部原生导航条：100% 还原 DeepSeek App (左侧双横线，右侧(+)，中间留白，无多余设置按钮) */
       .dsh-mobile-app-header {
@@ -3614,14 +3809,7 @@ function injectMobileStyles() {
       }
 
       /* 3. 中间主内容区与输入框 */
-      div[class*="_centerCol"] {
-        flex: 1 1 100% !important;
-        width: 100% !important;
-        min-width: 0 !important;
-        max-width: 100% !important;
-        display: flex !important;
-        height: 100% !important;
-      }
+
 
       div[class*="_detailsCol"],
       div[class*="toggleCluster"],
@@ -4012,9 +4200,7 @@ function injectMobileStyles() {
       }
 
       /* 输入框底座：DeepSeek App 居中及底部固定 */
-      div[class*="wSkVaW_scrollBody"] {
-        padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
-      }
+
 
       /* 输入卡片：DeepSeek App 圆角大胶囊造型 */
       div[class*="uV2eYG_card"] {
@@ -4208,11 +4394,20 @@ function injectMobileStyles() {
       }
 
       /* 输入框贴底：scrollBody 的 16px 底部衬距是空隙来源，收掉只留安全区；
-         再垫 6px 让统计药丸完整可见 */
-      div[class*="wSkVaW_scrollBody"] {
-        padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px)) !important;
-      }
-      div[class*="wSkVaW_composerStack"] {
+         再垫 6px 让统计药丸完整可见。
+
+         ⚠️ **不要**再试图在这里加 --dsh-composer-height、也不要给 composerSeat 加
+         position:fixed（2026-10-16 两次尝试，均已回退）。原因：DSH 的滚动锚定
+         （dsh-client-ui-conversation）是**按 DOM 流内位置**遍历祖先算偏移来修正
+         scrollTop 的；把 composer 摘出文档流、或给滚动内容加 padding，锚定就算错，
+         真机症状是「进去停在很久以前的某条，点『加载更早』后再也回不到最新」。
+         这个遮挡是 DSH 对话视图 sticky 吸底设计的固有代价；DSH 另有"覆盖层模式"
+         （:has([data-conversation-composer-overlay])：composerSeat 转 absolute、
+         viewArea 自己滚），但那是 **dsh-client-ui-trajectory（轨迹视图）** 在用的，
+         对话视图没有开。要根治得走 DSH 侧，不是插件 CSS 能补的。 */
+
+
+            div[class*="wSkVaW_composerStack"] {
         padding-bottom: env(safe-area-inset-bottom, 0px) !important;
       }
 
@@ -4519,15 +4714,15 @@ function injectMobileStyles() {
         box-sizing: border-box !important;
       }
 
-      /* 7. 代码块、表格与徽标自适应 */
-      pre, code, pre > code, table {
+      /* 7. 代码块与徽标自适应 */
+      pre, code, pre > code {
         max-width: 100% !important;
         overflow-x: auto !important;
         -webkit-overflow-scrolling: touch !important;
         font-size: 12.5px !important;
       }
 
-      /* 状态徽标与药丸按钮永不折字 */
+                  /* 状态徽标与药丸按钮永不折字 */
       span[style*="border-radius: 999"],
       span[style*="border-radius:999"] {
         white-space: nowrap !important;
@@ -4776,10 +4971,125 @@ function createUpstreamBridge(ctx) {
 // ---- 移动端自适应与触控交互增强 ----
 // 上游 DOM 依赖统一经上方契约层（U.*）访问；见 UPSTREAM_ARIA / UPSTREAM_SEL。
 
+/**
+ * 面板打开时让顶栏让位（#2，2026-10-16）。
+ *
+ * 症状：打开 dsh-chanhub 的「渠道中心」后，面板标题与插件顶栏的会话名叠在同一位置。
+ * 实测：插件顶栏是 position:fixed + z-index:9998，而面板根 .dshc-center-backdrop
+ * 是全屏 fixed、z-index:80；面板标题「渠道中心」落在 y19，正好在顶栏的 y0-40 之内
+ * —— 顶栏把面板标题盖住了。
+ *
+ * 做法：面板可见时给 <body> 打 dsh-panel-open，CSS 据此隐藏顶栏。
+ * **不用 CSS :has()**：本插件构建目标是 chrome100，:has() 需要 chrome105+
+ * （文件里现存的一处 :has() 属于历史遗留，不该再扩大它的使用面）。
+ *
+ * @param {object} ctx cordis 上下文
+ * @returns {() => void} 解绑函数
+ */
+function setupPanelAwareness(ctx) {
+  if (typeof document === 'undefined') return () => {};
+  // 已知的面板根。加新面板时在这里补一行即可。
+  const PANEL_SELECTORS = [
+    '.dshc-center-backdrop',   // dsh-chanhub 渠道中心
+    '[data-dsh-panel-host]',   // dsh-better-sidebar（注意：常驻 DOM，需判可见）
+    '[data-dsh-better-sidebar]',
+  ];
+
+  const isPanelOpen = () => PANEL_SELECTORS.some((sel) => {
+    const el = document.querySelector(sel);
+    if (!el) return false;
+    const cs = getComputedStyle(el);
+    if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+    const r = el.getBoundingClientRect();
+    return r.width > 0 && r.height > 0;
+  });
+
+  const sync = () => {
+    const open = isPanelOpen();
+    if (document.body.classList.contains('dsh-panel-open') !== open) {
+      document.body.classList.toggle('dsh-panel-open', open);
+    }
+  };
+
+  sync();
+  const observer = new MutationObserver(sync);
+  // 只监听 body 的**直接子节点增删**：面板（.dshc-center-backdrop）就是 body 的直接
+  // 子节点（实测 depth=1）。**不要**用 subtree/attributes —— 那是全文档级监听，会话
+  // 流式输出时每秒上千次回调，每次还要 getComputedStyle + getBoundingClientRect，
+  // 会把主线程拖垮（实测症状：滚动卡住、界面与后端不同步）。
+  observer.observe(document.body, { childList: true });
+  const timer = setInterval(sync, 1000);
+
+  const dispose = () => { observer.disconnect(); clearInterval(timer); };
+  ctx?.effect?.(() => dispose);
+  return dispose;
+}
+
 function setupMobileExperience(rpcCall, ctx) {
   if (typeof document === 'undefined' || typeof window === 'undefined') return;
-  injectMobileStyles();
+
+  // ---- 逃生开关（2026-10-16 加）----
+  // 真机上出现过「进去停在很久以前某条、滚不到最新」，而我在仿真视口里用同样大的
+  // 会话也复现不出来。与其一轮轮改代码让你试，不如给一个能**一步二分**的开关：
+  //   ?dsh-mobile=off    → 完全禁用（样式 + 全部 JS）
+  //   ?dsh-mobile=no-js  → 只保留 CSS，跳过全部 JS（二分用）
+  //   ?dsh-mobile=no-css → 只跑 JS，不注入 CSS（二分用；界面会错乱）
+  //   ?dsh-mobile=no-new → 保留移动端布局，只关掉本轮新增/改动的规则（**界面仍可用**）
+  //   ?dsh-mobile=no-observer → 关掉全文档 MutationObserver（定位滚动卡死用）
+  //   ?dsh-diag=1（独立参数）→ 叠加只读诊断信息；可与 dsh-mobile 任意取值组合，
+  //                          用来对比「开/关移动层」两种状态的真实指标
+  //   ?dsh-mobile=on     → 恢复
+  // 用 localStorage 记住，这样在「添加到桌面」的 PWA（没有地址栏）里也能生效。
+  // 带 off 还坏 → 问题在 DSH 或环境；不带才坏 → 问题在本层。
+  const MOBILE_FLAG_KEY = 'dsh-bridge-gateway:mobile';
+  const flag = new URLSearchParams(window.location.search).get('dsh-mobile');
+  if (flag !== null) {
+    try { window.localStorage.setItem(MOBILE_FLAG_KEY, flag); } catch { /* 隐私模式 */ }
+  }
+  let mobileFlag = 'on';
+  try { mobileFlag = window.localStorage.getItem(MOBILE_FLAG_KEY) || 'on'; } catch { /* 读不到就当开启 */ }
+  document.documentElement.dataset.dshMobile = mobileFlag;
+
+  // 细分开关（同一次会话里就能二分出是哪一半）：
+  //   no-js  → 只注入 CSS，跳过全部 JS
+  //   no-css → 只跑 JS，不注入 CSS
+  // 诊断层是**独立参数**（dsh-diag=1），不受 dsh-mobile 取值影响 ——
+  // 这样同一台设备、同一个会话可以分别测「移动层开」与「移动层关」两种状态的指标，
+  // 拿到差值才能定位（我仿真复现不出，只能靠真机的对照数据）。
+  const diagOn = new URLSearchParams(window.location.search).get('dsh-diag') === '1';
+  if (diagOn) window.setTimeout(setupMobileDiag, 1500);
+
+  // 逗号分隔的多开关，例如 no-frame,no-pad
+  const flagSet = new Set(String(mobileFlag).split(',').map((x) => x.trim()).filter(Boolean));
+  const disabledSuspects = new Set(
+    [...flagSet].filter((f) => f.startsWith('no-')).map((f) => f.slice(3)),
+  );
+  // 兼容：no-frame 等价于同时关掉 frameLayout / frameSize / frameOverflow
+  if (disabledSuspects.has('frame')) {
+    for (const k of ['frameLayout', 'frameSize', 'frameOverflow']) disabledSuspects.add(k);
+  }
+
+  const withCss = !flagSet.has('off') && !flagSet.has('no-css');
+  const withJs = !flagSet.has('off') && !flagSet.has('no-js');
+  // no-new：保留承重的移动端布局（抽屉化等），只关掉本轮新增/改动的规则。
+  // 这是唯一能"界面仍可用"地二分本轮改动的开关（no-js 会让会话选择 UI 失效）。
+  const withNew = withCss && !flagSet.has('no-new');
+  // no-observer：关掉那个全文档 MutationObserver（定位「滚动卡死」用）
+  const MOBILE_NO_OBSERVER = flagSet.has('no-observer');
+  if (!withCss && !withJs) {
+    // 整层关掉，但诊断层仍要跑（对照用）
+    if (diagOn) window.setTimeout(setupMobileDiag, 1500);
+    return;
+  }
+
+  if (withCss) {
+    injectMobileStyles();
+    injectSuspectStyles(disabledSuspects);
+  }
+  if (withNew) injectNewMobileStyles();
+  if (!withJs) return;
   const U = createUpstreamBridge(ctx);
+  setupPanelAwareness(ctx);
 
   // 1. 创建顶部 DeepSeek App 风格导航条 (Header: 左侧双横线，中间当前会话标题，右侧(+))
   let header = document.querySelector('.dsh-mobile-app-header');
@@ -4834,18 +5144,66 @@ function setupMobileExperience(rpcCall, ctx) {
     document.body.appendChild(header);
   }
 
+  // ---------------------------------------------------------------------------
+  // 顶栏可见性兜底（2026-10-16）
+  // ---------------------------------------------------------------------------
+  // 这个顶栏只在窄屏出现，而它的**全部样式**都写在 @media (max-width: 768px) 里，
+  // 宽屏只靠末尾一条 `@media (min-width: 769px) { display: none !important }` 藏起来。
+  // 于是存在一个脆弱窗口：样式表晚到、被卸载，或页面处于「重连/热更中途」的中间态时，
+  // 这个无样式的 <header> 会以块级元素落进侧边栏栅格 —— 表现为左下角一堆被裁切的图标
+  // （☰ / 新会话 / ⊕）。已实测复现。
+  //
+  // 这里用内联 display 做兜底，并且**不依赖"CSS 的 !important 压过内联"这种隐式契约**：
+  // 窄屏由 matchMedia 主动把内联值让开，交还给 CSS 的 display:flex。
+  if (header && !header.dataset.dshVisibilityBound) {
+    header.dataset.dshVisibilityBound = '1';
+    // 先无条件隐藏：即使下面 matchMedia 不可用，也绝不会露出无样式块
+    header.style.display = 'none';
+    try {
+      const mq = window.matchMedia('(max-width: 768px)');
+      const syncHeaderVisibility = () => {
+        // 窄屏清空内联值 → 由 CSS 决定（flex）；宽屏内联 none → 不依赖 CSS 也在
+        header.style.display = mq.matches ? '' : 'none';
+      };
+      syncHeaderVisibility();
+      if (typeof mq.addEventListener === 'function') mq.addEventListener('change', syncHeaderVisibility);
+      else if (typeof mq.addListener === 'function') mq.addListener(syncHeaderVisibility);
+    } catch { /* 不支持 matchMedia 的极老内核：保持内联隐藏，宁可不显示也不露无样式块 */ }
+  }
+
   // 绑定会话标题实时同步 (切换会话或收到首条回复自动更新)
+  /**
+   * 把当前会话名写进移动端顶栏。
+   *
+   * 历史坑（2026-10-16 修复）：旧实现读 `snap.current`，而 **DSH 0.1.7 起
+   * sessions list 快照已不再提供 current 字段** → 恒 undefined → 标题永远停在
+   * "新会话"，即使已经打开了一个会话（用户反馈："会话界面最上面不应该显示新会话，
+   * 应该显示会话名"）。因为读不到就静默回落到默认文案，这个 bug 不会报错。
+   *
+   * 正确判据来自 DSH 自己的实现（dsh-client-ui-session 的 publishMain）：
+   * 「当前会话」= 快照里 retainedBy.mainView > 0 的那一个；取不到再退回第一个
+   * 非空会话。不依赖 session 作用域插槽，因此不用改动顶栏结构。
+   */
+  const pickCurrentSession = (snap) => {
+    const list = snap?.byId ? Object.values(snap.byId) : [];
+    if (!list.length) return null;
+    const retained = list.find((x) => (x?.retainedBy?.mainView ?? 0) > 0);
+    if (retained) return retained;
+    return list.find((x) => !x?.blank) || null;
+  };
+
   const syncMobileTitle = () => {
     if (!titleEl) titleEl = document.querySelector('.dsh-mobile-header-title');
     if (!titleEl) return;
     const snap = ctx?.sessions?.list?.getSnapshot?.();
     if (!snap) return;
-    const cur = snap.current ? snap.byId?.[snap.current] : null;
+    const cur = pickCurrentSession(snap);
     if (!cur || cur.blank) {
       titleEl.innerText = '新会话';
     } else {
       titleEl.innerText = cur.displayTitle || cur.title || '会话';
     }
+    titleEl.title = titleEl.innerText;
   };
 
   syncMobileTitle();
@@ -4890,9 +5248,29 @@ function setupMobileExperience(rpcCall, ctx) {
     });
   };
 
-  const panelObserver = new MutationObserver(ensurePanelCloseButton);
-  panelObserver.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
-  window.addEventListener('resize', ensurePanelCloseButton);
+  // ---- 观察器必须按帧合并（2026-10-17 修）----
+  // 原实现把 ensurePanelCloseButton 直接当 MutationObserver 回调，而监听范围是
+  // **全文档子树 + class 属性**：会话流式输出时 DOM 每秒变上千次，于是
+  // ensurePanelCloseButton 也跑上千次，每次都要 openPanels() + querySelector
+  // （而且它没有廉价早退）。主线程被占满的直接后果就是**滚动卡死、界面与后端不同步**
+  // —— 用户真机症状「滚不到最新会话、加载更早后回不去」。
+  // 按帧合并后最多每帧一次（≤60/s），同一帧内的多次变更只算一次。
+  let panelCloseRaf = 0;
+  const schedulePanelCloseButton = () => {
+    if (panelCloseRaf) return;
+    panelCloseRaf = window.requestAnimationFrame(() => {
+      panelCloseRaf = 0;
+      ensurePanelCloseButton();
+    });
+  };
+  if (MOBILE_NO_OBSERVER) {
+    // 二分开关：完全关掉这个观察器（面板关闭按钮会缺失，仅用于定位问题）
+    document.documentElement.dataset.dshMobileObserver = 'off';
+  } else {
+    const panelObserver = new MutationObserver(schedulePanelCloseButton);
+    panelObserver.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+  }
+  window.addEventListener('resize', schedulePanelCloseButton);
 
   // 1.5 移动端标题行「对话」下拉：隐藏原生 tablist，在标准模式右边注入一个
   //     原生样式的「对话 ▾」按钮，点开下拉选择 对话/轨迹/上下文 切换视图。
@@ -4906,6 +5284,20 @@ function setupMobileExperience(rpcCall, ctx) {
       mobileTabState.dropdown.remove();
       mobileTabState.dropdown = null;
     }
+  };
+
+  /**
+   * 把下拉定位到按钮正下方。
+   * 下拉是 body 级 portal（position:fixed），坐标得自己算 —— 这是脱离祖先
+   * overflow:hidden 裁剪的代价，也是原生 popover 同样的做法。
+   */
+  const positionTabDropdown = () => {
+    const dd = mobileTabState.dropdown;
+    const btn = mobileTabState.btn;
+    if (!dd || !btn || !btn.isConnected) return;
+    const r = btn.getBoundingClientRect();
+    dd.style.top = Math.round(r.bottom + 6) + 'px';
+    dd.style.left = Math.round(r.left) + 'px';
   };
 
   const renderTabDropdown = () => {
@@ -4944,8 +5336,10 @@ function setupMobileExperience(rpcCall, ctx) {
       };
       dropdown.appendChild(option);
     });
-    mobileTabState.btn.appendChild(dropdown);
+    // 挂到 <body>：绕开祖先的 overflow:hidden 裁剪（见 .dsh-mobile-tab-dropdown 注释）
+    document.body.appendChild(dropdown);
     mobileTabState.dropdown = dropdown;
+    positionTabDropdown();
   };
 
   const syncTabButtonLabel = () => {
@@ -5017,6 +5411,8 @@ function setupMobileExperience(rpcCall, ctx) {
   titleExtrasObserver.observe(document.body, { childList: true, subtree: true });
   window.addEventListener('resize', () => {
     if (window.innerWidth > 768) closeTabDropdown();
+    // 横竖屏切换后按钮会移位，portal 化的下拉得跟着重算坐标
+    else positionTabDropdown();
   });
   document.addEventListener(
     'click',

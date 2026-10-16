@@ -97,7 +97,7 @@ resolve、远程流层直接抛错 —— 于是外壳渲染得出来，工作�
 | 路径 | 变化 |
 |---|---|
 | `<DSH_HOME>/dsh-bridge/` | → `<DSH_HOME>/dsh-bridge-gateway/`（启动时自动迁移） |
-| `~/.dsh-bridge/` | → `~/.dsh-bridge-cloudflared/`（cloudflared 缓存，自动迁移，免重下） |
+| `~/.dsh-bridge/` | → `~/.dsh-bridge-gateway-cloudflared/`（cloudflared 缓存，**两级链自动迁移**，免重下 39MB） |
 | RPC 通道 `/dsh-bridge` | → `/dsh-bridge-gateway`，**新旧双通道并存**，旧缓存页面仍可用 |
 
 ## 功能
@@ -123,7 +123,8 @@ resolve、远程流层直接抛错 —— 于是外壳渲染得出来，工作�
 - **卡片折叠。** 访问配置与安全认证两个 Tab 的卡片都可折叠，默认只展开首张，
   折叠后仍保留状态标签与一行关键信息。
 - **移动端适配。** 远程网页 UI 针对手机屏幕深度适配（抽屉化侧边栏、点击热区扩至约 44px、
-  输入框贴底等）。
+  输入框贴底等）。网关另外提供真实的 **PNG** 主屏图标（DSH 业务蓝 + 白色鲸鱼，含 `any`
+  与 `maskable` 两版）与 Web App Manifest，"添加到桌面"得到的是正常图标而非空白方块。
 - **全界面配置。** 以上全部功能都在 DSH Web 远程访问面板里配置，无需手改任何文件。
 
 ## 界面
@@ -276,6 +277,21 @@ dsh plugin --profile web add .
 
 测试会通过 `test/isolate-home.mjs` 把 `DSH_HOME` 指向一次性临时目录，不会污染你本机的
 真实环境。
+
+### 排查只在手机上出现的问题
+
+桌面视口复现不出、真机稳定复现的问题，可以不改代码直接二分。在远程地址后加查询参数即可；
+选择会记进 `localStorage`，所以在没有地址栏的 PWA 里同样生效。
+
+| 参数 | 作用 |
+|---|---|
+| `?dsh-diag=1` | 叠加只读指标面板（滚动容器几何、`scrollHeight` / `clientHeight`、输入框位置、视口三件套）。它与 `dsh-mobile` 相互独立，因此能对比移动层「开」与「关」两种状态。 |
+| `?dsh-mobile=off` | 完全禁用移动端增强层（CSS 与 JS）。 |
+| `?dsh-mobile=no-new` | 保留承重布局，只关掉最近新增的那批规则。 |
+| `?dsh-mobile=no-<分组>` | 关掉某一组规则：`no-frameLayout`、`no-centercol`、`no-pad`、`no-observer`，逗号分隔可叠加。 |
+| `?dsh-mobile=on` | 恢复正常。 |
+
+第一步先取两次 `?dsh-diag=1` —— 一次原样、一次带 `?dsh-mobile=off` —— 两者差值通常就足以定位元凶。
 
 本项目 fork 自 [wenbin-wb/dsh-bridge](https://github.com/wenbin-wb/dsh-bridge)。
 向上游反馈通用问题、向本仓库反馈直连网关相关问题。

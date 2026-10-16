@@ -14,6 +14,8 @@ import {
   DATA_DIR_NAME, LEGACY_DATA_DIR_NAME,
   dshHome, dataDir, legacyDataDir, dataPath, configFile, sessionsFile,
   resetAuthFile, accessLogFile, certDir, migrateLegacyDataDir,
+  LEGACY_CLOUDFLARED_DIR_NAMES, cloudflaredBinDir, cloudflaredBinDirs,
+  legacyCloudflaredDirs, migrateLegacyCloudflaredDir,
 } from '../lib/paths.js'
 
 const silent = { info() {}, warn() {}, error() {}, debug() {} }
@@ -152,5 +154,94 @@ test('paths honour a runtime change to DSH_HOME (lazy resolution)', () => {
     else process.env.DSH_HOME = prev
     rmSync(a, { recursive: true, force: true })
     rmSync(b, { recursive: true, force: true })
+  }
+})
+
+// ---------------------------------------------------------------------------
+// cloudflared 缓存目录的两级迁移链（文件级）
+// ---------------------------------------------------------------------------
+// 这个名字改过两次，所以迁移必须能从**两个**历史名追到当前名：
+//   ~/.dsh-bridge/                     ← 上游沿用名
+//   ~/.dsh-bridge-cloudflared/         ← 第一次改名后
+//   ~/.dsh-bridge-gateway-cloudflared/ ← 当前
+// 少追一级，老用户就会白等一次 39MB 重下载。
+//
+// 注意：cloudflared 目录基于 os.homedir()（不是 DSH_HOME），所以这里改的是 HOME。
+// Node 在 POSIX 上让 os.homedir() 读 $HOME，因此可以安全注入。
+function withFakeHome(fn) {
+  const home = mkdtempSync(join(tmpdir(), 'dsh-cf-home-'))
+  const prev = process.env.HOME
+  process.env.HOME = home
+  try {
+    return fn(home)
+  } finally {
+    if (prev === undefined) delete process.env.HOME
+    else process.env.HOME = prev
+    rmSync(home, { recursive: true, force: true })
+  }
+}
+
+/** 造一个"看起来已下载过"的 cloudflared 缓存目录 */
+function seedCloudflared(dir) {
+  mkdirSync(join(dir, 'bin'), { recursive: true })
+  writeFileSync(join(dir, 'bin', 'cloudflared'), 'x'.repeat(64))
+}
+
+test('cloudflared 迁移链：从上游沿用名 ~/.dsh-bridge/ 追到当前名', () => {
+  withFakeHome((home) => {
+    seedCloudflared(join(home, '.dsh-bridge'))
+    const r = migrateLegacyCloudflaredDir({ logger: silent })
+    assert.equal(r.migrated, true)
+    assert.equal(r.reason, 'renamed')
+    assert.equal(r.from, join(home, '.dsh-bridge'))
+    assert.equal(r.to, join(home, '.dsh-bridge-gateway-cloudflared'))
+    assert.ok(existsSync(join(home, '.dsh-bridge-gateway-cloudflared', 'bin', 'cloudflared')))
+    assert.ok(!existsSync(join(home, '.dsh-bridge')), '旧目录应已被 rename 走')
+  })
+})
+
+test('cloudflared 迁移链：从中间名 ~/.dsh-bridge-cloudflared/ 追到当前名', () => {
+  withFakeHome((home) => {
+    seedCloudflared(join(home, '.dsh-bridge-cloudflared'))
+    const r = migrateLegacyCloudflaredDir({ logger: silent })
+    assert.equal(r.migrated, true)
+    assert.equal(r.from, join(home, '.dsh-bridge-cloudflared'))
+    assert.ok(existsSync(join(home, '.dsh-bridge-gateway-cloudflared', 'bin', 'cloudflared')))
+  })
+})
+
+test('cloudflared 迁移链：优先取最近的一级，且幂等', () => {
+  withFakeHome((home) => {
+    // 两个历史目录同时存在（理论上少见，但必须确定性选择"从新到旧"的第一个）
+    seedCloudflared(join(home, '.dsh-bridge-cloudflared'))
+    seedCloudflared(join(home, '.dsh-bridge'))
+    const r1 = migrateLegacyCloudflaredDir({ logger: silent })
+    assert.equal(r1.migrated, true)
+    assert.equal(r1.from, join(home, '.dsh-bridge-cloudflared'), '应优先迁移较新的历史名')
+    // 更旧的那个保持原样，不被顺手删掉（它仍是用户的文件）
+    assert.ok(existsSync(join(home, '.dsh-bridge')))
+
+    const r2 = migrateLegacyCloudflaredDir({ logger: silent })
+    assert.equal(r2.migrated, false)
+    assert.equal(r2.reason, 'already-migrated')
+  })
+})
+
+test('cloudflared 迁移链：没有任何历史目录时只报告，不创建目录', () => {
+  withFakeHome((home) => {
+    const r = migrateLegacyCloudflaredDir({ logger: silent })
+    assert.equal(r.migrated, false)
+    assert.equal(r.reason, 'no-legacy-dir')
+    // 与数据目录迁移不同：这里不预创建 —— 没下载过就不该凭空造一个缓存目录
+    assert.ok(!existsSync(join(home, '.dsh-bridge-gateway-cloudflared')))
+  })
+})
+
+test('cloudflared 清理覆盖当前 + 全部历史 bin 目录', () => {
+  const dirs = cloudflaredBinDirs()
+  assert.equal(dirs.length, 1 + LEGACY_CLOUDFLARED_DIR_NAMES.length)
+  assert.equal(dirs[0], cloudflaredBinDir())
+  for (const legacy of legacyCloudflaredDirs()) {
+    assert.ok(dirs.includes(join(legacy, 'bin')), `清理应覆盖 ${legacy}/bin`)
   }
 })
